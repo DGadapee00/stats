@@ -12,7 +12,7 @@ export function renderNotes(root, { unitId }) {
     <div class="stack">
       <h2>Notes</h2>
       <div class="card stack">
-        <p>Rewritten class notes arrive here chapter by chapter, from the weekly Canvas drop, in the same format as FLUX's: every worked example recomputed, slips in the source marked as corrections, and each section linked to its practice problems and lab.</p>
+        <p>The teacher's notes, rewritten chapter by chapter: every worked example recomputed, slips in the source marked as corrections, and each section linked to its practice problems and lab.</p>
         <p class="note">Until then, use the teacher's notes. The practice problems cite the example each version is built on (for example “Notes Ex 1.13”).</p>
       </div>
       <h3>Chapters on this exam</h3>

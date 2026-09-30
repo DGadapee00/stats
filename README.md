@@ -41,7 +41,8 @@ node scripts/smoke.mjs   # every screen at 380px and 1280px (needs the dev serve
   - *Paired vs independent* (Ch 9): the same subjects twice, tested both ways.
   - *Regression* (Ch 10): drag points; line, residuals, R², residual plot, leverage.
   Worked solutions link to the lab for their chapter.
-- **Notes** — coming, from the weekly Canvas drop. See [PLAN.md](PLAN.md).
+- **Notes** — coming: the teacher's notes for Ch 1–10, rewritten, with every worked example
+  recomputed and linked to its practice problem and lab. See [PLAN.md](PLAN.md).
 
 ## How it is checked
 

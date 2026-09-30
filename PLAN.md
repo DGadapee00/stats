@@ -231,7 +231,11 @@ Every ★ lab ships with 2–3 Predict-first prompts and the generators for its 
 
 **Status (30 Sep 2026):** 0–7, 9 and 10 done: ten labs (the five ★ labs; describing data,
 conditional probability, distributions, normal probability plot, paired vs independent; t vs z and
-the F shape live in the Distributions lab). Next: 8 (notes, from the weekly drop) and 11 (deploy).
+the F shape live in the Distributions lab). Next: 8 (notes) and 11 (deploy).
+
+**Change to 8 (30 Sep 2026):** there is no weekly Canvas drop for this course. The teacher's notes
+for Ch 1–10 (already provided) are the only notes, so no ingest pipeline or scheduled run is built.
+Notes are written once from them, as data in `src/notes/`, midterm chapters first.
 
 ---
 
