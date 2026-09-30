@@ -8,7 +8,7 @@ solutions, spaced review, and interactive labs. It is built for a phone first.
 ```bash
 npm install
 npm start          # http://localhost:5175
-npm test           # stats-check, tex-check, problems-check, labs-check
+npm test           # stats-check, tex-check, problems-check, labs-check, notes-check
 node scripts/smoke.mjs   # every screen at 380px and 1280px (needs the dev server running)
 ```
 
@@ -41,8 +41,11 @@ node scripts/smoke.mjs   # every screen at 380px and 1280px (needs the dev serve
   - *Paired vs independent* (Ch 9): the same subjects twice, tested both ways.
   - *Regression* (Ch 10): drag points; line, residuals, R², residual plot, leverage.
   Worked solutions link to the lab for their chapter.
-- **Notes** — coming: the teacher's notes for Ch 1–10, rewritten, with every worked example
-  recomputed and linked to its practice problem and lab. See [PLAN.md](PLAN.md).
+- **Notes** — the teacher's notes for Ch 1–10, rewritten: 101 worked examples, each with its
+  solution folded until you want it and a link to practice the same numbers; TI-84 steps; each
+  section linked to its lab. Where the notes leave an example to be worked in class, the answer is
+  computed both from the printed tables and exactly. Slips in the source are marked as corrections
+  (and listed in [ERRATA.md](ERRATA.md)).
 
 ## How it is checked
 
@@ -55,6 +58,8 @@ node scripts/smoke.mjs   # every screen at 380px and 1280px (needs the dev serve
   - 200 seeded versions each stay valid and render,
   - KaTeX parses every formula,
   - and each probability agrees with a seeded Monte Carlo simulation of the same problem.
+- `scripts/notes-check.mjs` recomputes every number the notes state (263 of them) from the
+  examples' data, checks each linked practice case cites the same example, and parses all TeX.
 - `scripts/labs-check.mjs` runs every lab headless:
   - every default, scenario and prediction state computes and draws,
   - every Predict-first verdict is what the lab's own numbers show (over several seeds),

@@ -6,7 +6,7 @@ holds the plan and the course decisions (tables, quartile rule, exam dates, buil
 
 ## Checks
 
-- `npm test` (stats-check, tex-check, problems-check, labs-check) must pass. `npx vite build` must succeed.
+- `npm test` (stats-check, tex-check, problems-check, labs-check, notes-check) must pass. `npx vite build` must succeed.
 - `node scripts/smoke.mjs` needs the dev server on 5175 (`npx vite --port 5175 --strictPort`, in the
   background). It fails on page errors and on any page wider than a 380px phone. Look at the
   screenshots in `scripts/output/smoke/` after UI changes.
@@ -44,3 +44,11 @@ holds the plan and the course decisions (tables, quartile rule, exam dates, buil
   predictions; `outcome(before, after)` must derive the answer from the lab's results, and
   labs-check requires it to equal `expect` (and the change to be reachable by the sliders).
 - Numbers quoted in a prediction's `why` are computed; recompute them after changing a preset.
+
+## Notes
+
+- One file per chapter in `src/notes/` (format in `src/notes/index.js`), rewritten from the teacher's
+  notes, which are the only notes for this course (there is no weekly drop). Route `#/<unit>/notes/<ch>`.
+- Every worked example that states a number carries `checks`; notes-check recomputes each one.
+  Link an example to its practice case (`problem`, `case`) only when the case cites that example.
+- Where the source slips, keep its example and add a `fix` block (and a line in ERRATA.md).

@@ -237,6 +237,10 @@ the F shape live in the Distributions lab). Next: 8 (notes) and 11 (deploy).
 for Ch 1–10 (already provided) are the only notes, so no ingest pipeline or scheduled run is built.
 Notes are written once from them, as data in `src/notes/`, midterm chapters first.
 
+**Status (30 Sep 2026, later):** notes for all ten chapters are done (101 worked examples, every
+stated number recomputed by notes-check). Remaining: 11 (deploy), which needs the owner's
+Cloudflare login.
+
 ---
 
 ## 9. Decisions (answered 30 Sep 2026)
