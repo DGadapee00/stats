@@ -73,7 +73,8 @@ for (const N of NOTES) {
           if (tpl && x.case != null) {
             const c = tpl.cases?.[x.case];
             ok(c, `${E}: ${x.problem} has no case ${x.case}`);
-            if (c) ok(c.src.includes(`Ex ${x.n}`), `${E}: case ${x.case} of ${x.problem} is "${c.src}", not this example`);
+            // The case must cite this example: "Notes Ex 4.1, 4.6" covers 4.6, "Ex 3.3–3.4" covers 3.4.
+            if (c) ok(/Notes Ex/.test(c.src) && new RegExp(`(^|[^\\d.])${x.n.replace('.', '\\.')}($|[^\\d])`).test(c.src), `${E}: case ${x.case} of ${x.problem} is "${c.src}", not this example`);
           }
         }
         if (x.checks) {
