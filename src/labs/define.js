@@ -15,7 +15,8 @@
  *   height: plot height as a fraction of its width (default 0.72)
  *
  * A param is { id, label, type: 'range' | 'choice' | 'toggle', … }:
- *   range  { min, max, step, fmt? }       choice { options: [[value, label], …] }
+ *   range  { min, max, step }  (each may be a function of the state)
+ *   choice { options: [[value, label], …], select?, reset?(value) → state to apply when it changes }
  *   show(state) hides it when false.
  *
  * `compute` gets a seeded generator (src/stats/rng.js) built from state.seed, so a lab's picture

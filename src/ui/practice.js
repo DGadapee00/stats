@@ -14,6 +14,7 @@ import { instance, render, grade, accepted, caseIndex, seedForAttempt } from '..
 import { createProgress, pickSet, MASTERED_BOX } from '../problems/progress.js';
 import { CHAPTER_TITLES, unitById, unitLabel } from '../data/catalog.js';
 import { hashFor } from '../engine/router.js';
+import { labsForChapter } from '../labs/index.js';
 import { mathProse, escapeHTML as esc } from './shared.js';
 
 export const progress = createProgress();
@@ -199,6 +200,13 @@ function partHTML(p, a) {
   return `<div class="part ${cls}">${label}${body}${verdict}</div>`;
 }
 
+/** "See it in a lab" under a solution. */
+function labLinks(unitId, ch) {
+  const labs = labsForChapter(ch);
+  if (!labs.length) return '';
+  return `<p class="note" style="margin-top:10px">See it in a lab: ${labs.map((l) => `<a href="${hashFor({ unitId, mode: 'explore', labId: l.id })}">${esc(l.title)}</a>`).join(' · ')}</p>`;
+}
+
 const fmt = (v) => String(Number(Number(v).toPrecision(5)));
 
 function draw(root, unitId) {
@@ -222,7 +230,7 @@ function draw(root, unitId) {
       <div class="parts stack">${tpl.parts.map((p) => partHTML(v.parts.find((q) => q.id === p.id), a)).join('')}</div>
       ${a.hints ? `<div class="card hints"><h3>Hints</h3><ol>${v.hints.slice(0, a.hints).map((h) => `<li>${mathProse(h)}</li>`).join('')}</ol></div>` : ''}
       ${a.finished ? finishedHTML(a, status) : ''}
-      ${a.finished || a.revealed ? `<div class="card steps"><h3>Worked solution</h3><ol>${v.steps.map((st) => `<li>${mathProse(st)}</li>`).join('')}</ol>${a.case?.note ? `<p class="note" style="margin-top:10px"><b>About the source:</b> ${mathProse(a.case.note)}</p>` : ''}</div>` : ''}
+      ${a.finished || a.revealed ? `<div class="card steps"><h3>Worked solution</h3><ol>${v.steps.map((st) => `<li>${mathProse(st)}</li>`).join('')}</ol>${a.case?.note ? `<p class="note" style="margin-top:10px"><b>About the source:</b> ${mathProse(a.case.note)}</p>` : ''}${labLinks(unitId, tpl.ch)}</div>` : ''}
       <div class="sheet-actions">
         ${
           a.finished

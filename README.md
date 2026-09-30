@@ -3,12 +3,12 @@
 A study app for STA 3032 (Fall 2026; Walpole, Myers, Myers & Ye, *Probability & Statistics for
 Engineers & Scientists*). It is the sibling of [FLUX](https://github.com/DGadapee00/flux-phy2049)
 for PHY 2049, with the same approach: generated practice problems tied to the course, worked
-solutions, spaced review, and (coming) interactive labs. It is built for a phone first.
+solutions, spaced review, and interactive labs. It is built for a phone first.
 
 ```bash
 npm install
 npm start          # http://localhost:5175
-npm test           # stats-check, tex-check, problems-check
+npm test           # stats-check, tex-check, problems-check, labs-check
 node scripts/smoke.mjs   # every screen at 380px and 1280px (needs the dev server running)
 ```
 
@@ -26,7 +26,20 @@ node scripts/smoke.mjs   # every screen at 380px and 1280px (needs the dev serve
   - **Review:** spaced review, mixed sets, and a timed 8-problem practice exam.
 - **Tables** — Appendix A as a lookup, with the printed value beside the exact one and the full z
   table highlighted.
-- **Notes, Explore** — coming. See [PLAN.md](PLAN.md) for the order.
+- **Explore** — eight labs, all 2D, each built to correct one or two intuitions. Every lab has
+  Predict-first cards: you commit to what a change will do, then make it, and the lab says what
+  happened from its own numbers.
+  - *Describing data* (Ch 1): histogram, dot plot, box plot; mean vs median, s vs IQR, bin width.
+  - *Conditional probability* (Ch 2): a screening test as an area model and a tree; Bayes' rule.
+  - *Distributions* (Ch 3, 5, 6, and t, χ², F): every distribution with an event shaded.
+  - *Sampling distributions* (Ch 7): x̄ and p̂ from thousands of samples; the normal
+    approximation to the binomial with and without the continuity correction.
+  - *CI coverage* (Ch 8): 100 intervals; z, t, and the wrong z-with-s.
+  - *Errors and power* (Ch 8): H₀ and H₁ curves, α, β, power.
+  - *Which test?* (Ch 8–10): a decision tree ending at the formula, assumptions and TI-84 menu.
+  - *Regression* (Ch 10): drag points; line, residuals, R², residual plot, leverage.
+  Worked solutions link to the lab for their chapter.
+- **Notes** — coming, from the weekly Canvas drop. See [PLAN.md](PLAN.md).
 
 ## How it is checked
 
@@ -39,6 +52,11 @@ node scripts/smoke.mjs   # every screen at 380px and 1280px (needs the dev serve
   - 200 seeded versions each stay valid and render,
   - KaTeX parses every formula,
   - and each probability agrees with a seeded Monte Carlo simulation of the same problem.
+- `scripts/labs-check.mjs` runs every lab headless:
+  - every default, scenario and prediction state computes and draws,
+  - every Predict-first verdict is what the lab's own numbers show (over several seeds),
+  - and the pictures are statistically right: the simulated SD of x̄ against σ/√n, long-run
+    CI coverage against the confidence level, simulated power and size against the formula.
 
 [ERRATA.md](ERRATA.md) lists where a printed answer is wrong. Quartiles follow the teacher's notes (TI-84: the median of each half). The tables are those of the
 textbook's Appendix A (`src/stats/tables-data.js`, extracted by `scripts/extract_tables.py`).

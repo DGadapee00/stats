@@ -200,7 +200,10 @@ export function renderLab(root, { unitId, lab }) {
     else if (t.dataset.num) {
       if (t.value === '' || !Number.isFinite(Number(t.value))) return;
       state[id] = Number(t.value);
-    } else state[id] = coerce(p, t.value);
+    } else {
+      state[id] = coerce(p, t.value);
+      if (p.reset) Object.assign(state, p.reset(state[id]));
+    }
     // A choice or toggle can change what else is shown and every range's limits.
     update();
   });
@@ -215,6 +218,7 @@ export function renderLab(root, { unitId, lab }) {
     if (!b) return;
     const p = lab.params.find((q) => q.id === b.dataset.seg);
     state[p.id] = coerce(p, b.dataset.v);
+    if (p.reset) Object.assign(state, p.reset(state[p.id]));
     update();
   });
 

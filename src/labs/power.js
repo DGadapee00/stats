@@ -88,7 +88,7 @@ export default defineLab({
     const f1 = (x) => D.normPdf(x, r.m1, r.se);
     // β: the H₁ curve over the region where H₀ is kept.
     const keep = s.tail === 'right' ? [[-Infinity, r.reg[0][0]]] : s.tail === 'left' ? [[r.reg[0][1], Infinity]] : [[r.reg[0][1], r.reg[1][0]]];
-    for (const [a, b] of r.reg) shade(ctx, A, f1, a, b, alpha(C.pink, 0.22));
+    for (const [a, b] of r.reg) shade(ctx, A, f1, a, b, alpha(C.pink, 0.38));
     for (const [a, b] of keep) shade(ctx, A, f1, a, b, alpha(C.purple, 0.55));
     for (const [a, b] of r.reg) shade(ctx, A, f0, a, b, alpha(C.red, 0.7));
     curve(ctx, A, f0, lo, hi, { color: C.blue, width: 2 });

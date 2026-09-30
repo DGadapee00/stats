@@ -107,7 +107,7 @@ export function axes(ctx, A, { xTicks = true, yTicks = true, xLabel = '', yLabel
   ctx.moveTo(A.x0, A.y1 + 0.5);
   ctx.lineTo(A.x1, A.y1 + 0.5);
   ctx.stroke();
-  if (A.y) {
+  if (A.y && yTicks) {
     ctx.beginPath();
     ctx.moveTo(A.x0 - 0.5, A.y0);
     ctx.lineTo(A.x0 - 0.5, A.y1);

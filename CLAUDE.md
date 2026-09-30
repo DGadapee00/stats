@@ -6,7 +6,7 @@ holds the plan and the course decisions (tables, quartile rule, exam dates, buil
 
 ## Checks
 
-- `npm test` (stats-check, tex-check, problems-check) must pass. `npx vite build` must succeed.
+- `npm test` (stats-check, tex-check, problems-check, labs-check) must pass. `npx vite build` must succeed.
 - `node scripts/smoke.mjs` needs the dev server on 5175 (`npx vite --port 5175 --strictPort`, in the
   background). It fails on page errors and on any page wider than a 380px phone. Look at the
   screenshots in `scripts/output/smoke/` after UI changes.
@@ -33,3 +33,14 @@ holds the plan and the course decisions (tables, quartile rule, exam dates, buil
 - Cite sources by section (Walpole §5.2) or by the notes' example number (Notes Ex 1.13). Do not
   invent textbook example numbers.
 - Mobile first: 380px portrait is the design width; no horizontal scroll.
+
+## Labs
+
+- A lab is a `defineLab({...})` object in `src/labs/` (contract in `define.js`), registered in
+  `src/labs/index.js` and listed per exam in `catalog.js` (`labs`). All 2D, on Canvas via
+  `src/plot/plot.js`. Route: `#/<unit>/explore/<labId>`.
+- `compute(state, rng)` is pure and gets a seeded generator; every number shown comes from it.
+- A lab earns its place only if moving a parameter corrects an intuition. Each gets 2–4
+  predictions; `outcome(before, after)` must derive the answer from the lab's results, and
+  labs-check requires it to equal `expect` (and the change to be reachable by the sliders).
+- Numbers quoted in a prediction's `why` are computed; recompute them after changing a preset.
