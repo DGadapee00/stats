@@ -53,7 +53,7 @@ function intro(root, unitId) {
       <h2>Practice exam</h2>
       <div class="card stack">
         <p>${SIZE} problems from ${esc(unitLabel(unit))}, chosen across the chapters with the ones you know least first. You have ${MINUTES} minutes.</p>
-        <p class="note">No hints and no feedback until you submit, like the real thing. Use your printed tables (or the Tables tab). Answers save as you go.</p>
+        <p class="note">No hints and no feedback until you submit, like the real thing. Use your TI-84 and your printed tables (or the Tables tab). Answers save as you go.</p>
         ${n < SIZE ? `<p class="note">Only ${n} problems are written for this exam so far.</p>` : ''}
         <button class="btn primary" data-act="start">Start the clock</button>
       </div>

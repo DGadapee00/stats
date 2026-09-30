@@ -163,7 +163,7 @@ button {
   color: var(--text-muted);
   padding: 7px 4px;
   border-radius: var(--radius-sm);
-  min-height: 34px;
+  min-height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -265,14 +265,14 @@ h3 {
 }
 
 .btn.small {
-  min-height: 34px;
+  min-height: 44px;
   padding: 0 10px;
 }
 
 .linkish {
   color: var(--blue);
   font-size: var(--fs-ui);
-  min-height: 34px;
+  min-height: 44px;
 }
 
 /* ------------------------------------------------------------------ practice list */
@@ -731,7 +731,7 @@ table.results th {
   border: 1px solid var(--border-hover);
   border-radius: var(--radius);
   padding: 8px 10px;
-  min-height: 42px;
+  min-height: 44px;
   width: 100%;
 }
 
@@ -898,7 +898,7 @@ canvas.draggable {
 .ctl input[type='range'] {
   width: 100%;
   accent-color: var(--blue);
-  min-height: 28px;
+  min-height: 44px;
 }
 
 .ctl .num,
@@ -909,7 +909,7 @@ canvas.draggable {
   border: 1px solid var(--border-hover);
   border-radius: var(--radius);
   padding: 6px 8px;
-  min-height: 38px;
+  min-height: 44px;
   width: 100%;
   min-width: 0;
 }
@@ -922,7 +922,7 @@ canvas.draggable {
   display: flex;
   align-items: center;
   gap: 8px;
-  min-height: 34px;
+  min-height: 44px;
   cursor: pointer;
 }
 
@@ -942,7 +942,7 @@ canvas.draggable {
 
 .seg button {
   flex: 1;
-  min-height: 36px;
+  min-height: 44px;
   padding: 0 6px;
   border-radius: var(--radius-sm);
   color: var(--text-muted);
@@ -1120,7 +1120,7 @@ canvas.tappable {
   cursor: pointer;
   color: var(--blue);
   font-size: var(--fs-ui);
-  min-height: 32px;
+  min-height: 44px;
   display: flex;
   align-items: center;
 }
@@ -1178,4 +1178,24 @@ table.nb-table th {
 .disp.wrapped {
   text-align: center;
   line-height: 2;
+}
+
+/* Touch targets: 44px tall on a phone, per the platform guidelines. */
+.unit-select {
+  min-height: 44px;
+}
+
+.crumbs a,
+.nb-foot a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+/* The z table keeps its z column in view while it scrolls sideways. */
+table.ztab tr > :first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--panel-solid);
 }

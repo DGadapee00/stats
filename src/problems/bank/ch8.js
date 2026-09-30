@@ -246,7 +246,7 @@ export default [
       String.raw`$\bar x = ${fx($.xbar, 3)}$, $s = ${fx($.s, 3)}$ (TI-84 1-Var Stats: x̄ and Sx)`,
       $.look.line,
       String.raw`$$E = ${fx($.look.value, 3)}\cdot\dfrac{${fx($.s, 3)}}{\sqrt{${$.n}}} = ${tn(($.look.value * $.s) / Math.sqrt($.n), 5)}$$`,
-      String.raw`$$(${fx($.xbar, 3)} \mp ${tn(($.look.value * $.s) / Math.sqrt($.n), 5)}) = (${fx($.xbar - ($.look.value * $.s) / Math.sqrt($.n), 2)},\ ${fx($.xbar + ($.look.value * $.s) / Math.sqrt($.n), 2)})$$`,
+      String.raw`$$(${fx($.xbar, 3)} \pm ${tn(($.look.value * $.s) / Math.sqrt($.n), 5)}) = (${fx($.xbar - ($.look.value * $.s) / Math.sqrt($.n), 2)},\ ${fx($.xbar + ($.look.value * $.s) / Math.sqrt($.n), 2)})$$`,
       `We are ${confLabel($.conf)} confident the mean length of the songs on her phone is between these bounds.`,
     ],
     cases: [kase('Notes Ex 8.9', { n: 9, conf: 0.99, shift: 0, xs: [201, 257, 284, 208, 179, 222, 217, 206, 240] }, { xbar: 223.78, s: 31.88, lo: 188.12, hi: 259.44 })],

@@ -79,7 +79,7 @@ const fmtTick = (v) => {
  * A plot area: margins inside the canvas and the x and y scales for it. `y` may be omitted for
  * a plot with no vertical axis (a density drawn to fit).
  */
-export function area(w, h, { x, y, left = 40, right = 12, top = 20, bottom = 28 }) {
+export function area(w, h, { x, y, left = 40, right = 12, top = 20, bottom = 36 }) {
   const box = { x0: left, x1: w - right, y0: top, y1: h - bottom };
   return { ...box, x: scale(x[0], x[1], box.x0, box.x1), y: y ? scale(y[0], y[1], box.y1, box.y0) : null, w, h };
 }
@@ -132,9 +132,10 @@ export function axes(ctx, A, { xTicks = true, yTicks = true, xLabel = '', yLabel
   ctx.font = FONT_LABEL;
   ctx.fillStyle = C.muted;
   if (xLabel) {
+    // Under the tick labels, not beside them: at the right end it would sit on the last tick.
     ctx.textAlign = 'right';
-    ctx.textBaseline = 'bottom';
-    ctx.fillText(xLabel, A.x1, A.h - 1);
+    ctx.textBaseline = 'top';
+    ctx.fillText(xLabel, A.x1, A.y1 + 20);
   }
   if (yLabel) {
     ctx.textAlign = 'left';
@@ -213,11 +214,13 @@ export function vline(ctx, A, x, { color = C.text, dash = [4, 4], label = '', wi
   ctx.stroke();
   ctx.setLineDash([]);
   if (label) {
+    // Beside the line, not on it: to its right, or to its left near the right edge.
     ctx.font = FONT;
     ctx.fillStyle = color;
-    ctx.textAlign = align;
+    const right = px > A.x1 - 60;
+    ctx.textAlign = right ? 'right' : 'left';
     ctx.textBaseline = 'top';
-    ctx.fillText(label, Math.max(A.x0 + 12, Math.min(A.x1 - 12, px)), A.y0);
+    ctx.fillText(label, right ? px - 5 : px + 5, Math.max(1, A.y0 - 15));
   }
 }
 

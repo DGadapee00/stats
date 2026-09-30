@@ -36,7 +36,7 @@ function shape(y) {
 export default defineLab({
   id: 'npp',
   title: 'Normal probability plot',
-  ch: ['8'],
+  ch: ['6', '8'],
   blurb: 'Is it normal enough for t? Read the plot: straight, curved for skew, an S for heavy tails, and how much a normal sample wiggles anyway.',
   height: 0.85,
   params: [

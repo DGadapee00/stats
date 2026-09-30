@@ -293,7 +293,7 @@ export default [
       String.raw`$s_p^2 = ${fx($.sp2, 4)}$, $\nu = ${$.df}$`,
       $.look.line,
       String.raw`$$E = ${fx($.look.value, 3)}\sqrt{${fx($.sp2, 4)}\left(\frac{1}{${$.n1}} + \frac{1}{${$.n2}}\right)} = ${fx($.look.value * $.se, 4)}$$`,
-      String.raw`$$(${fx($.d, 2)} \mp ${fx($.look.value * $.se, 4)}) = (${fx($.d - $.look.value * $.se, 4)},\ ${fx($.d + $.look.value * $.se, 4)})$$`,
+      String.raw`$$(${fx($.d, 2)} \pm ${fx($.look.value * $.se, 4)}) = (${fx($.d - $.look.value * $.se, 4)},\ ${fx($.d + $.look.value * $.se, 4)})$$`,
     ],
     cases: [kase('Notes Ex 9.12', { n1: 13, n2: 10, x1: 16.2, gap: 1.3, v1: 12.7, v2: 26.4, conf: 0.95 }, { lo: -2.47, hi: 5.07 })],
   }),
@@ -347,7 +347,7 @@ export default [
     steps: ($) => [
       String.raw`$\bar x_1 - \bar x_2 = ${fx($.d, 3)}$, $\sqrt{s_1^2/n_1 + s_2^2/n_2} = ${fx($.se, 4)}$, $\nu = ${fx($.df, 2)}$`,
       $.look.line.replace('Table A.4', `Rounding ν down to ${Math.floor($.df)}, Table A.4`),
-      String.raw`$$(${fx($.d, 3)} \mp ${fx($.look.value, 3)} \times ${fx($.se, 4)}) = (${fx($.d - $.look.value * $.se, 3)},\ ${fx($.d + $.look.value * $.se, 3)})$$`,
+      String.raw`$$(${fx($.d, 3)} \pm ${fx($.look.value, 3)} \times ${fx($.se, 4)}) = (${fx($.d - $.look.value * $.se, 3)},\ ${fx($.d + $.look.value * $.se, 3)})$$`,
       `TI-84 with the exact ν: (${fx($.lo, 3)}, ${fx($.hi, 3)}).`,
     ],
     cases: [kase('Notes Ex 9.14', { n1: 10, n2: 8, conf: 0.9, gap: 0, xy: [[3, 7, 25, 10, 15, 6, 12, 25, 15, 7], [78, 44, 40, 38, 33, 12, 1, 18]] }, { lo: -36.63, hi: -4.37 })],

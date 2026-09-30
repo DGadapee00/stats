@@ -28,7 +28,7 @@ export const UNITS = [
     date: '2026-10-12',
     label: 'Mon 10/12',
     // The labs this exam's Explore list leads with (the rest follow, under "After the midterm").
-    labs: ['describe', 'cond', 'dist'],
+    labs: ['describe', 'cond', 'dist', 'npp'],
   },
   {
     id: 'final',

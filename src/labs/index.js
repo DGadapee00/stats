@@ -10,7 +10,7 @@ import cond from './cond.js';
 import npp from './npp.js';
 import paired from './paired.js';
 
-export const LABS = [describe, cond, dist, clt, ci, power, npp, tests, paired, reg];
+export const LABS = [describe, cond, dist, npp, clt, ci, power, tests, paired, reg];
 
 export const labById = (id) => LABS.find((l) => l.id === id) || null;
 
@@ -21,7 +21,7 @@ const FOR_CHAPTER = {
   3: ['dist'],
   4: ['dist'],
   5: ['dist'],
-  6: ['dist', 'clt'],
+  6: ['dist', 'npp'],
   7: ['clt'],
   8: ['ci', 'power', 'tests', 'npp'],
   9: ['paired', 'tests'],
