@@ -13,6 +13,7 @@ import { chromium } from './playwright.mjs';
 import { PROBLEMS } from '../src/problems/index.js';
 import { accepted, instance } from '../src/problems/engine.js';
 import { LABS } from '../src/labs/index.js';
+import { NOTES } from '../src/notes/index.js';
 
 const BASE = process.env.SMOKE_URL || 'http://localhost:5175/';
 const OUT = path.resolve('scripts/output/smoke');
@@ -63,6 +64,13 @@ for (const [name, vp] of [['phone', { width: 380, height: 800 }], ['laptop', { w
   await settle('tables-lookup');
   await visit('#/mid/notes', 'notes');
   await visit('#/mid/explore', 'explore');
+  // Every notes chapter, with every solution and calculator box open (wide math shows up there).
+  for (const N of NOTES) {
+    await visit(`#/final/notes/${N.ch}`, `notes-${N.ch}`, { shot: false });
+    await page.evaluate(() => document.querySelectorAll('details').forEach((d) => (d.open = true)));
+    await page.waitForTimeout(50);
+    await settle(`notes-${N.ch}-open`, false);
+  }
 
   // Every lab: it draws, a control redraws it, and a prediction runs to its verdict.
   const inked = () =>

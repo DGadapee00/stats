@@ -8,6 +8,7 @@ import { unitById, nextUnit } from '../data/catalog.js';
  *   #/mid/exam                    the practice exam
  *   #/mid/notes · /explore · /tables
  *   #/final/explore/clt           a lab
+ *   #/mid/notes/5                 a chapter's notes
  *
  * With no link, the app opens the practice list for the exam coming up next.
  */
@@ -28,17 +29,18 @@ export function parseHash(hash = typeof location === 'undefined' ? '' : location
     seed: s != null && Number.isFinite(Number(s)) ? Math.max(0, Math.floor(Number(s))) : null,
     set: params.get('set') || null,
     labId: mode === 'explore' && c ? c : null,
+    chapter: mode === 'notes' && c ? c : null,
     bare: !full,
   };
 }
 
-export function hashFor({ unitId, mode = 'practice', problemId = null, seed = null, set = null, labId = null }) {
+export function hashFor({ unitId, mode = 'practice', problemId = null, seed = null, set = null, labId = null, chapter = null }) {
   const q = new URLSearchParams();
   if (problemId) q.set('p', problemId);
   if (problemId && seed != null) q.set('s', String(seed));
   if (set) q.set('set', set);
   const qs = q.toString();
-  const lab = mode === 'explore' && labId ? `/${labId}` : '';
+  const lab = mode === 'explore' && labId ? `/${labId}` : mode === 'notes' && chapter ? `/${chapter}` : '';
   return `#/${unitId}${mode === 'practice' ? '' : `/${mode}`}${lab}${qs ? `?${qs}` : ''}`;
 }
 

@@ -4,7 +4,7 @@ import { parseHash, hashFor } from './engine/router.js';
 import { renderList, renderProblem, dueCount } from './ui/practice.js';
 import { renderExam } from './ui/exam.js';
 import { renderTables } from './ui/tables.js';
-import { renderNotes } from './ui/placeholders.js';
+import { renderNotes } from './ui/notes.js';
 import { renderExplore } from './ui/lab.js';
 
 // Which build this is, so "is the live site current?" has an answer (see DEPLOY.md, /version.json).
@@ -40,7 +40,7 @@ function route() {
   badge.hidden = !due;
   badge.textContent = due;
 
-  const key = `${r.unitId}|${r.mode}|${r.problemId}|${r.seed}|${r.labId}`;
+  const key = `${r.unitId}|${r.mode}|${r.problemId}|${r.seed}|${r.labId}|${r.chapter}`;
   // Each screen sets the handlers it needs on the shared view; none carries over to the next one.
   view.onclick = view.oninput = view.onchange = view.onkeydown = null;
   if (r.mode === 'practice' && r.problemId) renderProblem(view, r);
