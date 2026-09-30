@@ -90,7 +90,7 @@ function checkParts(id, inst, where) {
         if (!grade(p, $, typed(v, p)).correct) err(id, `${where} part ${p.id}: the grader rejects its own accepted value ${v}`);
         // A table route is a rounding of the exact answer, never a different answer.
         const gap = Math.abs(v - exact);
-        if (gap > Math.max(0.01 * Math.abs(exact), 0.006, 2 * tolerance(p, exact, $))) err(id, `${where} part ${p.id}: alt ${v} is far from the exact ${exact}`);
+        if (gap > Math.max(0.01 * Math.abs(exact), 0.006, 2 * tolerance(p, exact, $), p.altGap ? p.altGap($) : 0)) err(id, `${where} part ${p.id}: alt ${v} is far from the exact ${exact}`);
       }
       const wrong = exact * 1.1;
       const wrongGap = Math.abs(wrong - exact);

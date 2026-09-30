@@ -8,9 +8,13 @@ import ch3 from './bank/ch3.js';
 import ch4 from './bank/ch4.js';
 import ch5 from './bank/ch5.js';
 import ch6 from './bank/ch6.js';
+import ch7 from './bank/ch7.js';
+import ch8 from './bank/ch8.js';
+import ch9 from './bank/ch9.js';
+import ch10 from './bank/ch10.js';
 import { UNITS, CHAPTER_ORDER, CHAPTER_TITLES } from '../data/catalog.js';
 
-export const PROBLEMS = [...ch1, ...ch2, ...ch3, ...ch4, ...ch5, ...ch6];
+export const PROBLEMS = [...ch1, ...ch2, ...ch3, ...ch4, ...ch5, ...ch6, ...ch7, ...ch8, ...ch9, ...ch10];
 
 const byIdMap = new Map(PROBLEMS.map((p) => [p.id, p]));
 

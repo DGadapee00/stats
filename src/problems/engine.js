@@ -65,6 +65,8 @@ export function sampleValues(tpl, rand) {
       continue;
     }
     if (!tpl.valid(inst.$)) continue;
+    // Conditions only generated versions must meet (a worked case from the notes may break them).
+    if (tpl.sampleValid && !tpl.sampleValid(inst.$)) continue;
     if (tpl.parts.some((p) => p.get && !Number.isFinite(p.get(inst.$)))) continue;
     return values;
   }

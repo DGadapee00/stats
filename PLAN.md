@@ -254,7 +254,12 @@ Every ★ lab ships with 2–3 Predict-first prompts and the generators for its 
 
   - Because A.6 has only those two columns, an F interval or two-sided F test in this course uses α/2 ∈ {.05, .01}, so a 90% or 98% interval. Generators respect that, and use \(f_{1-\alpha}(\nu_1,\nu_2) = 1/f_\alpha(\nu_2,\nu_1)\).
   - A df between table rows is graded as correct from either neighbouring row.
-- **Conventions:**
+- **Conventions** (updated 30 Sep from the notes for Ch 6–10; these replace the Walpole defaults below where they differ):
+  - p-values and Welch's df as the TI-84 gives them (fractional df; rounded-down df also accepted).
+  - Normal approximation condition: **np(1 − p) ≥ 10** (not np ≥ 5, nq ≥ 5).
+  - Normal probability plot: z on the x-axis, data on the y-axis, z_i = Φ⁻¹((i − 0.5)/n).
+  - Regression: ŷ = a + bx.
+- **Conventions (original):**
   - **Quartiles** use the teacher's TI-84 rule: the median of the lower and upper halves, leaving the median out when n is odd (checked against her Examples 1.6 and 1.13).
   - **Box plot:** whiskers run to the most extreme values inside 1.5·IQR fences, and outliers are marked `*`.
   - **Standard deviation** s uses n − 1.

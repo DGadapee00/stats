@@ -37,7 +37,7 @@ export function renderExplore(root, { unitId }) {
   root.innerHTML = `
     <div class="stack">
       <h2>Explore</h2>
-      <p class="note">Labs are interactive pictures you change to test an idea. None is built yet: the practice bank and the tables came first, for the midterm. Here is the order they arrive in.</p>
+      <p class="note">Labs are interactive pictures you change to test an idea. None is built yet: the practice bank (all ten chapters) and the tables came first. Here is the order the labs arrive in.</p>
       ${LABS.map(([t, ch, d, when]) => `<div class="card"><div class="row" style="justify-content:space-between"><h3>${esc(t)}</h3><span class="tag">${esc(ch)} · ${esc(when)}</span></div><p class="note" style="margin-top:6px">${esc(d)}</p></div>`).join('')}
       <a class="btn" href="${hashFor({ unitId, mode: 'tables' })}">Open the tables</a>
     </div>`;

@@ -17,6 +17,7 @@ import * as D from '../src/stats/dist.js';
 import * as TB from '../src/stats/tables.js';
 import * as S from '../src/stats/describe.js';
 import { createRng } from '../src/stats/rng.js';
+import * as I from '../src/stats/infer.js';
 
 let fails = 0;
 let checks = 0;
@@ -280,6 +281,95 @@ same('Ex 1.5 frequency table', S.frequencyTable(batteries, { start: 1.5, width: 
     if (Math.abs(xb - 50) <= half) hit++;
   }
   close('simulated z-interval coverage', hit / M, 0.95, 4 * Math.sqrt((0.95 * 0.05) / M));
+}
+
+// ---------------------------------------------------------------- 7. inference (Ch 7–10)
+{
+  // Published: Montgomery's steam-usage data (the notes' Ex 10.1), ŷ = −6.33 + 9.21x.
+  const tx = [21, 24, 32, 47, 50, 59, 68, 74, 62, 50, 41, 30];
+  const uy = [185.79, 214.47, 288.03, 424.84, 454.58, 539.03, 621.55, 675.06, 562.03, 452.93, 369.95, 273.98];
+  const R = I.linRegTest({ xs: tx, ys: uy, side: 'two' });
+  // The text rounds intermediate sums, so its −6.33 is within 0.01 of the exact −6.3355.
+  close('steam intercept', R.a, -6.33, 0.01);
+  close('steam slope', R.b, 9.21, 0.005);
+  // The regression t on r equals the slope's t = b / (s/√Sxx).
+  close('LinRegTTest t = slope t', R.t, R.b / Math.sqrt(R.s2 / R.sxx), 1e-6 * Math.abs(R.t));
+
+  // Duality: a two-sided test at α rejects exactly when the 100(1 − α)% interval misses the null value.
+  const r = createRng('duality');
+  for (let k = 0; k < 300; k++) {
+    const n = 5 + r.int(40);
+    const xbar = r.normal(50, 5);
+    const s = 1 + 9 * r.next();
+    const mu0 = xbar + r.normal(0, 3 * s / Math.sqrt(n));
+    const conf = [0.9, 0.95, 0.99][r.int(3)];
+    const a = 1 - conf;
+    const agree = (what, p, lo, hi, v) => {
+      checks++;
+      const out = v < lo || v > hi;
+      if ((p < a) !== out && Math.abs(p - a) > 1e-9) err(`duality ${what}`, `p = ${p}, interval (${lo}, ${hi}), null ${v}`);
+    };
+    const zt = I.zTest({ xbar, sigma: s, n, mu0, side: 'two' });
+    const zi = I.zInterval({ xbar, sigma: s, n, conf });
+    agree('z', zt.p, zi.lo, zi.hi, mu0);
+    const tt = I.tTest({ xbar, s, n, mu0, side: 'two' });
+    const ti = I.tInterval({ xbar, s, n, conf });
+    agree('t', tt.p, ti.lo, ti.hi, mu0);
+    const n2 = 5 + r.int(30);
+    const x2 = r.normal(50, 5);
+    const s2 = 1 + 9 * r.next();
+    const pt = I.pooledTest({ x1: xbar, x2, s1: s, s2, n1: n, n2, side: 'two' });
+    const pi = I.pooledInterval({ x1: xbar, x2, s1: s, s2, n1: n, n2, conf });
+    agree('pooled', pt.p, pi.lo, pi.hi, 0);
+    const wt = I.welchTest({ x1: xbar, x2, s1: s, s2, n1: n, n2, side: 'two' });
+    const wi = I.welchInterval({ x1: xbar, x2, s1: s, s2, n1: n, n2, conf });
+    agree('Welch', wt.p, wi.lo, wi.hi, 0);
+    const ft = I.fTest({ s1sq: s * s, s2sq: s2 * s2, n1: n, n2, side: 'two' });
+    const fi = I.fInterval({ s1sq: s * s, s2sq: s2 * s2, n1: n, n2, conf });
+    agree('F', ft.p, fi.lo, fi.hi, 1);
+  }
+
+  // Simulation: tests reject a true H0 about α of the time, intervals cover about conf of the time.
+  const M = 20000;
+  const g = createRng('inference-sim');
+  const sample = (n, mu, sig) => Array.from({ length: n }, () => g.normal(mu, sig));
+  const rate = (name, hits, want) => close(name, hits / M, want, 4 * Math.sqrt((want * (1 - want)) / M));
+  let rz = 0, rt = 0, rp = 0, rw = 0, rpair = 0, rf = 0, cf = 0, cw = 0;
+  for (let k = 0; k < M; k++) {
+    const a = sample(8, 10, 2);
+    const b = sample(12, 10, 2);
+    const c = sample(6, 10, 5);
+    if (I.zTest({ xbar: mean(a), sigma: 2, n: 8, mu0: 10, side: 'right' }).p < 0.05) rz++;
+    if (I.tTest({ xbar: mean(a), s: sdOf(a), n: 8, mu0: 10, side: 'two' }).p < 0.05) rt++;
+    if (I.pooledTest({ x1: mean(a), x2: mean(b), s1: sdOf(a), s2: sdOf(b), n1: 8, n2: 12, side: 'left' }).p < 0.05) rp++;
+    if (I.welchTest({ x1: mean(a), x2: mean(c), s1: sdOf(a), s2: sdOf(c), n1: 8, n2: 6, side: 'two' }).p < 0.05) rw++;
+    if (I.pairedTest({ xs: a, ys: a.map((x) => x + g.normal(0, 1)), side: 'two' }).p < 0.05) rpair++;
+    if (I.fTest({ s1sq: variance(a), s2sq: variance(b), n1: 8, n2: 12, side: 'two' }).p < 0.1) rf++;
+    const fi = I.fInterval({ s1sq: variance(a), s2sq: variance(c), n1: 8, n2: 6, conf: 0.9 });
+    if (fi.lo <= 4 / 25 && fi.hi >= 4 / 25) cf++;
+    const wi = I.welchInterval({ x1: mean(a), x2: mean(c), s1: sdOf(a), s2: sdOf(c), n1: 8, n2: 6, conf: 0.95 });
+    if (wi.lo <= 0 && wi.hi >= 0) cw++;
+  }
+  rate('z test size (right, 0.05)', rz, 0.05);
+  rate('t test size (two, 0.05)', rt, 0.05);
+  rate('pooled t size (left, 0.05)', rp, 0.05);
+  rate('paired t size (two, 0.05)', rpair, 0.05);
+  rate('F test size (two, 0.10)', rf, 0.1);
+  rate('F interval coverage (90%)', cf, 0.9);
+  // Welch's df is an approximation: allow half a percentage point beyond sampling error.
+  close('Welch t size (two, 0.05)', rw / M, 0.05, 0.005 + 4 * Math.sqrt(0.0475 / M));
+  close('Welch interval coverage (95%)', cw / M, 0.95, 0.005 + 4 * Math.sqrt(0.0475 / M));
+}
+
+function mean(xs) {
+  return xs.reduce((a, b) => a + b, 0) / xs.length;
+}
+function variance(xs) {
+  const m = mean(xs);
+  return xs.reduce((a, x) => a + (x - m) ** 2, 0) / (xs.length - 1);
+}
+function sdOf(xs) {
+  return Math.sqrt(variance(xs));
 }
 
 console.log(`stats-check: ${checks} checks, ${found.length} printed-table misprints (${Object.keys(PRINTED_ERRATA).length} known)${fails ? `, ${fails} FAILED` : ', all passed'}`);

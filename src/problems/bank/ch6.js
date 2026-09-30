@@ -16,6 +16,8 @@ const NORMALS = [
   { value: 'score', what: 'scores on a final exam', unit: 'points', mu: 72, sigma: 9, dp: 0 },
   { value: 'fill', what: 'the amount of soda in a bottle', unit: 'mL', mu: 500, sigma: 3.5, dp: 1 },
   { value: 'x', what: 'a random variable X', unit: '', mu: 40, sigma: 6, dp: 2 },
+  { value: 'height', what: 'the height of three-year-old girls', unit: 'inches', mu: 38.72, sigma: 3.17, dp: 2 },
+  { value: 'run', what: 'the finishing time in a 10-km run', unit: 'minutes', mu: 61, sigma: 9, dp: 0 },
 ];
 const NORM = choice(...NORMALS.map((c) => [c.value, c.what]));
 const ctxOf = (v) => NORMALS.find((c) => c.value === v);
@@ -26,6 +28,7 @@ const setup = ($) => {
 };
 
 const SIDE = choice(['left', 'less than'], ['right', 'more than'], ['between', 'between']);
+const ordinal = (k) => `${k}${k === 1 ? 'st' : k === 2 ? 'nd' : k === 3 ? 'rd' : 'th'}`;
 
 /** Φ(z) the two ways, for a probability question about Z with 2-decimal z's. */
 function zQuestion(side, z1, z2) {
@@ -45,50 +48,64 @@ function zSteps(side, z1, z2, ask) {
   return [a.line, b.line, String.raw`$${ask} = ${fx(b.table, 4)} - ${fx(a.table, 4)} = ${fx(b.table - a.table, 4)}$`];
 }
 
+/** The notes' theoretical quantiles: z_i = Φ⁻¹((i − 0.5)/n) for the i-th smallest value. */
+export const normalScores = (n) => Array.from({ length: n }, (_, i) => normInv((i + 0.5) / n));
+
 /**
- * A normal probability plot as SVG, the TI-84 way round: data on the horizontal axis, the normal
- * score z on the vertical. Scores use Walpole's plotting positions (i − 3/8)/(n + 1/4). A faint
+ * A normal probability plot as SVG, drawn the notes' way: the theoretical quantiles z_i on the
+ * horizontal axis and the sorted data on the vertical, with z_i = Φ⁻¹((i − 0.5)/n). A faint
  * least-squares line is drawn for reference.
  */
 function nppSVG(xs) {
   const s = sorted(xs);
   const n = s.length;
-  const zs = s.map((_, i) => normInv((i + 1 - 0.375) / (n + 0.25)));
+  const zs = normalScores(n);
   const W = 320;
   const H = 230;
-  const L = 36;
+  const L = 44;
   const R = W - 12;
-  const T = 14;
-  const B = H - 30;
-  const xlo = s[0];
-  const xhi = s[n - 1];
-  const pad = (xhi - xlo) * 0.05 || 1;
-  const X = (x) => L + ((R - L) * (x - (xlo - pad))) / (xhi - xlo + 2 * pad);
-  const Y = (z) => B - ((B - T) * (z + 2.6)) / 5.2;
+  const T = 16;
+  const B = H - 32;
+  const ylo = s[0];
+  const yhi = s[n - 1];
+  const pad = (yhi - ylo) * 0.06 || 1;
+  const zmax = Math.max(2.2, Math.ceil(Math.abs(zs[0]) * 10) / 10 + 0.2);
+  const X = (z) => L + ((R - L) * (z + zmax)) / (2 * zmax);
+  const Y = (y) => B - ((B - T) * (y - (ylo - pad))) / (yhi - ylo + 2 * pad);
   const out = [];
   for (const z of [-2, -1, 0, 1, 2]) {
-    out.push(`<line x1="${L}" y1="${Y(z)}" x2="${R}" y2="${Y(z)}" class="fig-grid" />`);
-    out.push(`<text x="${L - 6}" y="${Y(z) + 4}" text-anchor="end" class="fig-tick">${z}</text>`);
+    if (Math.abs(z) > zmax) continue;
+    out.push(`<line x1="${X(z)}" y1="${T}" x2="${X(z)}" y2="${B}" class="fig-grid" />`);
+    out.push(`<text x="${X(z)}" y="${B + 15}" text-anchor="middle" class="fig-tick">${z}</text>`);
+  }
+  // A few data ticks on the vertical axis.
+  const step = niceStep((yhi - ylo) / 4);
+  for (let y = Math.ceil((ylo - pad) / step) * step; y <= yhi + pad; y += step) {
+    out.push(`<line x1="${L}" y1="${Y(y)}" x2="${R}" y2="${Y(y)}" class="fig-grid" />`);
+    out.push(`<text x="${L - 6}" y="${Y(y) + 4}" text-anchor="end" class="fig-tick">${Number(y.toPrecision(6))}</text>`);
   }
   out.push(`<line x1="${L}" y1="${B}" x2="${R}" y2="${B}" class="fig-axis" />`);
   out.push(`<line x1="${L}" y1="${T}" x2="${L}" y2="${B}" class="fig-axis" />`);
-  out.push(`<text x="${R}" y="${H - 8}" text-anchor="end" class="fig-label">data value</text>`);
-  out.push(`<text x="${L - 30}" y="${T - 2}" class="fig-label">z</text>`);
-  // Reference line: the least-squares fit of z on x.
-  const xb = mean(s);
+  out.push(`<text x="${R}" y="${H - 4}" text-anchor="end" class="fig-label">theoretical quantile z</text>`);
+  out.push(`<text x="${L - 40}" y="${T - 4}" class="fig-label">data</text>`);
   const zb = mean(zs);
-  let sxx = 0;
-  let sxz = 0;
+  const yb = mean(s);
+  let szz = 0;
+  let szy = 0;
   for (let i = 0; i < n; i++) {
-    sxx += (s[i] - xb) ** 2;
-    sxz += (s[i] - xb) * (zs[i] - zb);
+    szz += (zs[i] - zb) ** 2;
+    szy += (zs[i] - zb) * (s[i] - yb);
   }
-  const b1 = sxz / sxx;
-  const x0 = xlo - pad;
-  const x1 = xhi + pad;
-  out.push(`<line x1="${X(x0)}" y1="${Y(zb + b1 * (x0 - xb))}" x2="${X(x1)}" y2="${Y(zb + b1 * (x1 - xb))}" class="fig-ref" />`);
-  for (let i = 0; i < n; i++) out.push(`<circle cx="${X(s[i]).toFixed(1)}" cy="${Y(zs[i]).toFixed(1)}" r="3.2" class="fig-pt" />`);
+  const b1 = szy / szz;
+  out.push(`<line x1="${X(-zmax)}" y1="${Y(yb + b1 * (-zmax - zb))}" x2="${X(zmax)}" y2="${Y(yb + b1 * (zmax - zb))}" class="fig-ref" />`);
+  for (let i = 0; i < n; i++) out.push(`<circle cx="${X(zs[i]).toFixed(1)}" cy="${Y(s[i]).toFixed(1)}" r="3.2" class="fig-pt" />`);
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Normal probability plot">${out.join('')}</svg>`;
+}
+
+function niceStep(raw) {
+  const p = 10 ** Math.floor(Math.log10(raw));
+  const m = raw / p;
+  return (m < 1.5 ? 1 : m < 3.5 ? 2 : m < 7.5 ? 5 : 10) * p;
 }
 
 /** Sample skewness and excess kurtosis, to keep only plots whose shape is unmistakable. */
@@ -161,7 +178,7 @@ export default [
     hints: ['Table A.3 gives the area to the LEFT of z.', 'Area to the right = 1 − area to the left. Area between = left area at the larger z − left area at the smaller z.'],
     steps: ($) => zSteps($.side, $.za, $.zb, $.side === 'left' ? String.raw`P(Z < ${fx($.za, 2)})` : $.side === 'right' ? String.raw`P(Z > ${fx($.za, 2)})` : String.raw`P(${fx($.za, 2)} < Z < ${fx($.zb, 2)})`),
     twin: { part: 'p', draw: (r, $) => { const z = r.normal(); return $.side === 'left' ? z < $.za : $.side === 'right' ? z > $.za : z > $.za && z < $.zb; } },
-    cases: [kase('Walpole §6.3', { side: 'right', z1: 1.84, z2: 1.84 }, { p: 0.0329 }), kase('Walpole §6.3', { side: 'between', z1: -1.97, z2: 0.86 }, { p: 0.7807 })],
+    cases: [kase('Notes Ex 6.2', { side: 'left', z1: 0.52, z2: 0.52 }, { p: 0.6985 }), kase('Walpole §6.3', { side: 'right', z1: 1.84, z2: 1.84 }, { p: 0.0329 }), kase('Walpole §6.3', { side: 'between', z1: -1.97, z2: 0.86 }, { p: 0.7807 })],
   }),
 
   problem({
@@ -198,7 +215,7 @@ export default [
     parts: [num('z', ($) => $.z, { alt: ($) => $.look.values, tol: 0, abs: 0.006, label: String.raw`$z_{\alpha}$`, traps: [[($) => -$.z, String.raw`$z_\alpha$ has area $\alpha$ to its RIGHT, so it is positive for $\alpha < 0.5$.`], [($) => zCrit($.alpha / 2), String.raw`That is $z_{\alpha/2}$. $z_\alpha$ puts all of $\alpha$ in one tail.`]] })],
     hints: [String.raw`$z_\alpha$ has area $\alpha$ to its right, so the area to its left is $1 - \alpha$.`, 'Look up 1 − α in the body of Table A.3.'],
     steps: ($) => [String.raw`Area to the left of $z_{${$.alpha}}$: $1 - ${$.alpha} = ${fx(1 - $.alpha, 4)}$`, $.look.line, String.raw`Exact: $z_{${$.alpha}} = ${fx($.z, 4)}$`],
-    cases: [kase('Walpole §6.4', { alpha: 0.05 }, { z: 1.645 }), kase('Walpole §6.4', { alpha: 0.025 }, { z: 1.96 })],
+    cases: [kase('Notes Ex 6.5', { alpha: 0.1 }, { z: 1.28 }), kase('Walpole §6.4', { alpha: 0.05 }, { z: 1.645 }), kase('Walpole §6.4', { alpha: 0.025 }, { z: 1.96 })],
   }),
 
   // ----------------------------------------------------------------- general normal
@@ -233,6 +250,8 @@ export default [
     },
     twin: { part: 'p', draw: (r, $) => { const x = r.normal($.c.mu, $.c.sigma); return $.side === 'left' ? x < $.x1 : $.side === 'right' ? x > $.x1 : x > $.x1 && x < $.x2; } },
     cases: [
+      kase('Notes Ex 6.3(a)', { ctx: 'height', side: 'left', k1: (35 - 38.72) / 3.17, k2: 0 }, { p: 0.1203 }),
+      kase('Notes Ex 6.4(a)', { ctx: 'run', side: 'between', k1: -6 / 9, k2: 1 }, { p: 0.5889 }),
       kase('Walpole §6.4', { ctx: 'battery', side: 'left', k1: -1.4, k2: -1.4 }, { p: 0.0808 }),
       kase('Walpole §6.4', { ctx: 'bulb', side: 'between', k1: -0.55, k2: 0.85 }, { p: 0.5111 }),
     ],
@@ -257,7 +276,11 @@ export default [
       String.raw`$$x = \mu + z\sigma = ${$.c.mu} + (${$.zt.z})(${$.c.sigma}) = ${tn($.c.mu + $.zt.z * $.c.sigma, 6)}${$.c.unit ? String.raw`\ \text{${$.c.unit}}` : ''}$$`,
       `Exact (TI-84 invNorm(${fx($.leftArea, 4)}, ${$.c.mu}, ${$.c.sigma})): ${tn($.x, 6)}.`,
     ],
-    cases: [kase('Walpole §6.3', { ctx: 'x', side: 'right', p: 0.14 }, { x: 46.48 }), kase('Walpole §6.3', { ctx: 'x', side: 'left', p: 0.45 }, { x: 39.22 })],
+    cases: [
+      kase('Notes Ex 6.3(b)', { ctx: 'height', side: 'left', p: 0.2 }, { x: 36.05 }),
+      kase('Notes Ex 6.4(b), the fastest 10%', { ctx: 'run', side: 'left', p: 0.1 }, { x: 49.47 }),
+      kase('Walpole §6.3', { ctx: 'x', side: 'right', p: 0.14 }, { x: 46.48 }),
+    ],
   }),
 
   problem({
@@ -275,7 +298,7 @@ export default [
     },
     valid: ($) => $.z2 - $.z1 >= 0.4,
     text: (T, $) => `${setup($)} Of ${T.N} of them, about how many would you expect to be between ${$.xa} and ${$.xb}${$.c.unit ? ` ${$.c.unit}` : ''}?`,
-    parts: [num('n', ($) => $.n, { alt: ($) => [$.nt, Math.round($.nt), Math.round($.n)], tol: 0, abs: 0.6, label: 'Expected number', traps: [[($) => $.exact, 'That is the probability. Multiply it by the number of items.']] })],
+    parts: [num('n', ($) => $.n, { alt: ($) => [$.nt, Math.round($.nt), Math.round($.n)], tol: 0, abs: 0.6, altGap: ($) => 0.005 * $.N, label: 'Expected number', traps: [[($) => $.exact, 'That is the probability. Multiply it by the number of items.']] })],
     hints: ['Find the probability that one value falls in the range, as usual.', 'Expected number = N × probability.'],
     steps: ($) => [
       String.raw`$z_1 = \dfrac{${$.xa} - ${$.c.mu}}{${$.c.sigma}} = ${fx(zTable($.z1).z, 2)}$, $z_2 = \dfrac{${$.xb} - ${$.c.mu}}{${$.c.sigma}} = ${fx(zTable($.z2).z, 2)}$`,
@@ -287,7 +310,7 @@ export default [
 
   // ----------------------------------------------------------------- assessing normality
   problem({
-    ...C6, id: 'c6.normal-plot', title: 'Reading a normal probability plot', kind: 'conceptual', level: 2, topics: ['normal-probability-plot', 'assessing-normality'], src: 'Walpole §8.8, Notes Ch 6',
+    ...C6, id: 'c6.normal-plot', title: 'Reading a normal probability plot', kind: 'conceptual', level: 2, topics: ['normal-probability-plot', 'assessing-normality'], src: 'Notes §6.2.2',
     vars: {
       shape: choice(['normal', 'normal'], ['right', 'right-skewed'], ['left', 'left-skewed'], ['heavy', 'heavy-tailed']),
       xs: data((rand, v) => {
@@ -305,27 +328,111 @@ export default [
     },
     derive: ($) => ({ ok: !!$.xs }),
     valid: ($) => $.ok,
-    text: () => 'The normal probability plot below (data on the horizontal axis, normal scores z on the vertical, as a TI-84 draws it) is for a sample of 36 measurements. What does it suggest about the population?',
+    text: () => 'The normal probability plot below (theoretical quantiles z on the horizontal axis, the sorted data on the vertical, as in the notes) is for a sample of 36 measurements. What does it suggest about the population?',
     figure: ($) => nppSVG($.xs),
     parts: [
       mc('shape', [
         ['normal', 'The points lie close to a straight line: a normal model is reasonable'],
-        ['right', 'The points bend away from the line at the high end: the data are skewed right'],
-        ['left', 'The points bend away from the line at the low end: the data are skewed left'],
-        ['heavy', 'The points bend away at both ends in an S shape: the tails are heavier than normal'],
+        ['right', 'The points curve upward, away from the line at the high end: the data are skewed right'],
+        ['left', 'The points curve downward, away from the line at the low end: the data are skewed left'],
+        ['heavy', 'The points leave the line at both ends (low end below, high end above): the tails are heavier than normal'],
       ], ($) => $.shape),
     ],
-    hints: ['If the data came from a normal population, the points would fall close to a straight line.', 'Look at where the pattern leaves the line: one end only (skew) or both ends (tails).', 'With data on the horizontal axis, a long right tail shows as the top points stretching far to the right.'],
+    hints: ['If the data came from a normal population, the points would fall close to a straight line.', 'Look at where the pattern leaves the line: one end only (skew) or both ends (tails).', 'With the data on the vertical axis, a long right tail shows as the largest values sitting far above the line.'],
     steps: ($) =>
       [
         {
           normal: 'The points follow a straight line from end to end, with only small random wiggles. Nothing suggests the population is not normal.',
-          right: 'The largest values lie much farther to the right than a normal sample’s would, so the top of the plot flattens out to the right. That is a long right tail: the data are skewed right, and a normal model is not reasonable.',
-          left: 'The smallest values lie much farther to the left than a normal sample’s would, so the bottom of the plot flattens out to the left. That is a long left tail: the data are skewed left, and a normal model is not reasonable.',
-          heavy: 'Both ends leave the line: the smallest values stretch out to the left and the largest to the right, farther than a normal sample’s. The tails are heavier than normal, so a normal model is not reasonable.',
+          right: 'The largest values are much bigger than a normal sample’s would be, so the right end of the plot curves up, away from the line. That is a long right tail: the data are skewed right, and a normal model is not reasonable.',
+          left: 'The smallest values are much smaller than a normal sample’s would be, so the left end of the plot curves down, away from the line. That is a long left tail: the data are skewed left, and a normal model is not reasonable.',
+          heavy: 'Both ends leave the line: the smallest values fall below it and the largest rise above it, farther out than a normal sample’s. The tails are heavier than normal, so a normal model is not reasonable.',
         }[$.shape],
         'Small samples always wiggle a little. Judge the overall pattern, not single points.',
       ],
     cases: [],
+  }),
+  problem({
+    ...C6, id: 'c6.normal-scores', title: 'Building a normal probability plot', kind: 'numeric', level: 2, topics: ['normal-probability-plot', 'assessing-normality'], src: 'Notes Ex 6.6',
+    vars: {
+      n: range(5, 8, 1),
+      k: range(2, 7, 1),
+      xs: data((rand, v) => {
+        const r = createRng(Math.floor(rand() * 2 ** 31));
+        return Array.from({ length: v.n }, () => Number(r.normal(32, 0.5).toFixed(2)));
+      }),
+    },
+    derive: ($) => {
+      const zs = normalScores($.n);
+      const s = sorted($.xs);
+      return { zs, s, z1: zs[0], zk: zs[$.k - 1], area1: 0.5 / $.n, areak: ($.k - 0.5) / $.n, look1: zForArea(0.5 / $.n), lookk: zForArea(($.k - 0.5) / $.n) };
+    },
+    valid: ($) => $.k <= $.n && new Set($.xs).size === $.n,
+    text: (T, $) => `The finishing times (in seconds) of ${$.n} randomly selected races of a greyhound: ${$.xs.map((x) => x.toFixed(2)).join(', ')}. To draw a normal probability plot, find the theoretical quantile for the smallest time and for the ${ordinal($.k)} smallest.`,
+    figure: ($) => nppSVG($.xs),
+    parts: [
+      num('z1', ($) => $.z1, { alt: ($) => $.look1.values, tol: 0, abs: 0.006, label: 'z for the smallest value' }),
+      num('zk', ($) => $.zk, { alt: ($) => $.lookk.values, tol: 0, abs: 0.006, label: ($T, $) => `z for the ${ordinal($.k)} smallest value` }),
+    ],
+    hints: ['Sort the data. The i-th smallest value is plotted against the theoretical quantile for rank i.', String.raw`$z_i = \Phi^{-1}\!\left(\dfrac{i - 0.5}{n}\right)$: the z with that area to its left (TI-84: invNorm).`],
+    steps: ($) => [
+      String.raw`Sorted: $${$.s.map((x) => x.toFixed(2)).join(String.raw`,\ `)}$, $n = ${$.n}$`,
+      String.raw`$$z_1 = \Phi^{-1}\!\left(\dfrac{1 - 0.5}{${$.n}}\right) = \Phi^{-1}(${fx($.area1, 4)}) = ${fx($.z1, 3)}$$`,
+      String.raw`$$z_{${$.k}} = \Phi^{-1}\!\left(\dfrac{${$.k} - 0.5}{${$.n}}\right) = \Phi^{-1}(${fx($.areak, 4)}) = ${fx($.zk, 3)}$$`,
+      `All the quantiles: ${$.zs.map((z) => fx(z, 3)).join(', ')}. Plot each against its sorted value; points close to a straight line (as here) support a normal model.`,
+    ],
+    cases: [kase('Notes Ex 6.6', { n: 6, k: 4, xs: [31.35, 32.52, 32.06, 31.26, 31.91, 32.37] }, { z1: -1.383, zk: 0.21 })],
+  }),
+
+  problem({
+    ...C6, id: 'c6.uniform-conditional', title: 'Uniform: intervals, conditions, single points', kind: 'numeric', level: 2, topics: ['uniform', 'conditional'], src: 'Notes Ex 6.1',
+    vars: { a: range(0, 10, 1), len: range(4, 10, 1), u: range(1, 8, 1), e: range(2, 9, 1), f: range(1, 8, 1), g: range(1, 9, 1) },
+    derive: ($) => {
+      const b = $.a + $.len;
+      const lo = $.a + $.u;
+      const hi = lo + 1;
+      const cut = $.a + $.e;
+      const inner = $.a + $.f;
+      return { b, lo, hi, cut, inner, pt: $.a + $.g, pBetween: 1 / $.len, pLess: $.e / $.len, pCond: $.f / $.e };
+    },
+    valid: ($) => $.hi <= $.b && $.cut < $.b && $.inner < $.cut && $.pt < $.b,
+    text: (T, $) => `The annual increase in height of cedar trees is uniformly distributed between ${$.a} and ${$.b} inches. Let X be the growth of a randomly selected tree in a year.`,
+    parts: [
+      prob('between', ($) => $.pBetween, { label: ($T, $) => String.raw`$P(${$.lo} < X < ${$.hi})$` }),
+      prob('less', ($) => $.pLess, { label: ($T, $) => String.raw`$P(X < ${$.cut})$` }),
+      prob('cond', ($) => $.pCond, { label: ($T, $) => String.raw`$P(X < ${$.inner} \mid X < ${$.cut})$`, traps: [[($) => ($.inner - $.a) / $.len, String.raw`That ignores the condition. Given $X < c$, divide by $P(X < c)$.`]] }),
+      prob('point', () => 0, { label: ($T, $) => `$P(X = ${$.pt})$`, traps: [[($) => 1 / $.len, 'That is the height of the density, not a probability. For a continuous X, a single value has probability 0.']] }),
+    ],
+    hints: [String.raw`$f(x) = \dfrac{1}{B - A}$ on $[A, B]$, so a probability is (width of the interval) ÷ (B − A).`, String.raw`$P(E \mid F) = \dfrac{P(E \cap F)}{P(F)}$. When one event implies the other, the intersection is just the smaller event.`, 'A continuous random variable takes any single value with probability 0.'],
+    steps: ($) => [
+      String.raw`$f(x) = \dfrac{1}{${$.b} - ${$.a}} = \dfrac{1}{${$.len}}$ for $${$.a} \le x \le ${$.b}$.`,
+      String.raw`$P(${$.lo} < X < ${$.hi}) = \dfrac{${$.hi} - ${$.lo}}{${$.len}} = ${fx($.pBetween, 4)}$`,
+      String.raw`$P(X < ${$.cut}) = \dfrac{${$.cut} - ${$.a}}{${$.len}} = ${fx($.pLess, 4)}$`,
+      String.raw`$$P(X < ${$.inner} \mid X < ${$.cut}) = \dfrac{P(X < ${$.inner})}{P(X < ${$.cut})} = \dfrac{${$.inner - $.a}/${$.len}}{${$.cut - $.a}/${$.len}} = ${fx($.pCond, 4)}$$`,
+      String.raw`$P(X = ${$.pt}) = 0$: a single point has no width, so no area.`,
+    ],
+    cases: [kase('Notes Ex 6.1', { a: 6, len: 5, u: 3, e: 2, f: 1, g: 1 }, { between: 0.2, less: 0.4, cond: 0.5, point: 0 })],
+  }),
+
+  problem({
+    ...C6, id: 'c6.both-independent', title: 'Two independent normal outcomes', kind: 'numeric', level: 2, topics: ['normal', 'independence', 'product-rule'], src: 'Notes Ex 6.4(c)',
+    vars: { ctx: NORM, k: range(-1.5, 1.5, 0.05) },
+    derive: ($) => {
+      const c = ctxOf($.ctx);
+      const x = roundTo(c.mu + $.k * c.sigma, c.dp);
+      const z = (x - c.mu) / c.sigma;
+      const one = normCdf(z);
+      const t1 = zTable(z).value;
+      return { c, x, z, one, both: one * one, t1, tboth: t1 * t1 };
+    },
+    valid: ($) => Math.abs($.z) > 0.04,
+    text: (T, $) => `${setup($)} Two values are chosen independently (say, Hailey's and Jack's results). Find the probability that one value is below ${$.x}${$.c.unit ? ` ${$.c.unit}` : ''}, and that both are.`,
+    parts: [prob('one', ($) => $.one, { alt: ($) => [$.t1], label: ($T, $) => `$P(X < ${$.x})$` }), prob('both', ($) => $.both, { alt: ($) => [$.tboth], label: 'Both are below it', traps: [[($) => $.one, 'That is one value. Both, independently: multiply the two probabilities.']] })],
+    hints: ['Standardize and find the probability for one value.', String.raw`Independent events: $P(A \cap B) = P(A)P(B)$.`],
+    steps: ($) => [
+      String.raw`$z = \dfrac{${$.x} - ${$.c.mu}}{${$.c.sigma}} = ${fx($.z, 4)} \approx ${fx(zTable($.z).z, 2)}$, so $P(X < ${$.x}) = ${fx($.t1, 4)}$ (exact $${fx($.one, 4)}$)`,
+      String.raw`$$P(\text{both}) = P(X_1 < ${$.x})\,P(X_2 < ${$.x}) = (${fx($.t1, 4)})^2 = ${fx($.tboth, 4)}$$`,
+    ],
+    twin: { part: 'both', draw: (r, $) => r.normal($.c.mu, $.c.sigma) < $.x && r.normal($.c.mu, $.c.sigma) < $.x },
+    cases: [kase('Notes Ex 6.4(c), both finish within an hour', { ctx: 'run', k: -1 / 9 }, { one: 0.4562, both: 0.2077 })],
   }),
 ];

@@ -79,7 +79,7 @@ for (const [name, vp] of [['phone', { width: 380, height: 800 }], ['laptop', { w
   const fb = await page.locator('.verdict.bad').innerText();
   if (!/complement/i.test(fb)) err(`${name} work`, `wrong answer feedback: ${fb}`);
   await settle('work-wrong');
-  await page.fill('input[data-part="p"]', '0.0808');
+  await page.fill('input[data-part="p"]', String(accepted(tpl.parts[0], inst.$)[0].toFixed(4)));
   await page.click('[data-act="check"]');
   if (!(await page.locator('.verdict.ok').count())) err(`${name} work`, 'the right answer was not accepted');
   if (!(await page.locator('.steps').count())) err(`${name} work`, 'no worked solution after solving');

@@ -33,6 +33,9 @@ export const num = (id, get, o = {}) => ({
   unit: o.unit ?? null,
   label: o.label ?? null,
   prob: false,
+  // How far a table route may legitimately sit from the exact answer (for the check), when more
+  // than the default 1%: a count out of N inherits N times the table's rounding.
+  altGap: o.altGap ?? null,
 });
 
 /**
@@ -158,3 +161,78 @@ export function fLook(alpha, v1, v2) {
 }
 
 export { binomTable, poisTable };
+
+// ---------- hypothesis tests and intervals (Ch 7–10) ----------
+
+/** The three alternatives, as the notes lay them out. */
+export const SIDE = choice(['two', 'two-tailed'], ['left', 'left-tailed'], ['right', 'right-tailed']);
+const REL = { two: '\\ne', left: '<', right: '>' };
+
+/** "H_0: μ = 920" and "H_1: μ > 920" in TeX. */
+export const hyp = (param, v0, side) => [String.raw`H_0: ${param} = ${v0}`, String.raw`H_1: ${param} ${REL[side]} ${v0}`];
+
+/** The p-value as a probability statement, e.g. "P(Z > 1.84)" or "2P(T > |−1.53|)". */
+export function pTex(side, name, stat, df = null) {
+  const v = tn(stat, 4);
+  const sub = df == null ? '' : `_{${typeof df === 'number' && !Number.isInteger(df) ? tn(df, 4) : df}}`;
+  if (side === 'left') return String.raw`P(${name}${sub} < ${v})`;
+  if (side === 'right') return String.raw`P(${name}${sub} > ${v})`;
+  return String.raw`2P(${name}${sub} > ${tn(Math.abs(stat), 4)})`;
+}
+
+/** The notes' decision rule: reject when p-value < α. */
+export const decide = (p, alpha) => (p < alpha ? 'reject' : 'fail');
+
+export const decisionPart = (o = {}) =>
+  mc(
+    'dec',
+    [
+      ['reject', 'Reject H₀', 'Reject only when the p-value is less than α.'],
+      ['fail', 'Fail to reject H₀', 'The p-value is less than α, so the data are unlikely under H₀: reject it.'],
+    ],
+    ($) => $.dec,
+    { label: ($T, $) => `Decision at α = ${$.alpha}`, ...o },
+  );
+
+/** Step lines for a test's decision and the notes' conclusion sentence. */
+export function conclude($, claim) {
+  const rej = $.dec === 'reject';
+  const rel = rej ? '<' : String.raw`\ge`;
+  return [
+    String.raw`p-value $= ${fx($.p, 4)} ${rel} \alpha = ${$.alpha}$, so ${rej ? 'reject' : 'fail to reject'} $H_0$.`,
+    `${rej ? 'There is sufficient evidence' : 'There is not sufficient evidence'} to conclude that ${claim}.`,
+  ];
+}
+
+/** A z-based p-value read from Table A.3 after rounding z: the table route for `alt`. */
+export function zTableP(side, z) {
+  const T = (v) => zTable(v).value;
+  if (side === 'left') return T(z);
+  if (side === 'right') return 1 - T(z);
+  return 2 * (1 - T(Math.abs(z)));
+}
+
+/** The critical values a student may use for a two-sided 100(1 − α)% interval: exact, then table. */
+export function zCrits(alpha) {
+  return [zCritTable(alpha / 2).values, zCritTable(alpha / 2).z].flat();
+}
+
+/** An interval endpoint: exact, or any table-route value; tolerance scales with the margin. */
+export const endpoint = (id, get, o = {}) =>
+  num(id, get, {
+    tol: 0,
+    abs: ($) => Math.max(0.004 * Math.abs(o.margin ? o.margin($) : 1), 0.0006),
+    // A table route moves the endpoint by the table's error in the critical value: a few percent
+    // of the margin at most (a df between rows, z rounded to 2 places).
+    altGap: ($) => 0.05 * Math.abs(o.margin ? o.margin($) : 1),
+    ...o,
+    label: o.label ?? (id === 'lo' ? 'Lower bound' : 'Upper bound'),
+  });
+
+/** A test statistic, graded to the two decimals a calculator screen is copied at. */
+export const statPart = (id, get, label, o = {}) => num(id, get, { tol: 0.004, abs: 0.006, label, ...o });
+
+/** A p-value: to about 3 decimals, or the table route. */
+export const pPart = (get, o = {}) => prob('p', get, { label: 'p-value', ...o });
+
+export const confLabel = (conf) => `${Math.round(conf * 100)}%`;
