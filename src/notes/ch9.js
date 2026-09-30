@@ -226,7 +226,7 @@ export default {
             ],
           },
         ],
-        ['key', String.raw`**F-interval** for $\sigma_1^2/\sigma_2^2$ (normal populations, independent samples): $\left(\dfrac{s_1^2/s_2^2}{f_{\alpha/2}(n_1-1,\,n_2-1)},\ \dfrac{s_1^2}{s_2^2}\,f_{\alpha/2}(n_2-1,\,n_1-1)\right)$.`],
+        ['key', String.raw`**F-interval** for $\sigma_1^2/\sigma_2^2$ (normal populations, independent samples): lower bound $\dfrac{s_1^2/s_2^2}{f_{\alpha/2}(n_1-1,\,n_2-1)}$, upper bound $\dfrac{s_1^2}{s_2^2}\,f_{\alpha/2}(n_2-1,\,n_1-1)$.`],
         ['p', 'Table A.6 prints only $\\alpha = 0.05$ and $0.01$, so table intervals are 90% or 98%.'],
         [
           'ex',

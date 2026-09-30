@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "test": "node scripts/stats-check.mjs && node scripts/tex-check.mjs && node scripts/problems-check.mjs && node scripts/labs-check.mjs && node scripts/notes-check.mjs",
     "deploy": "npm test && npm run build && npx --yes wrangler@latest pages deploy dist --project-name flux-stats --branch main",
-    "live": "node scripts/live.mjs"
+    "live": "node scripts/live.mjs",
+    "overflow": "node scripts/overflow.mjs"
   },
   "dependencies": {
     "katex": "^0.16.47"

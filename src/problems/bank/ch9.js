@@ -101,7 +101,9 @@ export default [
     steps: ($) => [
       String.raw`$\hat p_1 = ${fx($.p1, 4)}$, $\hat p_2 = ${fx($.p2, 4)}$, $\hat p_1 - \hat p_2 = ${fx($.d, 4)}$`,
       $.zt.line,
-      String.raw`$$E = ${$.zt.value}\sqrt{\dfrac{${fx($.p1, 4)}(${fx(1 - $.p1, 4)})}{${$.n1}} + \dfrac{${fx($.p2, 4)}(${fx(1 - $.p2, 4)})}{${$.n2}}} = ${fx($.zt.value * $.se, 4)}$$`,
+      String.raw`$$\frac{\hat p_1 \hat q_1}{n_1} = \frac{${fx($.p1, 4)}(${fx(1 - $.p1, 4)})}{${$.n1}} = ${tn(($.p1 * (1 - $.p1)) / $.n1, 4)}, \quad \frac{\hat p_2 \hat q_2}{n_2} = \frac{${fx($.p2, 4)}(${fx(1 - $.p2, 4)})}{${$.n2}} = ${tn(($.p2 * (1 - $.p2)) / $.n2, 4)}$$`,
+      String.raw`$$SE = \sqrt{${tn(($.p1 * (1 - $.p1)) / $.n1, 4)} + ${tn(($.p2 * (1 - $.p2)) / $.n2, 4)}} = ${fx($.se, 4)}$$`,
+      String.raw`$$E = ${$.zt.value} \times ${fx($.se, 4)} = ${fx($.zt.value * $.se, 4)}$$`,
       String.raw`$$(${fx($.d - $.zt.value * $.se, 4)},\ ${fx($.d + $.zt.value * $.se, 4)})$$`,
       $.lo < 0 && $.hi > 0 ? 'The interval contains 0, so the data are consistent with p₁ = p₂.' : 'The interval does not contain 0, so the two proportions differ.',
     ],

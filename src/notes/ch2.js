@@ -37,7 +37,7 @@ export default {
           'ex',
           {
             n: '2.4',
-            q: String.raw`$S = \{\text{book, cell phone, mp3, paper, stationery, laptop}\}$ and $A = \{\text{book, stationery, laptop, paper}\}$. Find $A'$.`,
+            q: String.raw`$S = \{\text{book}, \text{cell phone}, \text{mp3}, \text{paper}, \text{stationery}, \text{laptop}\}$ and $A = \{\text{book}, \text{stationery}, \text{laptop}, \text{paper}\}$. Find $A'$.`,
             a: ['Take the outcomes of $S$ not listed in $A$.'],
             answer: String.raw`$A' = \{\text{cell phone, mp3}\}$.`,
           },

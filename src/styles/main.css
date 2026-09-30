@@ -1174,3 +1174,8 @@ table.nb-table th {
 .lab-side.locked [data-act] {
   opacity: 0.45;
 }
+
+.disp.wrapped {
+  text-align: center;
+  line-height: 2;
+}

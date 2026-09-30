@@ -6,6 +6,7 @@ import { renderExam } from './ui/exam.js';
 import { renderTables } from './ui/tables.js';
 import { renderNotes } from './ui/notes.js';
 import { renderExplore } from './ui/lab.js';
+import { fitMath } from './ui/shared.js';
 
 // Which build this is, so "is the live site current?" has an answer (see DEPLOY.md, /version.json).
 console.info(`FLUX·stats build ${__BUILD__.commit}${__BUILD__.subject ? ` — ${__BUILD__.subject}` : ''} (built ${__BUILD__.built})`);
@@ -53,6 +54,18 @@ function route() {
   last = key;
   document.title = `FLUX·stats — ${r.problemId ? 'Practice' : r.labId ? 'Lab' : r.mode[0].toUpperCase() + r.mode.slice(1)}`;
 }
+
+// Displayed equations that are too wide for the column switch to their wrapping form, whenever
+// the view's content changes (a revealed solution, an opened example) or the width does.
+let fitting = 0;
+const refit = () => {
+  if (!fitting) fitting = requestAnimationFrame(() => {
+    fitting = 0;
+    fitMath(view);
+  });
+};
+new MutationObserver(refit).observe(view, { childList: true, subtree: true, attributes: true, attributeFilter: ['open'] });
+window.addEventListener('resize', refit);
 
 window.addEventListener('hashchange', route);
 route();

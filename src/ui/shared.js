@@ -50,8 +50,56 @@ export function mathText(s, escape = false) {
     const b = str.indexOf(display ? '$$' : '$', a + open);
     if (b < 0) return out + keep(str.slice(i));
     const body = str.slice(a + open, b);
-    out += keep(str.slice(i, a)) + (display ? `<div class="disp">${tex(body, true)}</div>` : tex(body));
+    // A long inline list (data, a set, an interval) may break after its commas.
+    out += keep(str.slice(i, a)) + (display ? displayBlock(body) : tex(body.length > 30 && body.includes(',') ? commaBreaks(body) : body));
     i = b + open;
+  }
+}
+
+/**
+ * A displayed equation, set twice: as display math, and as a version that can wrap (display
+ * style, but inline, so KaTeX may break after = + − and, with \allowbreak, after top-level commas).
+ * `fitMath` shows the wrapping version only where the display one is wider than its column, so on
+ * a phone a long chain breaks onto several lines instead of hiding its result off to the right.
+ */
+function displayBlock(body) {
+  return `<div class="disp"><span class="d-full">${tex(body, true)}</span><span class="d-wrap" hidden>${tex(breakable(body))}</span></div>`;
+}
+
+/** `\displaystyle` plus a break opportunity after every comma outside braces. */
+export const breakable = (body) => String.raw`\displaystyle ` + commaBreaks(body);
+
+/** A break opportunity after every comma outside braces. */
+function commaBreaks(body) {
+  let out = '';
+  let depth = 0;
+  for (let i = 0; i < body.length; i++) {
+    const c = body[i];
+    if (c === '\\') {
+      out += c + (body[i + 1] ?? '');
+      i++;
+      continue;
+    }
+    if (c === '{') depth++;
+    else if (c === '}') depth--;
+    out += c;
+    if (c === ',' && depth === 0) out += String.raw`\allowbreak `;
+  }
+  return out;
+}
+
+/** Swap each displayed equation to its wrapping form where it does not fit (and back when it does). */
+export function fitMath(root = document) {
+  for (const d of root.querySelectorAll('.disp')) {
+    const full = d.querySelector('.d-full');
+    const wrap = d.querySelector('.d-wrap');
+    if (!full || !wrap) continue;
+    full.hidden = false;
+    wrap.hidden = true;
+    const tooWide = d.scrollWidth > d.clientWidth + 1;
+    full.hidden = tooWide;
+    wrap.hidden = !tooWide;
+    d.classList.toggle('wrapped', tooWide);
   }
 }
 

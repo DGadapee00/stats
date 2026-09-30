@@ -10,6 +10,10 @@ holds the plan and the course decisions (tables, quartile rule, exam dates, buil
 - `node scripts/smoke.mjs` needs the dev server on 5175 (`npx vite --port 5175 --strictPort`, in the
   background). It fails on page errors and on any page wider than a 380px phone. Look at the
   screenshots in `scripts/output/smoke/` after UI changes.
+- `npm run overflow` (same server) opens every problem with its solution revealed, and every notes
+  chapter, at 380px, and fails on any equation wider than the column. Run it after changing
+  worked steps. Displayed equations wrap automatically (`fitMath` in shared.js); one that still
+  cannot (a single long root or fraction) must be split into steps by hand.
 
 ## Conventions
 
