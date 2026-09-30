@@ -29,7 +29,7 @@ export default {
     {
       id: '8.1',
       title: 'Point estimates and confidence intervals',
-      problems: ['c8.z-interval'],
+      problems: ['c8.z-interval', 'c8.ci-meaning'],
       blocks: [
         ['p', '**Statistical inference** draws conclusions about a population from a sample. It has two parts: estimating parameters, and testing hypotheses.'],
         [

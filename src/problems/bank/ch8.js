@@ -1,5 +1,5 @@
 /** Chapter 8 · One-sample inference: estimation, z and t procedures, one proportion. */
-import { problem, kase, range, choice, data, num, prob, mc, tn, fx, pn, SIDE, hyp, pTex, decide, decisionPart, conclude, zTableP, zCrits, endpoint, statPart, pPart, confLabel, tLook, zCritLook } from '../kit.js';
+import { problem, kase, range, choice, data, num, prob, mc, tn, fx, pn, SIDE, hyp, pTex, decide, decisionPart, h1Part, conclusionPart, conclude, zTableP, zCrits, endpoint, statPart, pPart, confLabel, tLook, zCritLook } from '../kit.js';
 import { zTest, zInterval, tTest, tInterval, propTest, propInterval } from '../../stats/infer.js';
 import { tCrit, tCdf, zCrit, normCdf } from '../../stats/dist.js';
 import { tTable } from '../../stats/tables.js';
@@ -138,7 +138,7 @@ export default [
     },
     valid: clear,
     text: (T, $) => `A company claims the mean ${$.c.what} is ${$.c.mu0}${u($.c)}. A random sample of ${$.n} has mean ${$.xbar}${u($.c)}; the population standard deviation is ${$.c.sigma}${u($.c)}. At α = ${$.alpha}, is there evidence that the mean is ${REL[$.side]} ${$.c.mu0}${u($.c)}?`,
-    parts: [statPart('z', ($) => $.z, '$z_0$'), pPart(($) => $.p, { alt: ($) => [zTableP($.side, $.z)], traps: [[($) => ($.side === 'two' ? $.p / 2 : Math.min(1, 2 * $.p)), 'Check the tails: a two-tailed test doubles the one-tail area; a one-tailed test does not.']] }), decisionPart()],
+    parts: [h1Part(), statPart('z', ($) => $.z, '$z_0$'), pPart(($) => $.p, { alt: ($) => [zTableP($.side, $.z)], traps: [[($) => ($.side === 'two' ? $.p / 2 : Math.min(1, 2 * $.p)), 'Check the tails: a two-tailed test doubles the one-tail area; a one-tailed test does not.']] }), decisionPart(), conclusionPart()],
     hints: [String.raw`$z_0 = \dfrac{\bar x - \mu_0}{\sigma/\sqrt n}$`, 'The p-value is the area beyond z₀ in the direction of H₁ (both tails for ≠).', 'Reject H₀ when p-value < α. TI-84: STAT → TESTS → 1:Z-Test.'],
     steps: ($) => {
       const [h0, h1] = hyp(String.raw`\mu`, $.c.mu0, $.side);
@@ -164,7 +164,7 @@ export default [
     },
     valid: clear,
     text: (T, $) => `A “fun size” candy bar should weigh 20 grams, so the machine is calibrated to a mean of 20.1 grams. Weights are normal with σ = 0.6 gram. A quality engineer weighs ${$.n} bars: ${$.xs.map((x) => x.toFixed(2)).join(', ')}. At α = ${$.alpha}, test whether the mean is ${REL[$.side]} 20.1 grams.`,
-    parts: [num('xbar', ($) => $.xbar, { label: String.raw`$\bar x$`, tol: 0, abs: 0.006 }), statPart('z', ($) => $.z, '$z_0$'), pPart(($) => $.p, { alt: ($) => [zTableP($.side, $.z)] }), decisionPart()],
+    parts: [h1Part(), num('xbar', ($) => $.xbar, { label: String.raw`$\bar x$`, tol: 0, abs: 0.006 }), statPart('z', ($) => $.z, '$z_0$'), pPart(($) => $.p, { alt: ($) => [zTableP($.side, $.z)] }), decisionPart(), conclusionPart()],
     hints: ['Find x̄ first (TI-84: 1-Var Stats).', String.raw`$z_0 = \dfrac{\bar x - 20.1}{0.6/\sqrt n}$. The population is normal, so the z-test applies even for small n.`, 'TI-84: data in L1, then STAT → TESTS → 1:Z-Test with Inpt: Data.'],
     steps: ($) => {
       const [h0, h1] = hyp(String.raw`\mu`, 20.1, $.side);
@@ -264,7 +264,7 @@ export default [
     },
     valid: clear,
     text: (T, $) => `The mean ${$.c.what} is supposed to be ${$.c.mu0}${u($.c)}. A random sample of ${$.n} has mean ${$.xbar} and standard deviation ${$.s}${u($.c)}. Assume the population is normal. At α = ${$.alpha}, is there evidence that the mean is ${REL[$.side]} ${$.c.mu0}${u($.c)}?`,
-    parts: [statPart('t', ($) => $.t, '$t_0$'), pPart(($) => $.p, { traps: [[($) => zSideP($.side, $.t), T_NOT_Z]] }), decisionPart()],
+    parts: [h1Part(), statPart('t', ($) => $.t, '$t_0$'), pPart(($) => $.p, { traps: [[($) => zSideP($.side, $.t), T_NOT_Z]] }), decisionPart(), conclusionPart()],
     hints: [String.raw`σ is unknown: $t_0 = \dfrac{\bar x - \mu_0}{s/\sqrt n}$ with $\nu = n - 1$.`, 'The p-value comes from the t distribution (TI-84: tcdf, or STAT → TESTS → 2:T-Test).'],
     steps: ($) => {
       const [h0, h1] = hyp(String.raw`\mu`, $.c.mu0, $.side);
@@ -290,7 +290,7 @@ export default [
     },
     valid: clear,
     text: (T, $) => `Marissa believes the average length of the songs on her phone is 240 seconds. A random sample of ${$.n} songs has lengths ${$.xs.join(', ')} seconds. Song lengths are normal. At α = ${$.alpha}, test whether the mean length is ${REL[$.side]} 240 seconds.`,
-    parts: [statPart('t', ($) => $.t, '$t_0$'), pPart(($) => $.p), decisionPart()],
+    parts: [h1Part(), statPart('t', ($) => $.t, '$t_0$'), pPart(($) => $.p), decisionPart(), conclusionPart()],
     hints: ['Find x̄ and s first.', String.raw`$t_0 = \dfrac{\bar x - 240}{s/\sqrt n}$, $\nu = n - 1$.`, 'TI-84: data in L1, STAT → TESTS → 2:T-Test with Inpt: Data.'],
     steps: ($) => {
       const [h0, h1] = hyp(String.raw`\mu`, 240, $.side);
@@ -322,7 +322,7 @@ export default [
         defects: `A manufacturer's defective rate is supposed to be ${$.p0}. In a random sample of ${$.n} devices, ${$.x} are defective.`,
         voters: `Last year ${Math.round($.p0 * 100)}% of voters supported a measure. In a new random sample of ${$.n} voters, ${$.x} support it.`,
       })[$.ctx] + ` At α = ${$.alpha}, is there evidence that the population proportion is ${REL[$.side]} ${$.p0}?`,
-    parts: [num('phat', ($) => $.phat, { label: String.raw`$\hat p$`, tol: 0, abs: 0.0006 }), statPart('z', ($) => $.z, '$z_0$', { traps: [[($) => ($.phat - $.p0) / Math.sqrt(($.phat * (1 - $.phat)) / $.n), String.raw`The test uses $p_0$ in the standard error: $\sqrt{p_0(1-p_0)/n}$, not $\hat p$.`]] }), pPart(($) => $.p, { alt: ($) => [zTableP($.side, $.z)] }), decisionPart()],
+    parts: [h1Part(), num('phat', ($) => $.phat, { label: String.raw`$\hat p$`, tol: 0, abs: 0.0006 }), statPart('z', ($) => $.z, '$z_0$', { traps: [[($) => ($.phat - $.p0) / Math.sqrt(($.phat * (1 - $.phat)) / $.n), String.raw`The test uses $p_0$ in the standard error: $\sqrt{p_0(1-p_0)/n}$, not $\hat p$.`]] }), pPart(($) => $.p, { alt: ($) => [zTableP($.side, $.z)] }), decisionPart(), conclusionPart()],
     hints: [String.raw`Check $np_0(1-p_0) \ge 10$.`, String.raw`$z_0 = \dfrac{\hat p - p_0}{\sqrt{p_0(1-p_0)/n}}$`, 'TI-84: STAT → TESTS → 5:1-PropZTest.'],
     steps: ($) => {
       const [h0, h1] = hyp('p', $.p0, $.side);
@@ -360,5 +360,42 @@ export default [
       String.raw`$$(${fx($.phat - $.zt.value * $.se, 4)},\ ${fx($.phat + $.zt.value * $.se, 4)})$$`,
     ],
     cases: [kase('Notes Ex 8.16', { n: 100, f: 0.43, conf: 0.9 }, { lo: 0.3486, hi: 0.5114 }, { note: 'The notes state the condition as np̂(1 − p̂) ≤ 10; it should read ≥ 10 (a large enough sample).' })],
+  }),
+  problem({
+    ...C8, id: 'c8.ci-meaning', title: 'What a confidence interval means', kind: 'conceptual', topics: ['confidence-interval', 'interpretation'], src: 'Notes §8.1',
+    vars: { ctx: choice(['song', 'mean'], ['grads', 'proportion'], ['sodium', 'mean']), conf: choice([0.9, '90%'], [0.95, '95%']), c: range(-1, 1, 0.1), w: range(0.4, 1.2, 0.05) },
+    derive: ($) => {
+      const C = Math.round($.conf * 100);
+      if ($.ctx === 'grads') {
+        const mid = Number((0.42 + 0.05 * $.c).toFixed(3));
+        const E = Number((0.04 + 0.04 * $.w).toFixed(3));
+        return { C, what: 'the proportion of the city’s adults who are college graduates', par: 'p', L: Number((mid - E).toFixed(3)), H: Number((mid + E).toFixed(3)) };
+      }
+      const c = ctxOf($.ctx);
+      const mid = c.mu0 + $.c * c.sigma * 0.5;
+      const E = $.w * c.sigma * 0.4;
+      return { C, what: `the mean ${c.what}`, par: 'μ', L: Number((mid - E).toFixed(c.dp + 1)), H: Number((mid + E).toFixed(c.dp + 1)) };
+    },
+    text: (T, $) => `From one random sample, a ${$.C}% confidence interval for ${$.what} is (${$.L}, ${$.H}).`,
+    parts: [
+      mc(
+        'm',
+        ($) => [
+          ['method', `If we took many random samples and built an interval from each in the same way, about ${$.C}% of those intervals would contain the true ${$.par}.`],
+          ['prob', `There is a ${$.C}% probability that the true ${$.par} is between ${$.L} and ${$.H}.`, `The true ${$.par} is a fixed number: this particular interval either contains it or not. The ${$.C}% describes the method, over many samples.`],
+          ['data', `${$.C}% of the individual values in the population lie between ${$.L} and ${$.H}.`, 'The interval estimates a parameter (a mean or a proportion), not where individual values fall.'],
+          ['sample', `${$.C}% of samples would give a statistic between ${$.L} and ${$.H}.`, 'Other samples give other intervals, centered on their own statistics; the confidence level is about how often those intervals capture the parameter.'],
+        ],
+        'method',
+        { label: ($T, $) => `What does “${$.C}% confident” mean here?` },
+      ),
+      mc('wider', [['wider', 'wider'], ['same', 'the same width', 'More confidence needs a larger critical value, so a wider interval.'], ['narrower', 'narrower', 'To catch the parameter more often, the interval must reach further, not less far.']], 'wider', { label: 'A 99% interval from the same data would be…' }),
+    ],
+    hints: ['The confidence level is a property of the method: how often it succeeds over many samples.', 'Higher confidence: larger z or t, larger margin of error.'],
+    steps: ($) => [
+      `The ${$.C}% is the long-run success rate of the method: build intervals this way from many samples, and about ${$.C}% of them contain the true ${$.par}. This one either does or does not; we are "${$.C}% confident" that it does.`,
+      `For 99% the critical value grows (z from ${$.C === 90 ? '1.645' : '1.96'} to 2.576), so the same data give a wider interval.`,
+    ],
+    cases: [kase('Notes Ex 8.16', { ctx: 'grads', conf: 0.9, c: 0.2, w: 1.0355 }, { m: 'method', wider: 'wider' }, { note: 'The 90% interval for the proportion of college graduates, (0.3486, 0.5114), rounded.' })],
   }),
 ];

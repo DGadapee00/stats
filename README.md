@@ -14,16 +14,21 @@ node scripts/smoke.mjs   # every screen at 380px and 1280px (needs the dev serve
 
 ## What is here
 
-- **Practice** — 95 problem generators covering all ten chapters (the midterm's Ch 1–6 and the final's Ch 1–10). Each draws fresh numbers,
+- **Practice** — 96 problem generators covering all ten chapters (the midterm's Ch 1–6 and the final's Ch 1–10). Each draws fresh numbers,
   computes the answer, and shows a worked solution that names every table lookup. The first
-  attempts go through the worked examples (123 in all: every worked example in the teacher's notes, Ch 1–10,
+  attempts go through the worked examples (127 in all: every worked example in the teacher's notes, Ch 1–10,
   and a few from the textbook); after that, every attempt gets new numbers.
   - **Grading:** answers are graded to table precision. A problem accepts both the exact value
     and the value you get from the printed tables (z rounded to 2 places, the t row either
     side of your df).
   - **Feedback:** common slips get named: the complement, one tail instead of two, s instead
     of σ, adding variances that should add but were subtracted.
-  - **Review:** spaced review, mixed sets, and a timed 8-problem practice exam.
+  - **Interpretation:** every hypothesis test also asks for H₁ and the conclusion in words
+    (with "accept H₀" and "prove H₁" as the wrong options); "Which procedure?" is generated from
+    data-style cues; a separate problem asks what a confidence level means.
+  - **Review:** a Today plan on the home screen, spaced review (a problem climbs only when it
+    was due, and nothing is scheduled past the day before the exam), mixed sets, and a timed
+    8-problem practice exam.
 - **Tables** — Appendix A as a lookup, with the printed value beside the exact one and the full z
   table highlighted.
 - **Explore** — ten labs, all 2D, each built to correct one or two intuitions. Every lab has

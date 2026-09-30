@@ -1,5 +1,5 @@
 /** Chapter 10 · Simple linear regression. The notes write the fitted line as ŷ = a + bx. */
-import { problem, kase, range, choice, data, num, mc, tn, fx, pn, hyp, pTex, decide, decisionPart, conclude, statPart, pPart } from '../kit.js';
+import { problem, kase, range, choice, data, num, mc, tn, fx, pn, hyp, pTex, decide, decisionPart, h1Part, conclusionPart, conclude, statPart, pPart } from '../kit.js';
 import { linRegTest } from '../../stats/infer.js';
 import { createRng } from '../../stats/rng.js';
 
@@ -126,7 +126,7 @@ export default [
     sampleValid: ($) => $.p > 0.0005 && Math.abs($.r) < 0.999,
     text: (T, $) => `The table gives ${$.c.x} (x) and ${$.c.y} (y). Find the correlation coefficient r, and test at α = ${$.alpha} whether x and y are ${$.side === 'two' ? 'linearly related' : $.side === 'right' ? 'positively correlated' : 'negatively correlated'}.`,
     figure: ($) => tableScroll($.xs, $.ys, $.c),
-    parts: [num('r', ($) => $.r, { label: '$r$', tol: 0, abs: 0.002 }), statPart('t', ($) => $.t, '$t_0$'), pPart(($) => $.p), decisionPart()],
+    parts: [h1Part(), num('r', ($) => $.r, { label: '$r$', tol: 0, abs: 0.002 }), statPart('t', ($) => $.t, '$t_0$'), pPart(($) => $.p), decisionPart(), conclusionPart()],
     hints: [String.raw`$r = \dfrac{S_{xy}}{\sqrt{S_{xx}S_{yy}}}$`, String.raw`Test $H_0: \rho = 0$ with $t_0 = \dfrac{r\sqrt{n-2}}{\sqrt{1-r^2}}$ on $n - 2$ degrees of freedom (the same as testing the slope).`, 'TI-84: STAT → TESTS → F:LinRegTTest (choose ≠, >0 or <0).'],
     steps: ($) => {
       const [h0, h1] = hyp(String.raw`\rho`, '0', $.side);

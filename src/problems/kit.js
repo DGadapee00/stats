@@ -194,6 +194,36 @@ export const decisionPart = (o = {}) =>
     { label: ($T, $) => `Decision at α = ${$.alpha}`, ...o },
   );
 
+/** Choosing H₁ from the question's wording: its sign is the test's tail. */
+export const h1Part = (o = {}) =>
+  mc(
+    'h1',
+    [
+      ['two', 'H₁ uses ≠ (two-tailed)', 'Read the claim again: “different from”, “changed” or “not equal” is ≠; “more than” is >; “less than” is <.'],
+      ['left', 'H₁ uses < (left-tailed)', 'Read the claim again: “less than”, “below”, “decreased” is <; “more than” is >; “different from” is ≠.'],
+      ['right', 'H₁ uses > (right-tailed)', 'Read the claim again: “more than”, “above”, “increased” is >; “less than” is <; “different from” is ≠.'],
+    ],
+    ($) => $.side,
+    { label: 'The alternative hypothesis', ...o },
+  );
+
+/**
+ * The conclusion in words, with the two classic wrong ones: "accepting" H₀ and "proving" H₁. A
+ * test weighs evidence against H₀; it never proves either hypothesis.
+ */
+export const conclusionPart = (o = {}) =>
+  mc(
+    'concl',
+    [
+      ['yes', 'There is sufficient evidence to conclude H₁ (the claim being tested).', 'H₀ was not rejected (p-value ≥ α), so the data do not give sufficient evidence for H₁.'],
+      ['no', 'There is not sufficient evidence to conclude H₁.', 'H₀ was rejected (p-value < α): there is sufficient evidence for H₁.'],
+      ['accept', 'The data show that H₀ is true.', 'A test never shows H₀ is true. Failing to reject it only means the evidence against it is not strong enough.'],
+      ['prove', 'The data prove that H₁ is true.', 'A test gives evidence, not proof: even when H₀ is true, a test at α = 0.05 rejects it 5% of the time.'],
+    ],
+    ($) => ($.dec === 'reject' ? 'yes' : 'no'),
+    { label: 'The conclusion', ...o },
+  );
+
 /** Step lines for a test's decision and the notes' conclusion sentence. */
 export function conclude($, claim) {
   const rej = $.dec === 'reject';

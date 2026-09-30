@@ -1,5 +1,5 @@
 /** Chapter 9 · Two-sample inference. */
-import { problem, kase, range, choice, data, num, prob, mc, tn, fx, pn, SIDE, hyp, pTex, decide, decisionPart, conclude, zTableP, zCrits, endpoint, statPart, pPart, confLabel, tLook, fLook, zCritLook } from '../kit.js';
+import { problem, kase, range, choice, data, num, prob, mc, tn, fx, pn, SIDE, hyp, pTex, decide, decisionPart, h1Part, conclusionPart, conclude, zTableP, zCrits, endpoint, statPart, pPart, confLabel, tLook, fLook, zCritLook } from '../kit.js';
 import { twoPropTest, twoPropInterval, twoZTest, twoZInterval, fTest, fInterval, pooledTest, pooledInterval, welchTest, welchInterval, pairedTest, pairedInterval } from '../../stats/infer.js';
 import { fCrit, fCdf } from '../../stats/dist.js';
 import { fTable, tTable } from '../../stats/tables.js';
@@ -23,6 +23,82 @@ function twoSamples(rand, { n1, n2, m1, m2, s1, s2, dp }) {
 
 /** The claim a test is about, in words, e.g. "the mean of formula 1 is less than that of formula 2". */
 const claim2 = (side, d0, a, b, what) => (d0 ? `${what} of ${a} exceeds that of ${b} by ${side === 'right' ? 'more than' : side === 'left' ? 'less than' : 'an amount other than'} ${d0}` : `${what} of ${a} is ${REL[side]} that of ${b}`);
+
+/**
+ * Stories for "Which procedure?". Each gives the cues as data, not labels: a σ "known from long
+ * experience", sample standard deviations, an F-test's p-value, the same subjects measured twice.
+ * `u` is eight uniforms that set the numbers.
+ */
+const pick = (u, xs) => xs[Math.min(xs.length - 1, Math.floor(u * xs.length))];
+const between = (u, lo, hi, dp = 0) => Number((lo + u * (hi - lo)).toFixed(dp));
+const ask = (goal, alpha, claim, estimate) => (goal === 'test' ? ` At α = ${alpha}, is there evidence that ${claim}?` : ` Estimate ${estimate} with a ${alpha === 0.01 ? 99 : alpha === 0.1 ? 90 : 95}% confidence interval.`);
+const WHICH = {
+  z1: {
+    name: 'One-sample z (σ known)',
+    why: 'One mean, and σ is known (from long experience, not from this sample): a one-sample z procedure.',
+    story: (u, g, a) => {
+      const n = between(u[0], 36, 80);
+      return `A filling machine’s fill weight has standard deviation 0.5 g, known from years of records. A random sample of ${n} bags has mean ${between(u[1], 499, 501, 2)} g.` + ask(g, a, 'the mean fill weight is not 500 g', 'the mean fill weight');
+    },
+  },
+  t1: {
+    name: 'One-sample t',
+    why: 'One mean, σ unknown (only the sample’s s is given), roughly normal population: a one-sample t procedure with ν = n − 1.',
+    story: (u, g, a) => `A random sample of ${between(u[0], 8, 20)} ${pick(u[2], ['batteries', 'light bulbs', 'phone chargers'])} lasts ${between(u[1], 40, 60, 1)} hours on average, with standard deviation ${between(u[3], 3, 8, 1)} hours; lifetimes are roughly normal.` + ask(g, a, 'the mean lifetime is less than 50 hours', 'the mean lifetime'),
+  },
+  p1: {
+    name: 'One-proportion z',
+    why: 'One population, and each individual either has the trait or not: a one-proportion z procedure (check the np(1 − p) ≥ 10 condition).',
+    story: (u, g, a) => {
+      const n = between(u[0], 200, 900);
+      return `In a random sample of ${n} voters, ${Math.round(n * between(u[1], 0.4, 0.6, 3))} support a new bond measure.` + ask(g, a, 'more than half of all voters support it', 'the proportion of all voters who support it');
+    },
+  },
+  p2: {
+    name: 'Two-proportion z',
+    why: 'Two independent groups, each counted yes/no: a two-proportion z procedure.',
+    story: (u, g, a) => {
+      const n1 = between(u[0], 150, 400);
+      const n2 = between(u[1], 150, 400);
+      return `Of ${n1} patients given drug A, ${Math.round(n1 * between(u[2], 0.55, 0.75, 3))} recovered; of ${n2} given drug B, ${Math.round(n2 * between(u[3], 0.55, 0.75, 3))} recovered. The two groups are independent.` + ask(g, a, 'the recovery rates differ', 'the difference in recovery rates');
+    },
+  },
+  z2: {
+    name: 'Two-sample z (σ’s known)',
+    why: 'Two independent means with both σ’s known from long records: a two-sample z procedure.',
+    story: (u, g, a) => `Two machines cut rods. From years of records their standard deviations are 0.12 mm and 0.15 mm. Random samples of ${between(u[0], 30, 60)} and ${between(u[1], 30, 60)} rods have mean lengths ${between(u[2], 99.9, 100.1, 3)} and ${between(u[3], 99.9, 100.1, 3)} mm.` + ask(g, a, 'the machines’ mean lengths differ', 'the difference in mean length'),
+  },
+  f: {
+    name: 'Two-sample F (variances)',
+    why: 'The question is about spread, not the means: compare variances with the F procedure, f = s₁²/s₂² (normal populations).',
+    story: (u, g, a) => `Random samples of ${between(u[0], 10, 20)} bolts from supplier A and ${between(u[1], 10, 20)} from supplier B have diameter standard deviations ${between(u[2], 0.02, 0.05, 3)} and ${between(u[3], 0.02, 0.05, 3)} mm; diameters are normal.` + ask(g, a, 'the two suppliers differ in variability', 'the ratio of the two variances σ₁²/σ₂²'),
+  },
+  tp: {
+    name: 'Two-sample t, pooled',
+    why: 'Two independent means, σ’s unknown, and the F-test finds no evidence the variances differ (large p-value): pool, ν = n₁ + n₂ − 2.',
+    story: (u, g, a) => `Independent random samples of ${between(u[0], 8, 15)} and ${between(u[1], 8, 15)} plants grown with two fertilizers have mean heights ${between(u[2], 20, 26, 1)} and ${between(u[3], 20, 26, 1)} cm and standard deviations ${between(u[4], 2.5, 3.2, 1)} and ${between(u[5], 2.5, 3.2, 1)} cm; heights are normal. An F-test for equal variances gives p-value ${between(u[6], 0.4, 0.9, 2)}.` + ask(g, a, 'the mean heights differ', 'the difference in mean height'),
+  },
+  tw: {
+    name: 'Two-sample t, unpooled (Welch)',
+    why: 'Two independent means, σ’s unknown, and the F-test says the variances differ (small p-value): do not pool; use the Welch df.',
+    story: (u, g, a) => `Independent random samples of ${between(u[0], 8, 15)} city and ${between(u[1], 8, 15)} rural wells have mean nitrate levels ${between(u[2], 5, 9, 1)} and ${between(u[3], 10, 16, 1)} mg/L and standard deviations ${between(u[4], 1.5, 2.5, 1)} and ${between(u[5], 6, 9, 1)} mg/L; levels are normal. An F-test for equal variances gives p-value ${between(u[6], 0.001, 0.009, 3)}.` + ask(g, a, 'the mean nitrate levels differ', 'the difference in mean nitrate level'),
+  },
+  pd: {
+    name: 'Paired t',
+    why: 'The same subjects are measured twice (matched pairs): take the differences and use a one-sample t procedure on them.',
+    story: (u, g, a) =>
+      pick(u[0], [
+        `Each of ${between(u[1], 8, 15)} students is timed catching a falling ruler with the dominant hand and with the other hand.` + ask(g, a, 'the dominant hand is faster on average', 'the mean difference in reaction time'),
+        `Each of ${between(u[1], 8, 15)} cars is driven over the same route once on fuel A and once on fuel B, and its mileage recorded both times.` + ask(g, a, 'the fuels give different mean mileage', 'the mean difference in mileage'),
+        `${between(u[1], 8, 15)} patients have their blood pressure measured before and after a month on a new diet.` + ask(g, a, 'the diet lowers blood pressure on average', 'the mean change in blood pressure'),
+      ]),
+  },
+  slope: {
+    name: 't for the regression slope',
+    why: 'Two measurements on each individual, and the question is whether one predicts the other: regression, with the t procedure for the slope (LinRegTTest / LinRegTInt).',
+    story: (u, g, a) => `For ${between(u[0], 10, 25)} houses, the size (square feet) and the selling price are recorded.` + ask(g, a, 'price is linearly related to size', 'the slope, the change in price per extra square foot'),
+  },
+};
 
 export default [
   problem({
@@ -60,11 +136,11 @@ export default [
     },
     valid: ($) => clear($) && $.c1 >= 10 && $.c2 >= 10,
     text: (T, $) => `Two polishing solutions are compared. Of ${$.n1} lenses polished with solution 1, ${$.x1} had no polishing defects; of ${$.n2} polished with solution 2, ${$.x2} had none. The samples are independent. At α = ${$.alpha}, is the proportion without defects for solution 1 ${REL[$.side]} that for solution 2?`,
-    parts: [
+    parts: [h1Part(), 
       num('pool', ($) => $.pool, { label: String.raw`Pooled $\hat p$`, tol: 0, abs: 0.0006 }),
       statPart('z', ($) => $.z, '$z_0$', { traps: [[($) => ($.p1 - $.p2) / Math.sqrt(($.p1 * (1 - $.p1)) / $.n1 + ($.p2 * (1 - $.p2)) / $.n2), 'That uses the unpooled standard error (the one for the interval). Under H₀: p₁ = p₂, the test pools the samples.']] }),
       pPart(($) => $.p, { alt: ($) => [zTableP($.side, $.z)] }),
-      decisionPart(),
+      decisionPart(), conclusionPart(),
     ],
     hints: [String.raw`$\hat p = \dfrac{x_1 + x_2}{n_1 + n_2}$, the pooled proportion.`, String.raw`$z_0 = \dfrac{\hat p_1 - \hat p_2}{\sqrt{\hat p(1-\hat p)\left(\frac{1}{n_1} + \frac{1}{n_2}\right)}}$`, 'TI-84: STAT → TESTS → 6:2-PropZTest.'],
     steps: ($) => {
@@ -125,7 +201,7 @@ export default [
       $.ctx === 'octane'
         ? `Two formulations of a motor fuel are tested for road octane number. The variances are σ₁² = ${$.v1} for formula 1 and σ₂² = ${$.v2} for formula 2. Samples of n₁ = ${$.n1} and n₂ = ${$.n2} give x̄₁ = ${$.x1} and x̄₂ = ${$.x2}. The populations are normal and independent. At α = ${$.alpha}, is there evidence that ${claim2($.side, $.d0, 'formula 1', 'formula 2', 'the mean octane number')}?`
         : `Two solid-fuel propellants are compared for burning rate (cm/s). The variances are σ₁² = ${$.v1} and σ₂² = ${$.v2}. Samples of n₁ = ${$.n1} and n₂ = ${$.n2} give x̄₁ = ${$.x1} and x̄₂ = ${$.x2}. The populations are normal and independent. At α = ${$.alpha}, is there evidence that ${claim2($.side, $.d0, 'propellant 1', 'propellant 2', 'the mean burning rate')}?`,
-    parts: [statPart('z', ($) => $.z, '$z_0$'), pPart(($) => $.p, { alt: ($) => [zTableP($.side, $.z)] }), decisionPart()],
+    parts: [h1Part(), statPart('z', ($) => $.z, '$z_0$'), pPart(($) => $.p, { alt: ($) => [zTableP($.side, $.z)] }), decisionPart(), conclusionPart()],
     hints: [String.raw`$z_0 = \dfrac{\bar x_1 - \bar x_2 - \Delta_0}{\sqrt{\sigma_1^2/n_1 + \sigma_2^2/n_2}}$, where $\Delta_0$ is the difference under $H_0$ (usually 0).`, 'TI-84: STAT → TESTS → 3:2-SampZTest (it takes σ, so enter √variance; it assumes Δ₀ = 0, so subtract Δ₀ from x̄₁ first).'],
     steps: ($) => {
       const [h0, h1] = hyp(String.raw`\mu_1 - \mu_2`, d0tex($.d0), $.side);
@@ -221,7 +297,7 @@ export default [
     },
     valid: clear,
     text: (T, $) => `Arsenic concentration is measured in ${$.n1} metropolitan and ${$.n2} rural communities. The sample standard deviations are s₁ = ${$.s1} (metro) and s₂ = ${$.s2} (rural). The populations are normal and independent. At α = ${$.alpha}, test whether the metro variance is ${REL[$.side]} the rural variance.`,
-    parts: [statPart('f', ($) => $.f, '$f_0$', { traps: [[($) => $.s1 / $.s2, String.raw`The F statistic compares variances: square the standard deviations, $f_0 = s_1^2/s_2^2$.`]] }), pPart(($) => $.p), decisionPart()],
+    parts: [h1Part(), statPart('f', ($) => $.f, '$f_0$', { traps: [[($) => $.s1 / $.s2, String.raw`The F statistic compares variances: square the standard deviations, $f_0 = s_1^2/s_2^2$.`]] }), pPart(($) => $.p), decisionPart(), conclusionPart()],
     hints: [String.raw`$f_0 = s_1^2/s_2^2$ on $(n_1 - 1, n_2 - 1)$ degrees of freedom.`, 'Two-tailed p-value: twice the smaller tail area. TI-84: STAT → TESTS → E:2-SampFTest.'],
     steps: ($) => {
       const [h0, h1] = hyp(String.raw`\sigma_1^2`, String.raw`\sigma_2^2`, $.side);
@@ -260,7 +336,7 @@ export default [
     },
     valid: clear,
     text: (T, $) => `Pain thresholds to electric shock: males n₁ = ${$.n1}, x̄₁ = ${$.x1}, s₁² = ${$.v1}; females n₂ = ${$.n2}, x̄₂ = ${$.x2}, s₂² = ${$.v2}. The thresholds are normal and independent, with equal variances assumed. At α = ${$.alpha}, is the mean threshold for men ${REL[$.side]} that for women?`,
-    parts: [num('sp2', ($) => $.sp2, { label: String.raw`$s_p^2$`, tol: 0.002 }), statPart('t', ($) => $.t, '$t_0$'), pPart(($) => $.p), decisionPart()],
+    parts: [h1Part(), num('sp2', ($) => $.sp2, { label: String.raw`$s_p^2$`, tol: 0.002 }), statPart('t', ($) => $.t, '$t_0$'), pPart(($) => $.p), decisionPart(), conclusionPart()],
     hints: [String.raw`$s_p^2 = \dfrac{(n_1 - 1)s_1^2 + (n_2 - 1)s_2^2}{n_1 + n_2 - 2}$`, String.raw`$t_0 = \dfrac{\bar x_1 - \bar x_2 - \Delta_0}{\sqrt{s_p^2\left(\frac1{n_1} + \frac1{n_2}\right)}}$ with $\nu = n_1 + n_2 - 2$.`, 'TI-84: STAT → TESTS → 4:2-SampTTest, Pooled: Yes.'],
     steps: ($) => {
       const [h0, h1] = hyp(String.raw`\mu_1 - \mu_2`, '0', $.side);
@@ -311,7 +387,7 @@ export default [
     },
     valid: ($) => clear($) && $.s1 > 0 && $.s2 > 0,
     text: (T, $) => `Arsenic concentration (ppb) in ${$.a.length} metropolitan Phoenix communities: ${$.a.join(', ')}. In ${$.b.length} rural Arizona communities: ${$.b.join(', ')}. The populations are normal and independent, and the variances are not assumed equal. At α = ${$.alpha}, is the metro mean ${REL[$.side]} the rural mean?`,
-    parts: [num('df', ($) => $.df, { label: 'Degrees of freedom ν (the TI-84 keeps decimals; rounded down is fine)', tol: 0, abs: 0.02, alt: ($) => [Math.floor($.df)], altGap: () => 1 }), statPart('t', ($) => $.t, '$t_0$'), pPart(($) => $.p), decisionPart()],
+    parts: [h1Part(), num('df', ($) => $.df, { label: 'Degrees of freedom ν (the TI-84 keeps decimals; rounded down is fine)', tol: 0, abs: 0.02, alt: ($) => [Math.floor($.df)], altGap: () => 1 }), statPart('t', ($) => $.t, '$t_0$'), pPart(($) => $.p), decisionPart(), conclusionPart()],
     hints: [String.raw`$t_0 = \dfrac{\bar x_1 - \bar x_2}{\sqrt{s_1^2/n_1 + s_2^2/n_2}}$`, String.raw`$\nu = \dfrac{\left(s_1^2/n_1 + s_2^2/n_2\right)^2}{\frac{(s_1^2/n_1)^2}{n_1 - 1} + \frac{(s_2^2/n_2)^2}{n_2 - 1}}$ (the TI-84 keeps the decimals).`, 'TI-84: data in L1 and L2, STAT → TESTS → 4:2-SampTTest, Pooled: No.'],
     steps: ($) => {
       const [h0, h1] = hyp(String.raw`\mu_1 - \mu_2`, '0', $.side);
@@ -372,7 +448,7 @@ export default [
     },
     valid: ($) => clear($) && $.sd > 0,
     text: (T, $) => `Two methods of producing metal bars are compared on ${$.n} randomly chosen machines. Strengths with method 1: ${$.a.join(', ')}. With method 2, on the same machines in the same order: ${$.b.join(', ')}. The differences are normal. At α = ${$.alpha}, is the mean difference (method 1 − method 2) ${REL[$.side]} 0?`,
-    parts: [num('dbar', ($) => $.dbar, { label: String.raw`$\bar d$`, tol: 0.002, abs: 0.0006 }), num('sd', ($) => $.sd, { label: '$s_d$', tol: 0.003 }), statPart('t', ($) => $.t, '$t_0$', { traps: [[($) => ($.dbar) / Math.sqrt(variance($.a) / $.n + variance($.b) / $.n), 'That treats the samples as independent. They are paired: work with the differences.']] }), pPart(($) => $.p), decisionPart()],
+    parts: [h1Part(), num('dbar', ($) => $.dbar, { label: String.raw`$\bar d$`, tol: 0.002, abs: 0.0006 }), num('sd', ($) => $.sd, { label: '$s_d$', tol: 0.003 }), statPart('t', ($) => $.t, '$t_0$', { traps: [[($) => ($.dbar) / Math.sqrt(variance($.a) / $.n + variance($.b) / $.n), 'That treats the samples as independent. They are paired: work with the differences.']] }), pPart(($) => $.p), decisionPart(), conclusionPart()],
     hints: ['The samples are paired (same machine), so compute each difference d = method 1 − method 2.', String.raw`$t_0 = \dfrac{\bar d - \Delta_0}{s_d/\sqrt n}$ with $\nu = n - 1$.`, 'TI-84: L3 = L1 − L2, then STAT → TESTS → 2:T-Test on L3.'],
     steps: ($) => {
       const [h0, h1] = hyp(String.raw`\mu_d`, '0', $.side);
@@ -423,50 +499,24 @@ export default [
 
   // ----------------------------------------------------------------- choosing
   problem({
-    ...C9, id: 'c9.which-test', title: 'Which procedure?', kind: 'conceptual', level: 2, topics: ['test-selection'], src: 'Notes Ch 8–9',
+    ...C9, id: 'c9.which-test', title: 'Which procedure?', kind: 'conceptual', level: 2, topics: ['test-selection'], src: 'Notes Ch 8–10',
     vars: {
-      s: choice(
-        ['z1', 'A random sample of 50 sandwiches is weighed. The population standard deviation is known to be 18 mg. Is the mean sodium content above 920 mg?'],
-        ['t1', 'A random sample of 12 songs is timed. Is the mean song length different from 240 seconds? (σ unknown, lengths normal)'],
-        ['p1', 'Of 200 devices, 4 are defective. Is the defective rate below 5%?'],
-        ['p2', '253 of 300 lenses with solution 1 and 246 of 300 with solution 2 have no defects. Do the solutions differ?'],
-        ['z2', 'Two fuel formulas with known variances 1.5 and 1.2 are compared with samples of 15 and 20. Do their mean octane numbers differ?'],
-        ['f', 'Do metropolitan and rural communities have the same variance in arsenic levels? (normal populations)'],
-        ['tp', 'Pain thresholds of 13 men and 10 women are compared; the variances are assumed equal. Do the means differ?'],
-        ['tw', 'Arsenic levels in 10 metro and 8 rural communities are compared; an F-test shows the variances differ. Do the means differ?'],
-        ['pd', 'Each of 12 students is timed with the dominant hand and with the other hand. Is the dominant hand faster?'],
-      ),
+      proc: choice(...Object.keys(WHICH).map((k) => [k, WHICH[k].name])),
+      goal: choice(['test', 'a test'], ['ci', 'an interval']),
+      alpha: choice([0.01, '0.01'], [0.05, '0.05'], [0.1, '0.10']),
+      u: data((rand) => Array.from({ length: 8 }, () => rand()), (v) => v.map((x) => x.toFixed(3)).join(',')),
     },
-    derive: ($) => ({ key: $.s }),
-    text: (T) => T.s,
+    derive: ($) => ({ key: $.proc, story: WHICH[$.proc].story($.u, $.goal, $.alpha) }),
+    text: (T, $) => $.story,
     parts: [
-      mc('k', [
-        ['z1', 'One-sample z-test'],
-        ['t1', 'One-sample t-test'],
-        ['p1', 'One-proportion z-test'],
-        ['p2', 'Two-proportion z-test'],
-        ['z2', 'Two-sample z-test'],
-        ['f', 'Two-sample F-test'],
-        ['tp', 'Two-sample t-test, pooled'],
-        ['tw', 'Two-sample t-test, unpooled (Welch)'],
-        ['pd', 'Paired t-test'],
-      ], ($) => $.key),
+      mc('k', Object.entries(WHICH).map(([k, w]) => [k, w.name]), ($) => $.key, { label: 'The procedure' }),
+      mc('g', [['test', 'A hypothesis test', 'The question asks for a range of plausible values, not a yes/no answer: an interval.'], ['ci', 'A confidence interval', 'The question asks whether there is evidence for a claim: a test.']], ($) => $.goal, { label: 'A test or an interval?' }),
     ],
-    hints: ['Mean, proportion or variance? One sample or two?', 'For two means: are the samples paired? If not, are the σ’s known? If not, are the variances equal?'],
-    steps: ($) =>
-      [
-        {
-          z1: 'One mean, σ known, n ≥ 30: one-sample z-test.',
-          t1: 'One mean, σ unknown, normal population: one-sample t-test with ν = n − 1.',
-          p1: 'One proportion: one-proportion z-test. Check np₀(1 − p₀) ≥ 10: here it is 200(0.05)(0.95) = 9.5, just short, so the normal approximation is borderline (the notes run the test anyway, Ex 8.14).',
-          p2: 'Two proportions from independent samples: two-proportion z-test with the pooled p̂.',
-          z2: 'Two means, independent samples, variances known: two-sample z-test.',
-          f: 'Comparing two variances: F-test with f₀ = s₁²/s₂².',
-          tp: 'Two means, independent, σ’s unknown but assumed equal: pooled t-test with ν = n₁ + n₂ − 2.',
-          tw: 'Two means, independent, σ’s unknown and unequal: unpooled (Welch) t-test.',
-          pd: 'The same students are measured twice: paired samples. Take differences and use a paired t-test.',
-        }[$.key],
-      ],
-    cases: [kase('Notes Ex 9.16', { s: 'pd' }, { k: 'pd' })],
+    hints: [
+      'What is the question about: a mean, a proportion, a variance, or a relationship between two variables?',
+      'For two means: are the values paired (the same subjects twice)? If not, are the σ’s known? If not, what does the F-test say about the variances?',
+    ],
+    steps: ($) => [WHICH[$.proc].why, $.goal === 'test' ? 'It asks whether the data support a claim: a hypothesis test.' : 'It asks for an estimate with a margin of error: a confidence interval.'],
+    cases: [kase('Notes Ex 9.16', { proc: 'pd', goal: 'test', alpha: 0.05, u: [0.1, 0.572, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5] }, { k: 'pd', g: 'test' })],
   }),
 ];
