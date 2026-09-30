@@ -3,6 +3,24 @@ import { problem, kase, range, choice, data, num, mc, tn, fx } from '../kit.js';
 import { mean, median, sd, sorted, fiveNumber, boxPlot, range as spread, frequencyTable, modes } from '../../stats/describe.js';
 import { createRng } from '../../stats/rng.js';
 
+/**
+ * Quartiles by the other rules a student may have met: interpolating between order statistics
+ * (spreadsheets, many calculators' "percentile") and, for odd n, keeping the median in each half.
+ */
+function otherQuartiles(xs, p) {
+  const s = sorted(xs);
+  const n = s.length;
+  const h = (n - 1) * p;
+  const lo = Math.floor(h);
+  const interp = s[lo] + (h - lo) * ((s[lo + 1] ?? s[lo]) - s[lo]);
+  const half = n % 2 ? (p < 0.5 ? s.slice(0, (n + 1) / 2) : s.slice((n - 1) / 2)) : null;
+  return { interp, inclusive: half ? median(half) : null };
+}
+const quartileTraps = (p) => [
+  [($) => otherQuartiles($.xs, p).interp, 'That is a quartile by interpolating between values (the spreadsheet rule). The notes use the TI-84 rule: the median of the lower (or upper) half.'],
+  [($) => otherQuartiles($.xs, p).inclusive ?? NaN, 'That half included the median. With an odd n, the TI-84 rule leaves the median out of both halves.'],
+];
+
 const C1 = { ch: '1' };
 
 /** Measurements to draw a sample of: what, its unit, a typical value, spread, and decimals kept. */
@@ -152,33 +170,39 @@ export default [
     ...C1, id: 'c1.which-center', title: 'Mean or median?', kind: 'conceptual', topics: ['mean', 'median', 'skew', 'resistant'], src: 'Notes Ex 1.7',
     vars: {
       mean_: range(4, 60, 0.25),
-      gap: range(-40, 40, 5, { exclude: [0] }),
+      kind: choice(['right', 'skewed right'], ['left', 'skewed left'], ['sym', 'symmetric']),
+      // Skewed versions put the median a clear 25–60% away from the mean; symmetric ones within 2%.
+      f: range(0.25, 0.6, 0.05),
+      tiny: range(-0.02, 0.02, 0.01),
     },
     derive: ($) => {
-      const med = Math.max(1, $.mean_ - $.gap / 10);
-      return { med, shape: $.mean_ > med ? 'right' : 'left' };
+      const raw = $.kind === 'sym' ? $.mean_ * (1 + $.tiny) : $.kind === 'right' ? $.mean_ * (1 - $.f) : $.mean_ * (1 + $.f);
+      const med = Math.round(raw * 4) / 4;
+      return { med, shape: $.kind, center: $.kind === 'sym' ? 'mean' : 'median' };
     },
-    valid: ($) => Math.abs($.mean_ - $.med) >= 0.75,
+    valid: ($) => $.med >= 1 && ($.kind === 'sym' ? Math.abs($.mean_ - $.med) <= 0.02 * $.mean_ + 1e-9 : Math.abs($.mean_ - $.med) >= 0.2 * $.mean_),
     text: (T, $) => `A sample of cell phone call lengths (in minutes) has mean ${fx($.mean_, 2)} and median ${fx($.med, 2)}.`,
     parts: [
       mc('shape', [
-        ['right', 'Skewed right', 'When the data skew right, the long right tail pulls the mean above the median.'],
-        ['left', 'Skewed left', 'When the data skew left, the long left tail pulls the mean below the median.'],
-        ['sym', 'Roughly symmetric', 'In a symmetric data set the mean and the median are about equal. These are not.'],
+        ['right', 'Skewed right', 'When the data skew right, the long right tail pulls the mean well above the median.'],
+        ['left', 'Skewed left', 'When the data skew left, the long left tail pulls the mean well below the median.'],
+        ['sym', 'Roughly symmetric', 'In a symmetric data set the mean and the median are about equal. These are far apart.'],
       ], ($) => $.shape, { label: 'The shape of the data is most likely…' }),
       mc('center', [
-        ['median', 'The median'],
+        ['median', 'The median', 'For symmetric data the notes use the mean: it uses every value, and no tail drags it.'],
         ['mean', 'The mean', 'The mean is not resistant: the values in the long tail drag it away from the typical value.'],
-      ], 'median', { label: 'Which better describes a typical call?' }),
+      ], ($) => $.center, { label: 'Which better describes a typical call?' }),
     ],
-    hints: ['The mean follows the long tail; the median does not.', 'A measure is resistant if extreme values do not change it much.'],
+    hints: ['Compare the mean with the median: about equal means roughly symmetric; far apart means a long tail on the side of the mean.', 'A measure is resistant if extreme values do not change it much.'],
     steps: ($) => [
-      $.shape === 'right'
-        ? String.raw`The mean ($${fx($.mean_, 2)}$) is above the median ($${fx($.med, 2)}$): a few very long values pull the mean up. That is a right skew.`
-        : String.raw`The mean ($${fx($.mean_, 2)}$) is below the median ($${fx($.med, 2)}$): a few very small values pull the mean down. That is a left skew.`,
-      'For skewed data, use the median to describe the center. It is resistant; the mean is not.',
+      $.shape === 'sym'
+        ? String.raw`The mean ($${fx($.mean_, 2)}$) and the median ($${fx($.med, 2)}$) are about equal, so the data are roughly symmetric.`
+        : $.shape === 'right'
+          ? String.raw`The mean ($${fx($.mean_, 2)}$) is well above the median ($${fx($.med, 2)}$): a few very long values pull the mean up. That is a right skew.`
+          : String.raw`The mean ($${fx($.mean_, 2)}$) is well below the median ($${fx($.med, 2)}$): a few very small values pull the mean down. That is a left skew.`,
+      $.shape === 'sym' ? 'For symmetric data, use the mean: it uses every value, and nothing pulls it off center.' : 'For skewed data, use the median to describe the center. It is resistant; the mean is not.',
     ],
-    cases: [kase('Notes Ex 1.7', { mean_: 7.25, gap: 37.5 }, { shape: 'right', center: 'median' })],
+    cases: [kase('Notes Ex 1.7', { mean_: 7.25, kind: 'right', f: 1 - 3.5 / 7.25, tiny: 0 }, { shape: 'right', center: 'median' })],
   }),
 
   problem({
@@ -280,8 +304,8 @@ export default [
     derive: ($) => ({ f: fiveNumber($.xs) }),
     text: (T, $) => `Find the first quartile, the third quartile and the interquartile range of these ${$.n} values: ${list($.xs)}.`,
     parts: [
-      num('q1', ($) => $.f.q1, { label: '$Q_1$', tol: 0, abs: 1e-9 }),
-      num('q3', ($) => $.f.q3, { label: '$Q_3$', tol: 0, abs: 1e-9 }),
+      num('q1', ($) => $.f.q1, { label: '$Q_1$', tol: 0, abs: 1e-9, traps: quartileTraps(0.25) }),
+      num('q3', ($) => $.f.q3, { label: '$Q_3$', tol: 0, abs: 1e-9, traps: quartileTraps(0.75) }),
       num('iqr', ($) => $.f.q3 - $.f.q1, { label: 'IQR', tol: 0, abs: 1e-9 }),
     ],
     hints: ['Sort the data and find the median first.', 'Q1 is the median of the lower half and Q3 the median of the upper half. When n is odd, the median itself belongs to neither half (this is what the TI-84 does).', '$\\text{IQR} = Q_3 - Q_1$'],
@@ -353,7 +377,7 @@ export default [
     text: (T, $) => `The lives of ${$.n} car batteries, recorded to the nearest tenth of a year: ${list($.xs, 1)}. The frequency distribution uses the classes 1.5–1.9, 2.0–2.4, …, 4.5–4.9.`,
     parts: [
       num('f', ($) => $.row.f, { label: (T, $) => `Frequency of the class ${fx($.row.lo, 1)}–${fx($.row.hi, 1)}`, tol: 0, abs: 0 }),
-      num('rel', ($) => $.row.rel, { label: 'Its relative frequency', tol: 0, abs: 0.0005 }),
+      num('rel', ($) => $.row.rel, { label: 'Its relative frequency', tol: 0, abs: 0.005 }),
       num('mid', ($) => $.row.mid, { label: 'Its class midpoint', tol: 0, abs: 0.001 }),
     ],
     hints: ['Count the values from the class’s lower limit to its upper limit, both included.', 'Relative frequency = frequency ÷ total number of observations.', 'Midpoint = (lower limit + upper limit) ÷ 2.'],

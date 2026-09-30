@@ -204,7 +204,10 @@ export function parseNumber(input) {
  * 0.005σ, the table's z precision).
  */
 export function tolerance(part, want, $ = {}) {
-  const abs = typeof part.abs === 'function' ? part.abs($) : part.abs ?? 0;
+  let abs = typeof part.abs === 'function' ? part.abs($) : part.abs ?? 0;
+  // A small probability (a p-value of 0.0005) is read to its first significant figures, not to
+  // ±0.001: otherwise a doubled or halved tail would pass. A quarter of the value, at least 0.0001.
+  if (part.prob && part.smallRel !== false && Math.abs(want) < 0.004) abs = Math.min(abs, Math.max(0.0001, 0.25 * Math.abs(want)));
   return Math.max(abs, (part.tol ?? 0) * Math.abs(want), 1e-12 * Math.abs(want));
 }
 
@@ -274,6 +277,7 @@ function diagnose(part, $, got, want) {
     if (near(2 * want)) return 'That is twice the answer: one tail was asked for, not two.';
     if (near(want / 2)) return 'That is half the answer: this one counts both tails.';
   }
+  if (part.prob) return ''; // the square and root slips below are about σ and σ², not probabilities
   if (want !== 0 && near(Math.sqrt(Math.abs(want)))) return 'That is the square root of the answer. Was the variance asked for, not the standard deviation?';
   if (want > 0 && near(want * want)) return 'That is the square of the answer. Was the standard deviation asked for, not the variance?';
   if (near(-want) && want !== 0) return 'Right size, wrong sign.';

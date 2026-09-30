@@ -5,6 +5,8 @@ import { zTable, zForArea } from '../../stats/tables.js';
 import { createRng } from '../../stats/rng.js';
 import { mean, sd, sorted } from '../../stats/describe.js';
 
+const PLOTTING_POSITION = 'That uses the area i/(n + 1). The notes use (i − 0.5)/n: for the smallest of n values, 0.5/n.';
+
 const C6 = { ch: '6' };
 
 /** Normal settings with realistic numbers. dp: decimals the measurement is written to. */
@@ -370,8 +372,8 @@ export default [
     text: (T, $) => `The finishing times (in seconds) of ${$.n} randomly selected races of a greyhound: ${$.xs.map((x) => x.toFixed(2)).join(', ')}. To draw a normal probability plot, find the theoretical quantile for the smallest time and for the ${ordinal($.k)} smallest.`,
     figure: ($) => nppSVG($.xs),
     parts: [
-      num('z1', ($) => $.z1, { alt: ($) => $.look1.values, tol: 0, abs: 0.006, label: 'z for the smallest value' }),
-      num('zk', ($) => $.zk, { alt: ($) => $.lookk.values, tol: 0, abs: 0.006, label: ($T, $) => `z for the ${ordinal($.k)} smallest value` }),
+      num('z1', ($) => $.z1, { alt: ($) => $.look1.values, tol: 0, abs: 0.006, label: 'z for the smallest value', traps: [[($) => normInv(1 / ($.n + 1)), PLOTTING_POSITION]] }),
+      num('zk', ($) => $.zk, { alt: ($) => $.lookk.values, tol: 0, abs: 0.006, label: ($T, $) => `z for the ${ordinal($.k)} smallest value`, traps: [[($) => normInv($.k / ($.n + 1)), PLOTTING_POSITION]] }),
     ],
     hints: ['Sort the data. The i-th smallest value is plotted against the theoretical quantile for rank i.', String.raw`$z_i = \Phi^{-1}\!\left(\dfrac{i - 0.5}{n}\right)$: the z with that area to its left (TI-84: invNorm).`],
     steps: ($) => [

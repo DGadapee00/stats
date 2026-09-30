@@ -143,7 +143,7 @@ export default [
     ...C10, id: 'c10.association', title: 'Positive or negative association?', kind: 'conceptual', topics: ['correlation', 'association'], src: 'Notes §10.3',
     vars: {
       s: choice(
-        ['pos1', 'Monthly steam usage and average temperature at a plant that heats a process with steam.'],
+        ['pos1', 'Monthly steam usage and average monthly temperature at the chemical plant of Notes Ex 10.1, where the months with the highest temperatures used the most steam.'],
         ['pos2', 'Hours studied and exam score.'],
         ['neg1', 'The age of a used car and its price.'],
         ['neg2', 'Outdoor temperature and a home’s heating bill.'],

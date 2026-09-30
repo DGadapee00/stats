@@ -1,10 +1,15 @@
 /** Chapter 8 · One-sample inference: estimation, z and t procedures, one proportion. */
 import { problem, kase, range, choice, data, num, prob, mc, tn, fx, pn, SIDE, hyp, pTex, decide, decisionPart, conclude, zTableP, zCrits, endpoint, statPart, pPart, confLabel, tLook, zCritLook } from '../kit.js';
 import { zTest, zInterval, tTest, tInterval, propTest, propInterval } from '../../stats/infer.js';
-import { tCrit, tCdf } from '../../stats/dist.js';
+import { tCrit, tCdf, zCrit, normCdf } from '../../stats/dist.js';
 import { tTable } from '../../stats/tables.js';
 import { createRng } from '../../stats/rng.js';
 import { mean, sd } from '../../stats/describe.js';
+
+const Z_WITH_S = 'That endpoint uses a z critical value with s. With σ unknown the critical value is t with n − 1 degrees of freedom, which is larger, so the interval is wider.';
+const T_NOT_Z = 'That p-value comes from the normal curve. The statistic uses s, so the p-value comes from the t distribution with ν = n − 1 (tcdf, or T-Test).';
+/** The p-value a student gets by reading a t statistic off the normal curve. */
+const zSideP = (side, t) => (side === 'left' ? normCdf(t) : side === 'right' ? 1 - normCdf(t) : 2 * (1 - normCdf(Math.abs(t))));
 
 const C8 = { ch: '8' };
 const ALPHA = choice([0.01, '0.01'], [0.05, '0.05'], [0.1, '0.1']);
@@ -233,7 +238,7 @@ export default [
       return { xbar, s, ...r, look, los: look.values.map((t) => xbar - (t * s) / Math.sqrt($.n)), his: look.values.map((t) => xbar + (t * s) / Math.sqrt($.n)) };
     },
     text: (T, $) => `Marissa has over 500 songs on her phone. She takes a random sample of ${$.n} of them; their lengths in seconds are ${$.xs.join(', ')}. Song lengths are normally distributed. Find a ${confLabel($.conf)} confidence interval for the mean song length.`,
-    parts: [num('xbar', ($) => $.xbar, { label: String.raw`$\bar x$`, tol: 0.0005 }), num('s', ($) => $.s, { label: '$s$', tol: 0.002 }), endpoint('lo', ($) => $.lo, { alt: ($) => $.los, margin: ($) => $.E }), endpoint('hi', ($) => $.hi, { alt: ($) => $.his, margin: ($) => $.E })],
+    parts: [num('xbar', ($) => $.xbar, { label: String.raw`$\bar x$`, tol: 0.0005 }), num('s', ($) => $.s, { label: '$s$', tol: 0.002 }), endpoint('lo', ($) => $.lo, { alt: ($) => $.los, margin: ($) => $.E, traps: [[($) => $.xbar - (zCrit((1 - $.conf) / 2) * $.s) / Math.sqrt($.n), Z_WITH_S]] }), endpoint('hi', ($) => $.hi, { alt: ($) => $.his, margin: ($) => $.E, traps: [[($) => $.xbar + (zCrit((1 - $.conf) / 2) * $.s) / Math.sqrt($.n), Z_WITH_S]] })],
     hints: ['σ is unknown, so use s and a t critical value with ν = n − 1.', String.raw`$\bar x \pm t_{\alpha/2,\,n-1}\dfrac{s}{\sqrt n}$`, 'TI-84: STAT → TESTS → 8:TInterval with Inpt: Data.'],
     steps: ($) => [
       String.raw`$\bar x = ${fx($.xbar, 3)}$, $s = ${fx($.s, 3)}$ (TI-84 1-Var Stats: x̄ and Sx)`,
@@ -257,7 +262,7 @@ export default [
     },
     valid: clear,
     text: (T, $) => `The mean ${$.c.what} is supposed to be ${$.c.mu0}${u($.c)}. A random sample of ${$.n} has mean ${$.xbar} and standard deviation ${$.s}${u($.c)}. Assume the population is normal. At α = ${$.alpha}, is there evidence that the mean is ${REL[$.side]} ${$.c.mu0}${u($.c)}?`,
-    parts: [statPart('t', ($) => $.t, '$t_0$'), pPart(($) => $.p), decisionPart()],
+    parts: [statPart('t', ($) => $.t, '$t_0$'), pPart(($) => $.p, { traps: [[($) => zSideP($.side, $.t), T_NOT_Z]] }), decisionPart()],
     hints: [String.raw`σ is unknown: $t_0 = \dfrac{\bar x - \mu_0}{s/\sqrt n}$ with $\nu = n - 1$.`, 'The p-value comes from the t distribution (TI-84: tcdf, or STAT → TESTS → 2:T-Test).'],
     steps: ($) => {
       const [h0, h1] = hyp(String.raw`\mu`, $.c.mu0, $.side);
