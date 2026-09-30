@@ -39,13 +39,14 @@ export default [
 
   problem({
     ...C2, id: 'c2.permutations', title: 'Permutations: order matters', kind: 'numeric', topics: ['counting', 'permutations'], src: 'Walpole §2.3',
-    vars: { ctx: choice(['race', 'race'], ['officers', 'officers'], ['books', 'books']), n: range(4, 15, 1), r: range(2, 5, 1) },
+    vars: { ctx: choice(['race', 'race'], ['officers', 'officers'], ['awards', 'awards'], ['books', 'books']), n: range(4, 15, 1), r: range(2, 5, 1) },
     derive: ($) => ({ r2: $.ctx === 'books' ? $.n : $.r, ans: $.ctx === 'books' ? factorial($.n) : perm($.n, $.r) }),
     valid: ($) => ($.ctx === 'books' ? $.n <= 9 : $.r < $.n),
     text: (T, $) =>
       ({
         race: `${$.n} runners are in a race. In how many ways can the first ${$.r} places (1st, 2nd, …) be filled, with no ties?`,
         officers: `A club of ${$.n} members elects ${$.r} different officers (president, vice president, …). No one holds two offices. How many different slates are possible?`,
+        awards: `${$.r} different awards (research, teaching, service, …) go to students in a class of ${$.n}. No student can receive more than one. How many possible selections are there?`,
         books: `In how many ways can ${$.n} different books be arranged on a shelf?`,
       })[$.ctx],
     parts: [num('ways', ($) => $.ans, { tol: 0, abs: 0, label: 'Number of arrangements', traps: [[($) => choose($.n, $.r), 'That is a combination. Here the order matters (1st and 2nd are different), so use a permutation.']] })],
@@ -54,7 +55,7 @@ export default [
       $.ctx === 'books'
         ? [String.raw`$${$.n}! = ${$.ans}$`, `On the TI-84: MATH → PROB → 4:!`]
         : [String.raw`$$ {}_{${$.n}}P_{${$.r}} = \dfrac{${$.n}!}{(${$.n} - ${$.r})!} = ${Array.from({ length: $.r }, (_, i) => $.n - i).join(String.raw` \times `)} = ${$.ans}$$`, `On the TI-84: ${$.n}, MATH → PROB → 2:nPr, ${$.r}`],
-    cases: [kase('Walpole §2.3', { ctx: 'race', n: 8, r: 3 }, { ways: 336 })],
+    cases: [kase('Walpole §2.3', { ctx: 'race', n: 8, r: 3 }, { ways: 336 }), kase('Notes Ex 2.8', { ctx: 'awards', n: 25, r: 3 }, { ways: 13800 })],
   }),
 
   problem({

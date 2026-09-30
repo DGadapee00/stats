@@ -18,7 +18,7 @@ export default {
       problems: ['c7.linear-normal'],
       blocks: [
         ['p', String.raw`Recall from §4.3: $E(a_0 + a_1X_1 + \cdots + a_nX_n) = a_0 + a_1E(X_1) + \cdots + a_nE(X_n)$, and for INDEPENDENT $X_i$, $\sigma^2_{a_0 + a_1X_1 + \cdots + a_nX_n} = a_1^2\sigma^2_{X_1} + \cdots + a_n^2\sigma^2_{X_n}$.`],
-        ['key', String.raw`A linear function of normal random variables is itself NORMAL: if $X_1, \ldots, X_n$ are normal, so is $Y = a_0 + a_1X_1 + \cdots + a_nX_n$. (Only normal random variables have this property.)`],
+        ['key', String.raw`A linear function of INDEPENDENT normal random variables is itself NORMAL: if $X_1, \ldots, X_n$ are independent and normal, so is $Y = a_0 + a_1X_1 + \cdots + a_nX_n$. (Most distributions lose their shape when added: a sum of uniforms is not uniform, a sum of exponentials is not exponential.)`],
         ['p', 'So the mean and variance from §4.3 are all you need to know $Y$ completely.'],
         [
           'ex',

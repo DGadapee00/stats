@@ -197,7 +197,9 @@ export default [
       `The ${confLabel($.conf)} interval matches a two-tailed test at α = ${$.alpha}.`,
       $.dec === 'fail' ? `${$.v0} is inside (${$.L}, ${$.H}), so it is a plausible value of μ: fail to reject H₀.` : `${$.v0} is outside (${$.L}, ${$.H}), so it is not a plausible value of μ: reject H₀.`,
     ],
-    cases: [kase('Notes Ex 8.7', { ctx: 'candy', conf: 0.99, lo: (19.83 - 20.1) / 0.6, w: 0.94 / 0.6, pos: 0.27 / 0.94 }, { dec: 'fail' }, { note: 'The 99% z-interval from Ex 8.6 is (19.83, 20.77), which contains 20.1.' })],
+    cases: [kase('Notes Ex 8.7', { ctx: 'candy', conf: 0.99, lo: (19.83 - 20.1) / 0.6, w: 0.94 / 0.6, pos: 0.27 / 0.94 }, { dec: 'fail' }, { note: 'The 99% z-interval from Ex 8.6 is (19.83, 20.77), which contains 20.1.' }),
+      kase('Notes Ex 8.12', { ctx: 'song', conf: 0.99, lo: (188.12 - 240) / 30, w: (259.44 - 188.12) / 30, pos: (240 - 188.1) / 71.3 }, { dec: 'fail' }, { note: 'The 99% t-interval from Ex 8.9, (188.1, 259.4), contains 240.' }),
+    ],
   }),
 
   // ----------------------------------------------------------------- t procedures (σ unknown)

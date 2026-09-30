@@ -110,6 +110,7 @@ export default {
             a: ['We choose 3 students AND assign them to different awards: the order matters, so this is a permutation.', String.raw`$_{25}P_3 = \dfrac{25!}{22!} = 25 \times 24 \times 23 = 13{,}800$.`],
             answer: '13,800 selections.',
             problem: 'c2.permutations',
+            case: 1,
             checks: () => [['25P3', perm(25, 3), 13800, 0]],
           },
         ],

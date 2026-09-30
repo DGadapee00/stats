@@ -302,7 +302,7 @@ export default [
     ...C9, id: 'c9.welch-t-test', title: 'Two-sample t-test, unequal variances', kind: 'numeric', level: 3, topics: ['two-sample', 't-test', 'welch'], src: 'Notes Ex 9.13',
     vars: {
       n1: range(6, 12, 1), n2: range(6, 12, 1), side: SIDE, alpha: ALPHA, gap: range(-2, 2, 0.1),
-      xy: data((rand, v) => twoSamples(rand, { n1: v.n1, n2: v.n2, m1: 15, m2: 15 - v.gap * 10, s1: 6, s2: 20, dp: 0 }).map((a) => a.map((x) => Math.max(1, x))), (v) => `${v[0].join(', ')} | ${v[1].join(', ')}`),
+      xy: data((rand, v) => twoSamples(rand, { n1: v.n1, n2: v.n2, m1: 40, m2: 40 - v.gap * 8, s1: 6, s2: 12, dp: 0 }).map((a) => a.map((x) => Math.max(1, x))), (v) => `${v[0].join(', ')} | ${v[1].join(', ')}`),
     },
     derive: ($) => {
       const [a, b] = $.xy;
@@ -330,7 +330,7 @@ export default [
     ...C9, id: 'c9.welch-t-interval', title: 'Two-sample t-interval, unequal variances', kind: 'numeric', level: 3, topics: ['two-sample', 'confidence-interval', 'welch'], src: 'Notes Ex 9.14',
     vars: {
       n1: range(6, 12, 1), n2: range(6, 12, 1), conf: CONF, gap: range(-2, 2, 0.1),
-      xy: data((rand, v) => twoSamples(rand, { n1: v.n1, n2: v.n2, m1: 15, m2: 15 - v.gap * 10, s1: 6, s2: 20, dp: 0 }).map((a) => a.map((x) => Math.max(1, x))), (v) => `${v[0].join(', ')} | ${v[1].join(', ')}`),
+      xy: data((rand, v) => twoSamples(rand, { n1: v.n1, n2: v.n2, m1: 40, m2: 40 - v.gap * 8, s1: 6, s2: 12, dp: 0 }).map((a) => a.map((x) => Math.max(1, x))), (v) => `${v[0].join(', ')} | ${v[1].join(', ')}`),
     },
     derive: ($) => {
       const [a, b] = $.xy;
@@ -458,7 +458,7 @@ export default [
         {
           z1: 'One mean, σ known, n ≥ 30: one-sample z-test.',
           t1: 'One mean, σ unknown, normal population: one-sample t-test with ν = n − 1.',
-          p1: 'One proportion: one-proportion z-test (check np₀(1 − p₀) ≥ 10).',
+          p1: 'One proportion: one-proportion z-test. Check np₀(1 − p₀) ≥ 10: here it is 200(0.05)(0.95) = 9.5, just short, so the normal approximation is borderline (the notes run the test anyway, Ex 8.14).',
           p2: 'Two proportions from independent samples: two-proportion z-test with the pooled p̂.',
           z2: 'Two means, independent samples, variances known: two-sample z-test.',
           f: 'Comparing two variances: F-test with f₀ = s₁²/s₂².',

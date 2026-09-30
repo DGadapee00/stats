@@ -335,6 +335,7 @@ export default {
             a: ['$\\alpha = 0.01$, so use the 99% interval of Example 8.9: $(188.12, 259.44)$.', 'It contains 240.'],
             answer: 'Fail to reject $H_0$, as the test found.',
             problem: 'c8.ci-and-test',
+            case: 1,
             checks: () => {
               const I = tInterval({ xbar: mean(SONGS), s: sd(SONGS), n: 9, conf: 0.99 });
               return [['240 inside', I.lo < 240 && 240 < I.hi ? 1 : 0, 1, 0]];
@@ -433,13 +434,13 @@ export default {
             q: 'Use a confidence interval to check the decision of Example 8.15.',
             a: ['$\\alpha = 0.1$: use the 90% interval of Example 8.16, $(0.3486, 0.5114)$. It contains 0.4.'],
             answer: 'Fail to reject $H_0$, the same as the test.',
-            problem: 'c8.ci-and-test',
             checks: () => {
               const I = propInterval({ x: 43, n: 100, conf: 0.9 });
               return [['0.4 inside', I.lo < 0.4 && 0.4 < I.hi ? 1 : 0, 1, 0]];
             },
           },
         ],
+        ['warn', String.raw`For a proportion the match between test and interval is close but not exact: the test's standard error uses $p_0$, the interval's uses $\hat{p}$. When $p_0$ sits right at an end of the interval the two can disagree; the test is the one to report.`],
       ],
     },
   ],

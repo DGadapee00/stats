@@ -99,6 +99,7 @@ export default {
             ],
             answer: 'There is sufficient evidence that temperature and steam usage are linearly related.',
             problem: 'c10.correlation-test',
+            case: 1,
             checks: () => {
               const R = steam();
               return [

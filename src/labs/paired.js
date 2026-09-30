@@ -25,7 +25,7 @@ export default defineLab({
   height: 0.85,
   params: [
     { id: 'n', label: '$n$ (subjects)', type: 'range', min: 4, max: 40, step: 1, value: 10 },
-    { id: 'effect', label: String.raw`Treatment effect $\delta$`, type: 'range', min: 0, max: 8, step: 0.1, value: 2 },
+    { id: 'effect', label: String.raw`Treatment effect $\delta$`, type: 'range', min: 0, max: 8, step: 0.1, value: 3 },
     { id: 'between', label: 'Spread between subjects', type: 'range', min: 0, max: 20, step: 0.5, value: 8 },
   ],
   actions: [{ id: 'resample', label: 'New subjects', run: (s) => ({ ...s, seed: s.seed + 1 }) }],

@@ -169,7 +169,7 @@ export default defineLab({
         return a.fit.b1 * b.fit.b1 < 0 ? 'flip' : k > 0.2 ? 'lot' : 'little';
       },
       expect: 'little',
-      why: 'A point at x near x̄ has low leverage: it lifts the whole line a little (the intercept), but it cannot tilt it much. What it does damage is the fit: R² drops from 0.94 to 0.54, because its residual is huge.',
+      why: 'A point at x near x̄ has low leverage: it lifts the whole line a little (the intercept), but it cannot tilt it much. What it does damage is the fit: R² drops from 0.94 to 0.53, because its residual is huge.',
     },
     {
       id: 'leverage',

@@ -312,7 +312,7 @@ export default [
 
   // ----------------------------------------------------------------- assessing normality
   problem({
-    ...C6, id: 'c6.normal-plot', title: 'Reading a normal probability plot', kind: 'conceptual', level: 2, topics: ['normal-probability-plot', 'assessing-normality'], src: 'Notes §6.2.2',
+    ...C6, id: 'c6.normal-plot', title: 'Reading a normal probability plot', kind: 'conceptual', level: 2, topics: ['normal-probability-plot', 'assessing-normality'], src: 'Notes §6.3',
     vars: {
       shape: choice(['normal', 'normal'], ['right', 'right-skewed'], ['left', 'left-skewed'], ['heavy', 'heavy-tailed']),
       xs: data((rand, v) => {

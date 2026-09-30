@@ -27,7 +27,7 @@ export default {
           'ex',
           {
             n: '5.1',
-            q: 'Is $X$ binomial? (a) Flip a coin 5 times; $X$ = number of heads. (b) Throw a die 10 times; $X$ = number of 5s or 6s. (c) A couple has children until their first girl; $X$ = number of children. (d) Test-fire a rifle 10 times while adjusting its scope; $X$ = number of bull’s-eyes. (e) From a box of 8 blue, 6 red and 3 white balls, pick 4; $X$ = number of red. (f) Someone tries their usual passwords, and the account locks after 3 wrong tries; $X$ = number of tries.',
+            q: 'Is $X$ binomial? (a) Flip a coin 5 times; $X$ = number of heads. (b) Throw a die 10 times; $X$ = number of 5s or 6s. (c) A couple has children until their first girl; $X$ = number of children. (d) Test-fire a rifle 10 times while adjusting its scope; $X$ = number of bull’s-eyes. (e) From a box of 8 blue, 6 red and 3 white balls, pick 4; $X$ = number of red. (f) Peter tries the passwords he usually uses; he can fail 3 times, and a 4th wrong password locks the account. $X$ = number of tries.',
             a: [
               '(a) Yes: $n = 5$ independent flips, success = head, $p = 0.5$.',
               '(b) Yes: $n = 10$ independent throws, success = 5 or 6, $p = 2/6 = 1/3$.',

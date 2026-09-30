@@ -52,7 +52,7 @@ export default {
       id: '3.2',
       title: 'Discrete probability distributions',
       lab: 'dist',
-      problems: ['c3.build-distribution', 'c3.pmf-table', 'c3.pmf-constant', 'c3.cdf'],
+      problems: ['c3.build-distribution', 'c3.pmf-table', 'c3.pmf-constant'],
       blocks: [
         ['def', 'Probability mass function (pmf).', String.raw`$f(x) = P(X = x)$, listed for every value $x$. It must satisfy (1) $f(x) \ge 0$ and (2) $\sum_x f(x) = 1$.`],
         [
@@ -103,7 +103,7 @@ export default {
       id: '3.3',
       title: 'Continuous probability distributions',
       lab: 'dist',
-      problems: ['c3.density-cdf', 'c3.pdf-constant'],
+      problems: ['c3.density-cdf', 'c3.pdf-constant', 'c3.cdf'],
       blocks: [
         ['p', String.raw`For a continuous $X$, any single value has probability 0: there are infinitely many values between 0 and 1, so $P(X = 0.5) = 1/\infty = 0$. Probability lives on intervals instead.`],
         ['def', 'Probability density function (pdf).', String.raw`A function $f(x)$ with (1) $f(x) \ge 0$ for all $x$; (2) $\int_{-\infty}^{\infty} f(x)\,dx = 1$; and (3) $P(a < X < b) = \int_a^b f(x)\,dx$, the area under $f$ between $a$ and $b$.`],
