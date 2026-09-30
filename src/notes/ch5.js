@@ -1,14 +1,19 @@
 /**
- * Chapter 5, rewritten from the teacher's notes (Ch 5, pp. 58–71). Example numbers are the notes'.
+ * Chapter 5, rewritten from the teacher's notes (Ch 5, pp. 58–71), laid out like FLUX's notes.
+ * Example numbers are the notes'; the textbook's material (Walpole §5.2–5.5: multinomial,
+ * hypergeometric, negative binomial, the Poisson approximation) is marked, and its examples are
+ * lettered (5.A, 5.B, …).
  */
-import { binomPmf, binomCdf, geomPmf, geomCdf, poisPmf, poisCdf } from '../stats/dist.js';
+import { binomPmf, binomCdf, geomPmf, geomCdf, poisPmf, poisCdf, hyperPmf, choose, factorial } from '../stats/dist.js';
 
 export default {
   ch: '5',
   title: 'Some discrete probability distributions',
+  lede: 'Chapter 3 built distributions from scratch. In practice a handful of patterns cover most counting problems, and each comes with a ready-made formula for its probabilities, its mean and its variance. The skill this chapter teaches is recognising the pattern: a fixed number of independent trials (binomial), waiting for the first success (geometric), or events arriving at a steady rate (Poisson). The textbook adds sampling without replacement (hypergeometric) and a few relatives.',
   sections: [
     {
       id: '5.1',
+      part: 'Counting successes in n trials',
       title: 'The binomial distribution',
       lab: 'dist',
       problems: ['c5.is-binomial', 'c5.binom-pmf', 'c5.binom-cdf', 'c5.binom-mean-var', 'c5.binom-table'],
@@ -42,7 +47,7 @@ export default {
           },
         ],
         ['key', String.raw`If $X$ is binomial with $n$ trials and success probability $p$: $P(X = x) = {}_nC_x\,p^x (1 - p)^{n - x}$, for $x = 0, 1, 2, \ldots, n$.`],
-        ['why', String.raw`$p^x(1-p)^{n-x}$ is the probability of one particular order of $x$ successes and $n - x$ failures; $_nC_x$ counts the orders.`],
+        ['why', String.raw`$p^x(1-p)^{n-x}$ is the probability of one particular order of $x$ successes and $n - x$ failures (independent trials, so multiply); $_nC_x$ counts the orders, which are mutually exclusive, so add. Ex 3.3 was this with $n = 4$, $p = 1/2$.`],
         [
           'ex',
           {
@@ -68,6 +73,7 @@ export default {
             answer: '(a) 0.2123, (b) 0.0422.',
             problem: 'c5.binom-pmf',
             case: 1,
+            show: 'dist:favor',
             checks: () => [
               ['(a)', binomPmf(10, 15, 0.65), 0.2123, 5e-5],
               ['(b)', binomCdf(6, 15, 0.65), 0.0422, 5e-5],
@@ -91,6 +97,7 @@ export default {
             answer: '(a) 0.0656 (b) 0.0028 (c) 0.0128 (d) 0.9972 (e) 0.3381.',
             problem: 'c5.binom-cdf',
             case: 1,
+            show: 'dist:wireless',
             checks: () => [
               ['(a)', binomPmf(5, 20, 0.41), 0.0656, 5e-5],
               ['(b)', binomCdf(2, 20, 0.41), 0.0028, 5e-5],
@@ -116,6 +123,7 @@ export default {
           },
         ],
         ['key', String.raw`Binomial mean and variance: $\mu = np$, $\sigma^2 = np(1 - p)$. (Only for the binomial.)`],
+        ['why', String.raw`Write $X = X_1 + \cdots + X_n$, where $X_i$ is 1 if trial $i$ succeeds and 0 if not. Each $X_i$ has mean $p$ and variance $E(X_i^2) - p^2 = p - p^2 = p(1 - p)$. The trials are independent, so by §4.3 the means add to $np$ and the variances add to $np(1 - p)$.`, 'Derivation'],
         [
           'ex',
           {
@@ -132,10 +140,36 @@ export default {
             ],
           },
         ],
+        ['p', 'Read the mean as the center of the histogram: in 20 households, about 8 are wireless-only, give or take about 2. The values from 5 to 7 in Ex 5.4(e) sit just below that center.'],
+        [
+          'book',
+          'Walpole §5.2',
+          [
+            ['p', String.raw`The binomial has two outcomes per trial. With $k$ outcomes per trial, of probabilities $p_1, \ldots, p_k$ (adding to 1), the counts $X_1, \ldots, X_k$ of each outcome in $n$ independent trials have the **multinomial distribution**:`],
+            ['p', String.raw`$$f(x_1, \ldots, x_k) = \frac{n!}{x_1!\,x_2!\cdots x_k!}\,p_1^{x_1} p_2^{x_2} \cdots p_k^{x_k}, \qquad x_1 + \cdots + x_k = n.$$`],
+            ['p', 'The fraction counts the orders (the like-objects count of §2.4), and the product is the probability of any one order.'],
+            [
+              'ex',
+              {
+                n: '5.A',
+                title: 'coffee sizes',
+                q: 'At a coffee kiosk, 30% of orders are small, 50% medium and 20% large, independently. Find the probability that of the next 10 orders, 3 are small, 5 medium and 2 large.',
+                a: [String.raw`$\dfrac{10!}{3!\,5!\,2!} = 2520$ orders of the sizes.`, String.raw`$P = 2520\,(0.3)^3 (0.5)^5 (0.2)^2 = 2520(0.027)(0.03125)(0.04) = 0.0851$.`],
+                answer: '0.0851.',
+                checks: () => [
+                  ['count', factorial(10) / (factorial(3) * factorial(5) * factorial(2)), 2520, 0],
+                  ['P', 2520 * 0.3 ** 3 * 0.5 ** 5 * 0.2 ** 2, 0.0851, 5e-5],
+                ],
+              },
+            ],
+          ],
+        ],
+        ['bridge', 'The binomial fixes the number of trials and counts the successes. Turn that around, fix the number of successes (one) and count the trials, and the distribution is geometric.'],
       ],
     },
     {
       id: '5.2',
+      part: 'Waiting for a success',
       title: 'The geometric distribution',
       lab: 'dist',
       problems: ['c5.geometric'],
@@ -156,6 +190,7 @@ export default {
             answer: '(a) 0.0096 (b) 0.0490.',
             problem: 'c5.geometric',
             case: 0,
+            show: 'dist:items',
             checks: () => [
               ['(a)', geomPmf(5, 0.01), 0.0096, 5e-5],
               ['(b)', geomCdf(5, 0.01), 0.049, 5e-5],
@@ -179,10 +214,37 @@ export default {
             ],
           },
         ],
+        ['p', String.raw`The mean $1/p$ matches intuition: if 1 item in 100 is defective, you expect to look at about 100. The standard deviation is almost as large, because the wait is very skewed: usually shorter than 100, occasionally much longer.`],
+        ['key', String.raw`"Within $x$ trials" has a shortcut: the first success is later than trial $x$ only if the first $x$ trials all fail, so $P(X \le x) = 1 - (1 - p)^x$. In Ex 5.6(b), $1 - 0.99^5 = 0.0490$.`],
+        [
+          'book',
+          'Walpole §5.4',
+          [
+            ['p', String.raw`Wait instead for the $k$th success. The trial $X$ on which it happens has the **negative binomial distribution**: the first $x - 1$ trials must hold exactly $k - 1$ successes (a binomial count), and trial $x$ must be a success.`],
+            ['p', String.raw`$$P(X = x) = {}_{x-1}C_{k-1}\;p^k (1 - p)^{x - k}, \qquad x = k, k + 1, \ldots$$`],
+            ['p', String.raw`With $k = 1$ it is the geometric distribution. Its mean is $k/p$: $k$ geometric waits, one after another.`],
+            [
+              'ex',
+              {
+                n: '5.B',
+                title: 'free throws',
+                q: 'A player makes 70% of free throws, independently. What is the probability that her 3rd make comes on her 5th attempt?',
+                a: [String.raw`The first 4 attempts hold exactly 2 makes, and the 5th is a make: $_4C_2\,(0.7)^3(0.3)^2 = 6(0.343)(0.09)$.`],
+                answer: '0.1852.',
+                checks: () => [
+                  ['4C2', choose(4, 2), 6, 0],
+                  ['P', choose(4, 2) * 0.7 ** 3 * 0.3 ** 2, 0.1852, 5e-5],
+                ],
+              },
+            ],
+          ],
+        ],
+        ['bridge', 'Binomial and geometric both count trials. The Poisson counts events that have no trials at all: arrivals, accidents, flaws, happening at some average rate over time or space.'],
       ],
     },
     {
       id: '5.3',
+      part: 'Counting rare events',
       title: 'The Poisson distribution',
       lab: 'dist',
       problems: ['c5.poisson-basics', 'c5.poisson-rate', 'c5.poisson-table', 'c5.which-distribution'],
@@ -207,6 +269,7 @@ export default {
             answer: '(a) 0.2231 (b) 0.7769 (c) 0.4422 (d) 1.5, 1.5, 1.225 (e) 0.2240 (f) 0.8266.',
             problem: 'c5.poisson-basics',
             case: 0,
+            show: 'dist:deaths',
             checks: () => [
               ['(a)', poisPmf(0, 1.5), 0.2231, 5e-5],
               ['(b)', 1 - poisPmf(0, 1.5), 0.7769, 5e-5],
@@ -232,7 +295,88 @@ export default {
             note: 'Which one? A fixed number of trials: binomial. Trials until something first happens: geometric. A rate per unit of time or space, with no fixed number of trials: Poisson.',
           },
         ],
+        [
+          'book',
+          'Walpole §5.5',
+          [
+            ['p', String.raw`The Poisson is also the limit of the binomial when $n$ is large and $p$ is small: many trials, each very unlikely to succeed. Then $b(x; n, p) \approx p(x; \mu)$ with $\mu = np$. The approximation is good when $n$ is large and $np$ is moderate; a rule of thumb often quoted is $n \ge 20$ with $p \le 0.05$.`],
+            [
+              'ex',
+              {
+                n: '5.C',
+                title: 'rare defects',
+                q: 'One item in 1000 is defective. In a shipment of 3000, what is the probability of at most 2 defectives? Compare the exact binomial with the Poisson approximation.',
+                a: [
+                  String.raw`Exact: $X$ is binomial, $n = 3000$, $p = 0.001$: binomcdf(3000, 0.001, 2) $= 0.4231$.`,
+                  String.raw`Approximate: $\mu = np = 3$, and $P(X \le 2) \approx e^{-3}\left(1 + 3 + \tfrac{3^2}{2}\right) = 8.5\,e^{-3} = 0.4232$.`,
+                ],
+                answer: 'Both give 0.423, agreeing to three decimals.',
+                checks: () => [
+                  ['exact', binomCdf(2, 3000, 0.001), 0.4231, 5e-5],
+                  ['Poisson', poisCdf(2, 3), 0.4232, 5e-5],
+                  ['by hand', 8.5 * Math.exp(-3), 0.4232, 5e-5],
+                ],
+              },
+            ],
+          ],
+        ],
+        ['bridge', 'All three distributions so far assume independent trials or events. Drawing from a small batch without putting items back breaks that, which is why Ex 5.1(e) was not binomial. The textbook has a distribution for exactly that case.'],
       ],
     },
+    {
+      id: '5.4',
+      part: 'Sampling without replacement',
+      title: 'The hypergeometric distribution',
+      source: 'Walpole §5.3',
+      lab: 'dist',
+      blocks: [
+        ['p', String.raw`A lot of $N$ items contains $k$ "successes" (defectives, red balls) and $N - k$ failures. Draw $n$ of them WITHOUT replacement. The number of successes drawn, $X$, is **hypergeometric**. It is not binomial, because each draw changes what is left.`],
+        ['key', String.raw`$P(X = x) = \dfrac{{}_kC_x \cdot {}_{N-k}C_{n-x}}{{}_NC_n}$, for $\max(0,\ n - (N - k)) \le x \le \min(n, k)$.`],
+        ['why', 'Every group of $n$ items is equally likely: ${}_NC_n$ of them. The ones with exactly $x$ successes pick $x$ of the $k$ successes and $n - x$ of the $N - k$ failures: the multiplication rule of §2.4.'],
+        ['key', String.raw`Mean $\mu = n\,\dfrac{k}{N}$, variance $\sigma^2 = \dfrac{N - n}{N - 1} \cdot n \cdot \dfrac{k}{N}\left(1 - \dfrac{k}{N}\right)$.`],
+        ['p', String.raw`The mean is the binomial’s, with $p = k/N$. The variance is the binomial’s times $\frac{N - n}{N - 1}$, the **finite population correction**: less than 1, because drawing without replacement leaves less to chance (draw all $N$ and there is no randomness left at all).`],
+        [
+          'ex',
+          {
+            n: '5.D',
+            title: 'a lot of 20',
+            q: 'A lot of 20 items contains 4 defectives. An inspector draws 5 at random without replacement. Find (a) the probability of exactly 2 defectives; (b) the probability of at least one; (c) the mean and variance of the number of defectives drawn.',
+            a: [
+              String.raw`$N = 20$, $k = 4$, $n = 5$.`,
+              String.raw`(a) $P(X = 2) = \dfrac{{}_4C_2 \cdot {}_{16}C_3}{{}_{20}C_5} = \dfrac{6 \cdot 560}{15{,}504} = \dfrac{3360}{15{,}504} = 0.2167$.`,
+              String.raw`(b) $P(X \ge 1) = 1 - P(X = 0) = 1 - \dfrac{{}_{16}C_5}{{}_{20}C_5} = 1 - \dfrac{4368}{15{,}504} = 0.7183$.`,
+              String.raw`(c) $\mu = 5 \cdot \tfrac{4}{20} = 1$; $\sigma^2 = \tfrac{15}{19} \cdot 5 \cdot 0.2 \cdot 0.8 = 0.632$.`,
+            ],
+            answer: '(a) 0.2167 (b) 0.7183 (c) μ = 1, σ² = 0.632. Treated as binomial, (a) would be 0.2048.',
+            show: 'dist:lot',
+            checks: () => [
+              ['4C2', choose(4, 2), 6, 0],
+              ['16C3', choose(16, 3), 560, 0],
+              ['20C5', choose(20, 5), 15504, 0],
+              ['(a)', hyperPmf(2, 20, 5, 4), 0.2167, 5e-5],
+              ['16C5', choose(16, 5), 4368, 0],
+              ['(b)', 1 - hyperPmf(0, 20, 5, 4), 0.7183, 5e-5],
+              ['μ', (5 * 4) / 20, 1, 0],
+              ['σ²', (15 / 19) * 5 * 0.2 * 0.8, 0.632, 5e-4],
+              ['binomial instead', binomPmf(2, 5, 0.2), 0.2048, 5e-5],
+            ],
+          },
+        ],
+        ['p', String.raw`Ex 5.1(e) is the same pattern: 17 balls, 6 red, pick 4, so $X$ = number of red is hypergeometric with $N = 17$, $k = 6$, $n = 4$.`],
+        ['key', String.raw`When the sample is a small part of the lot ($n/N \le 0.05$), removing a few items hardly changes the proportion, and the binomial with $p = k/N$ is a good approximation.`],
+        ['ti', ['The TI-84 has no hypergeometric menu item. Use MATH ▸ PROB ▸ 3:nCr for the three combinations, as in (a).']],
+        ['bridge', 'Every variable in this chapter was a count. Chapter 6 turns to measurements, continuous variables, and to the most important distribution in statistics: the normal.'],
+      ],
+    },
+  ],
+  formulas: [
+    ['Binomial', String.raw`$P(X = x) = {}_nC_x\,p^x(1-p)^{n-x}$, $\;\mu = np$, $\;\sigma^2 = np(1-p)$`],
+    ['Geometric', String.raw`$P(X = x) = p(1-p)^{x-1}$, $\;\mu = 1/p$, $\;\sigma^2 = (1-p)/p^2$`],
+    ['Geometric, within $x$ trials', String.raw`$P(X \le x) = 1 - (1-p)^x$`],
+    ['Poisson', String.raw`$P(X = x) = \dfrac{e^{-\lambda}\lambda^x}{x!}$, $\;\mu = \sigma^2 = \lambda$`],
+    ['Multinomial', String.raw`$\dfrac{n!}{x_1!\cdots x_k!}\,p_1^{x_1}\cdots p_k^{x_k}$`, 'Walpole §5.2'],
+    ['Negative binomial', String.raw`$P(X = x) = {}_{x-1}C_{k-1}\,p^k(1-p)^{x-k}$`, 'Walpole §5.4'],
+    ['Poisson approximation', String.raw`$b(x; n, p) \approx p(x; np)$ for large $n$, small $p$`, 'Walpole §5.5'],
+    ['Hypergeometric', String.raw`$P(X = x) = \dfrac{{}_kC_x\,{}_{N-k}C_{n-x}}{{}_NC_n}$, $\;\mu = nk/N$`, 'Walpole §5.3'],
   ],
 };

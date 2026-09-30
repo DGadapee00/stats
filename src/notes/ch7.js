@@ -11,6 +11,7 @@ const r2 = (x) => Math.round(x * 100) / 100;
 export default {
   ch: '7',
   title: 'Fundamental sampling distributions',
+  lede: String.raw`A statistic like $\bar{x}$ or $\hat{p}$ changes from sample to sample, so it has a distribution of its own: its sampling distribution. This chapter finds those distributions, above all the central limit theorem, which says the mean of a large sample is close to normal whatever the population looks like. It is the bridge from probability to the inference of Chapters 8 to 10.`,
   sections: [
     {
       id: '7.1',

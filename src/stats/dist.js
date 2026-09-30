@@ -403,6 +403,13 @@ export function hyperPmf(x, N, n, k) {
   return Math.exp(lchoose(k, x) + lchoose(N - k, n - x) - lchoose(N, n));
 }
 
+/** P(X ≤ r) for the hypergeometric: a sum of h(x; N, n, k). */
+export function hyperCdf(r, N, n, k) {
+  let s = 0;
+  for (let x = 0; x <= Math.floor(r); x++) s += hyperPmf(x, N, n, k);
+  return Math.min(1, s);
+}
+
 // ---------- continuous uniform and exponential ----------
 
 export const unifPdf = (x, a, b) => (x >= a && x <= b ? 1 / (b - a) : 0);

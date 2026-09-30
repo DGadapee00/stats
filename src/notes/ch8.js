@@ -25,6 +25,7 @@ const FOUR_STEPS = [
 export default {
   ch: '8',
   title: 'One-sample inference',
+  lede: String.raw`With one sample in hand, what can we say about the population it came from? This chapter gives the two answers the rest of the course uses: a confidence interval, a range of plausible values for a mean or a proportion, and a hypothesis test, which asks whether the data contradict a claimed value and measures how strongly with a p-value.`,
   sections: [
     {
       id: '8.1',

@@ -1,18 +1,24 @@
 /**
- * Chapter 2, rewritten from the teacher's notes (Ch 2, pp. 26–40). Example numbers are the notes'.
+ * Chapter 2, rewritten from the teacher's notes (Ch 2, pp. 26–40), laid out like FLUX's notes.
+ * Example numbers are the notes'; the textbook's material (Walpole §2.3–2.7) is marked, and its
+ * examples are lettered (2.A, 2.B, …).
  */
-import { choose, perm } from '../stats/dist.js';
+import { choose, perm, factorial } from '../stats/dist.js';
 
 export default {
   ch: '2',
   title: 'Probability',
+  lede: 'Probability is the language for uncertainty: a number between 0 and 1 attached to an event, with a few rules for combining those numbers. This chapter builds it from the ground up: the outcomes an experiment can have, how to count them, and the rules for "or", "not", "given" and "and". Every inference later in the course rests on these rules.',
   sections: [
     {
       id: '2.1',
+      part: 'Outcomes and events',
       title: 'Random experiments and sample spaces',
       blocks: [
+        ['p', 'Probability starts with an experiment whose result we cannot predict, and a complete list of what that result could be.'],
         ['def', 'Random experiment.', 'A process with several possible outcomes, where which one happens cannot be predicted in advance (flipping a coin).'],
-        ['def', 'Sample space $S$.', 'The set of all possible outcomes. Each outcome is a **sample point**. For one coin flip, $S = \\{\\text{Head}, \\text{Tail}\\}$.'],
+        ['def', 'Sample space $S$.', String.raw`The set of all possible outcomes. Each outcome is a **sample point**. For one coin flip, $S = \{\text{Head}, \text{Tail}\}$.`],
+        ['p', 'When the experiment happens in stages, a **tree diagram** lists the sample space without missing anything: one level of branches per stage, and each path from the root to a tip is one sample point.'],
         [
           'ex',
           {
@@ -22,6 +28,7 @@ export default {
             answer: String.raw`$S = \{HH, HT, T1, T2, T3, T4, T5, T6\}$: 8 sample points.`,
           },
         ],
+        ['p', 'Not every sample space can be listed. The life of a component can be any number of years from 0 up, so its sample space is described by a rule instead: $S = \\{t \\mid t \\ge 0\\}$.'],
       ],
     },
     {
@@ -29,10 +36,12 @@ export default {
       title: 'Events',
       lab: 'cond',
       blocks: [
+        ['p', 'We rarely care about a single outcome. We care about a collection of them: "the component fails in the first five years", "the hand has two aces". Such a collection is an event.'],
         ['def', 'Event.', 'A subset of the sample space.'],
         ['p', String.raw`Example 2.2: if $S = \{t \mid t \ge 0\}$ is the life in years of a component, the event "it fails before the end of year 5" is $A = \{t \mid 0 \le t < 5\}$.`],
-        ['def', 'Null set $\\emptyset$.', 'The event with no outcomes (an impossible event). Example 2.3: $B = \\{x \\mid x \\text{ is an even factor of } 7\\} = \\emptyset$, since 7’s only factors, 1 and 7, are odd.'],
-        ['def', "Complement $A'$", String.raw`(also written $A^c$): every outcome of $S$ that is NOT in $A$.`],
+        ['def', String.raw`Null set $\emptyset$.`, String.raw`The event with no outcomes (an impossible event). Example 2.3: $B = \{x \mid x \text{ is an even factor of } 7\} = \emptyset$, since 7’s only factors, 1 and 7, are odd.`],
+        ['p', 'Events combine the way sets do, and each set operation has a plain-English reading that the word problems use:'],
+        ['def', "Complement $A'$", String.raw`(also written $A^c$): every outcome of $S$ that is NOT in $A$. "$A$ does not happen."`],
         [
           'ex',
           {
@@ -43,9 +52,9 @@ export default {
           },
         ],
         ['def', String.raw`Intersection $A \cap B$:`, 'the outcomes in both $A$ and $B$ ("$A$ and $B$ both happen").'],
-        ['def', String.raw`Union $A \cup B$:`, 'the outcomes in $A$ or $B$ or both ("$A$ or $B$ happens").'],
+        ['def', String.raw`Union $A \cup B$:`, 'the outcomes in $A$ or $B$ or both ("$A$ or $B$ happens"). In statistics "or" always includes both.'],
         ['def', 'Mutually exclusive (disjoint):', String.raw`$A \cap B = \emptyset$. The two events cannot happen at the same time.`],
-        ['p', 'A **Venn diagram** draws $S$ as a rectangle and events as circles inside it, which makes these set operations visible.'],
+        ['p', 'A **Venn diagram** draws $S$ as a rectangle and events as circles inside it, which makes these set operations visible: the overlap of two circles is $A \\cap B$, both circles together are $A \\cup B$, and everything outside a circle is its complement.'],
         [
           'ex',
           {
@@ -60,13 +69,18 @@ export default {
           },
         ],
         ['warn', '"60 like math" includes the 20 who like both. Start a Venn diagram from the overlap and subtract outward.'],
+        ['bridge', 'An event is a set of outcomes, so its probability comes down to how many outcomes it holds and how likely each one is. Part II attaches the numbers and learns to count outcomes when there are far too many to list.'],
       ],
     },
     {
       id: '2.3',
+      part: 'Counting the outcomes',
       title: 'Probability of an event',
       problems: ['c2.at-least-one'],
       blocks: [
+        ['p', 'A probability is a number between 0 and 1: 0 for an event that cannot happen, 1 for one that must. Read it as a long-run proportion: repeat the experiment many times and $P(A)$ is the fraction of the repetitions in which $A$ happens.'],
+        ['list', [String.raw`$0 \le P(A) \le 1$ for every event $A$.`, String.raw`$P(\emptyset) = 0$ and $P(S) = 1$.`]],
+        ['p', 'The simplest case, and the one the class notes use, is a sample space whose points are all equally likely: a fair coin, a fair die, a card drawn from a shuffled deck. Then a probability is a count.'],
         ['key', String.raw`When all sample points are equally likely: $P(A) = \dfrac{\text{number of sample points in } A}{\text{number of sample points in } S}$.`],
         [
           'ex',
@@ -80,6 +94,32 @@ export default {
             checks: () => [['P', 3 / 4, 0.75, 0]],
           },
         ],
+        ['warn', 'The sample space for two tosses has 4 points, not 3. "Zero, one or two heads" is a list of events, and they are not equally likely: one head happens two ways (HT and TH).'],
+        [
+          'book',
+          'Walpole §2.4',
+          [
+            ['p', 'When the sample points are not equally likely, each gets a **weight**, its probability: the weights are between 0 and 1 and add up to 1. The probability of an event is then the sum of the weights of the points in it. Counting is the special case where every weight is $1/N$.'],
+            [
+              'ex',
+              {
+                n: '2.A',
+                title: 'a loaded die',
+                q: 'A die is loaded so that a 6 comes up three times as often as each of the other faces, which are equally likely. Find the probability of an even number.',
+                a: [
+                  String.raw`Call each of the faces 1 to 5 weight $w$; the 6 has weight $3w$.`,
+                  String.raw`The weights add to 1: $5w + 3w = 8w = 1$, so $w = 1/8$.`,
+                  String.raw`Even $= \{2, 4, 6\}$: $P = \tfrac18 + \tfrac18 + \tfrac38 = \tfrac58$.`,
+                ],
+                answer: '$P(\\text{even}) = 0.625$, not the 0.5 of a fair die.',
+                checks: () => [
+                  ['w', 1 / (5 + 3), 1 / 8, 0],
+                  ['P(even)', 1 / 8 + 1 / 8 + 3 / 8, 0.625, 0],
+                ],
+              },
+            ],
+          ],
+        ],
       ],
     },
     {
@@ -87,7 +127,10 @@ export default {
       title: 'Counting: multiplication rule, permutations, combinations',
       problems: ['c2.multiplication-rule', 'c2.permutations', 'c2.combinations'],
       blocks: [
-        ['key', String.raw`**Multiplication rule.** If one operation can be done in $n_1$ ways and, for each of those, a second in $n_2$ ways, the two together can be done in $n_1 n_2$ ways.`],
+        ['p', 'For equally likely outcomes, a probability is a ratio of two counts. When a sample space has millions of points (every 5-card poker hand), nobody lists them: we count them. Three rules do nearly all the work.'],
+        ['h', 'The multiplication rule'],
+        ['key', String.raw`**Multiplication rule.** If one operation can be done in $n_1$ ways and, for each of those, a second in $n_2$ ways, the two together can be done in $n_1 n_2$ ways. It extends to any number of steps: $n_1 n_2 \cdots n_k$.`],
+        ['why', 'Draw the tree: the first step has $n_1$ branches and each of them splits into $n_2$, so there are $n_1$ groups of $n_2$ tips.'],
         [
           'ex',
           {
@@ -100,7 +143,9 @@ export default {
             checks: () => [['ways', 4 * 3, 12, 0]],
           },
         ],
+        ['h', 'Permutations: order matters'],
         ['def', 'Permutation:', 'an arrangement in a specific order. Order matters.'],
+        ['p', String.raw`Arrange $r$ of $n$ distinct objects in a row: the first place can be filled $n$ ways, the second $n - 1$ (one object is used), and so on down to $n - r + 1$ for the last. The multiplication rule multiplies these, and the product is written with factorials.`],
         ['key', String.raw`$_nP_r = \dfrac{n!}{(n - r)!}$ arrangements of $r$ objects chosen from $n$ distinct ones, where $n! = n(n-1)\cdots(2)(1)$ and $0! = 1$.`],
         [
           'ex',
@@ -115,9 +160,38 @@ export default {
           },
         ],
         ['ti', ['Type $n$ (25), then MATH ▸ PROB ▸ 2:nPr, then $r$ (3), ENTER: 13800.']],
+        [
+          'book',
+          'Walpole §2.3',
+          [
+            ['p', String.raw`If some of the objects are alike, swapping two alike objects gives the same arrangement, so the $n!$ arrangements overcount. With $n_1$ alike of one kind, $n_2$ of another, …, $n_k$ of the $k$th, the number of **distinct permutations** is`],
+            ['p', String.raw`$$\frac{n!}{n_1!\,n_2!\cdots n_k!}.$$`],
+            ['p', String.raw`The same count answers a different question: the number of ways to **partition** $n$ distinct objects into $k$ groups of sizes $n_1, \ldots, n_k$ (the order inside a group does not matter). It is written $\dbinom{n}{n_1, n_2, \ldots, n_k}$. A circular arrangement of $n$ objects has $(n - 1)!$ permutations, since turning the circle changes nothing.`],
+            [
+              'ex',
+              {
+                n: '2.B',
+                title: 'letters and committees',
+                q: '(a) How many distinct arrangements are there of the letters of STATISTICS? (b) In how many ways can 9 people be split into working groups of 4, 3 and 2?',
+                a: [
+                  String.raw`(a) 10 letters: S three times, T three times, I twice, A and C once. $\dfrac{10!}{3!\,3!\,2!} = \dfrac{3{,}628{,}800}{72} = 50{,}400$.`,
+                  String.raw`(b) A partition into cells of 4, 3 and 2: $\dbinom{9}{4, 3, 2} = \dfrac{9!}{4!\,3!\,2!} = \dfrac{362{,}880}{288} = 1260$.`,
+                ],
+                answer: '(a) 50,400; (b) 1260.',
+                checks: () => [
+                  ['10!', factorial(10), 3628800, 0],
+                  ['(a)', factorial(10) / (factorial(3) * factorial(3) * factorial(2)), 50400, 0],
+                  ['(b)', factorial(9) / (factorial(4) * factorial(3) * factorial(2)), 1260, 0],
+                  ['(b) as C·C', choose(9, 4) * choose(5, 3), 1260, 0],
+                ],
+              },
+            ],
+          ],
+        ],
+        ['h', 'Combinations: only the group matters'],
         ['def', 'Combination:', 'a selection where the order does not matter; only which objects are in the group.'],
-        ['key', String.raw`$_nC_r = \dfrac{n!}{r!\,(n - r)!}$ groups of $r$ chosen from $n$.`],
-        ['why', String.raw`Each group of $r$ can be arranged in $r!$ orders, so $_nC_r = {}_nP_r / r!$: the combinations are the permutations with the orderings of each group counted once.`],
+        ['key', String.raw`$_nC_r = \dbinom{n}{r} = \dfrac{n!}{r!\,(n - r)!}$ groups of $r$ chosen from $n$.`],
+        ['why', String.raw`Each group of $r$ can be arranged in $r!$ orders, so $_nC_r = {}_nP_r / r!$: the combinations are the permutations with the orderings of each group counted once.`, 'Derivation'],
         [
           'ex',
           {
@@ -133,6 +207,7 @@ export default {
             ],
           },
         ],
+        ['p', 'Counting both the sample space and the event turns a card problem into a ratio:'],
         [
           'ex',
           {
@@ -151,18 +226,20 @@ export default {
             ],
           },
         ],
-        ['ti', ['Type $n$, MATH ▸ PROB ▸ 3:nCr, then $r$. For Ex 2.9: 10 nCr 3 = 120, 5 nCr 2 = 10, 120 × 10 = 1200.']],
+        ['ti', ['Type $n$, MATH ▸ PROB ▸ 3:nCr, then $r$. For Ex 2.9: 10 nCr 3 = 120, 5 nCr 2 = 10, 120 × 10 = 1200.', 'Factorials: MATH ▸ PROB ▸ 4:!.']],
         ['warn', 'Permutation or combination? Ask whether swapping two of the chosen objects gives a different outcome. Different jobs or ranks: yes, permutation. Just a group: no, combination.'],
+        ['bridge', 'Counting handles one event at a time. Part III is the set of rules that turn the probabilities of simple events into those of combined ones: "or", "not", "given" and "and".'],
       ],
     },
     {
       id: '2.5',
+      part: 'Rules for combining probabilities',
       title: 'The additive and complement rules',
       lab: 'cond',
       problems: ['c2.additive-rule', 'c2.at-least-one'],
       blocks: [
         ['key', String.raw`**Additive rule:** $P(A \cup B) = P(A) + P(B) - P(A \cap B)$. If $A$ and $B$ are mutually exclusive, $P(A \cup B) = P(A) + P(B)$.`],
-        ['why', 'Adding $P(A)$ and $P(B)$ counts the overlap $A \\cap B$ twice; subtracting it once corrects that.'],
+        ['why', 'Adding $P(A)$ and $P(B)$ counts the overlap $A \\cap B$ twice; subtracting it once corrects that. Mutually exclusive events have no overlap, so there is nothing to subtract.'],
         [
           'ex',
           {
@@ -175,6 +252,27 @@ export default {
             checks: () => [['P', 0.8 + 0.6 - 0.5, 0.9, 1e-12]],
           },
         ],
+        ['warn', 'Without the correction, $0.8 + 0.6 = 1.4$: a probability above 1 is a sure sign an overlap was counted twice.'],
+        [
+          'book',
+          'Walpole §2.5',
+          [
+            ['p', 'With three events the same bookkeeping goes one step further: adding the three counts every pairwise overlap twice, subtracting the three overlaps removes the triple overlap entirely, so it is added back once.'],
+            ['p', String.raw`$$P(A \cup B \cup C) = P(A) + P(B) + P(C) - P(A \cap B) - P(A \cap C) - P(B \cap C) + P(A \cap B \cap C).$$`],
+            [
+              'ex',
+              {
+                n: '2.C',
+                title: 'three courses',
+                q: 'Of the students in a program, 40% take math, 30% physics and 20% chemistry; 10% take math and physics, 8% math and chemistry, 5% physics and chemistry, and 2% all three. What fraction take at least one of the three?',
+                a: [String.raw`$P(M \cup P \cup C) = 0.40 + 0.30 + 0.20 - 0.10 - 0.08 - 0.05 + 0.02$.`],
+                answer: '0.69: 69% take at least one.',
+                checks: () => [['P', 0.4 + 0.3 + 0.2 - 0.1 - 0.08 - 0.05 + 0.02, 0.69, 1e-12]],
+              },
+            ],
+          ],
+        ],
+        ['p', 'The most useful special case of the additive rule is an event and its complement: they are mutually exclusive and together they are everything.'],
         ['key', String.raw`**Complement rule:** $P(A) + P(A') = 1$, so $P(A) = 1 - P(A')$.`],
         ['why', String.raw`$A$ and $A'$ are mutually exclusive and together make up $S$, and $P(S) = 1$.`],
         [
@@ -190,7 +288,7 @@ export default {
             ],
           },
         ],
-        ['key', '"At least one" almost always means: 1 − P(none).'],
+        ['key', '"At least one" almost always means: 1 − P(none). The event "none" is a single case; "at least one" is all the others.'],
       ],
     },
     {
@@ -199,8 +297,9 @@ export default {
       lab: 'cond',
       problems: ['c2.conditional-independence', 'c2.two-way-table'],
       blocks: [
+        ['p', 'New information changes probabilities. The chance a flight arrives on time is one number; the chance it arrives on time, given that it left on time, is another. The second is a **conditional probability**.'],
         ['key', String.raw`$P(B \mid A) = \dfrac{P(A \cap B)}{P(A)}$, provided $P(A) > 0$: the probability of $B$ once we know $A$ happened.`],
-        ['why', 'Knowing $A$ happened shrinks the sample space to $A$. Of that, the part where $B$ also happens is $A \\cap B$.'],
+        ['why', 'Knowing $A$ happened shrinks the sample space to $A$. Of that, the part where $B$ also happens is $A \\cap B$. Dividing by $P(A)$ rescales the new, smaller sample space so that its probabilities add to 1 again.'],
         [
           'ex',
           {
@@ -214,6 +313,7 @@ export default {
             ],
           },
         ],
+        ['p', 'Data that classify each individual two ways (sex and phone brand, say) come as a **two-way (contingency) table**. Every probability in this chapter can be read off one: a cell over the grand total is an "and", a row or column total over the grand total is a single event, and a cell over its row or column total is a conditional.'],
         [
           'ex',
           {
@@ -258,7 +358,7 @@ export default {
       blocks: [
         ['p', 'Events are **independent** when one happening does not change the probability of the other: two tosses of a coin; a die roll and a coin flip. They are **dependent** when it does: drawing cards without replacement; choosing two different students in turn.'],
         ['key', String.raw`$A$ and $B$ are independent if and only if $P(B \mid A) = P(B)$ (equivalently, $P(A \mid B) = P(A)$).`],
-        ['p', 'Drawing WITH replacement makes the draws independent: the deck is the same each time.'],
+        ['p', 'Drawing WITH replacement makes the draws independent: the deck is the same each time. Without replacement, the first card changes what is left for the second.'],
         [
           'ex',
           {
@@ -271,16 +371,18 @@ export default {
             checks: () => [['P(R|S)', 0.11 / 0.25, 0.44, 1e-12]],
           },
         ],
-        ['warn', 'Independent is not the same as mutually exclusive. Mutually exclusive events with positive probabilities are always DEPENDENT: if one happens, the other cannot.'],
+        ['warn', 'Independent is not the same as mutually exclusive. Mutually exclusive events with positive probabilities are always DEPENDENT: if one happens, the other cannot, so knowing one happened drops the other’s probability to 0.'],
       ],
     },
     {
       id: '2.8',
       title: 'The product rule',
       lab: 'cond',
-      problems: ['c2.product-rule-independent'],
+      problems: ['c2.product-rule-independent', 'c2.without-replacement'],
       blocks: [
+        ['p', 'The definition of conditional probability, multiplied through by $P(A)$, is a rule for "and":'],
         ['key', String.raw`**General product rule:** $P(A \cap B) = P(A)\,P(B \mid A) = P(B)\,P(A \mid B)$.`],
+        ['p', 'When the events are independent, $P(B \\mid A)$ is just $P(B)$, and the rule is as simple as it gets. This is also the test for independence most problems use:'],
         ['key', String.raw`**Independent events:** $P(A \cap B) = P(A)\,P(B)$.`],
         [
           'ex',
@@ -303,7 +405,116 @@ export default {
           },
         ],
         ['key', '"And" between independent events: multiply. "Or" between mutually exclusive events: add.'],
+        [
+          'book',
+          'Walpole §2.6',
+          [
+            ['p', String.raw`The product rule chains to any number of events. Each factor is conditioned on everything before it:`],
+            ['p', String.raw`$$P(A_1 \cap A_2 \cap A_3) = P(A_1)\,P(A_2 \mid A_1)\,P(A_3 \mid A_1 \cap A_2),$$`],
+            ['p', 'and so on for more. Drawing without replacement is the typical use: each draw is conditioned on the cards already gone.'],
+            [
+              'ex',
+              {
+                n: '2.D',
+                title: 'three hearts',
+                q: 'Three cards are dealt in succession, without replacement, from a shuffled deck. Find the probability that all three are hearts.',
+                a: [
+                  String.raw`$P(H_1) = \tfrac{13}{52}$; after one heart is gone, $P(H_2 \mid H_1) = \tfrac{12}{51}$; after two, $P(H_3 \mid H_1 \cap H_2) = \tfrac{11}{50}$.`,
+                  String.raw`$P = \tfrac{13}{52} \cdot \tfrac{12}{51} \cdot \tfrac{11}{50} = \tfrac{1716}{132{,}600} = 0.0129$.`,
+                  String.raw`Counting gives the same: $\dfrac{_{13}C_3}{_{52}C_3} = \dfrac{286}{22{,}100} = 0.0129$.`,
+                ],
+                answer: '0.0129. With replacement it would be $(1/4)^3 = 0.0156$.',
+                checks: () => [
+                  ['product', (13 / 52) * (12 / 51) * (11 / 50), 0.0129, 5e-5],
+                  ['numerator', 13 * 12 * 11, 1716, 0],
+                  ['denominator', 52 * 51 * 50, 132600, 0],
+                  ['13C3', choose(13, 3), 286, 0],
+                  ['52C3', choose(52, 3), 22100, 0],
+                  ['with replacement', 0.25 ** 3, 0.0156, 5e-5],
+                ],
+              },
+            ],
+          ],
+        ],
+        ['bridge', 'The product rule runs forward: from $P(A)$ and $P(B \\mid A)$ to $P(A \\cap B)$. The last section of the chapter runs it backwards, from $P(B \\mid A)$ to $P(A \\mid B)$, which is how a test result is read.'],
       ],
     },
+    {
+      id: '2.9',
+      title: 'Total probability and Bayes’ rule',
+      source: 'Walpole §2.7',
+      lab: 'cond',
+      blocks: [
+        ['p', String.raw`Often we know how likely an outcome is within each of several groups, and want its overall probability. Suppose the groups $A_1, A_2, \ldots, A_k$ **partition** the sample space: they are mutually exclusive and together cover all of it (the three shifts of a factory, "has the disease" and "does not"). An event $B$ is then split into the pieces $B \cap A_1, \ldots, B \cap A_k$, and the product rule gives each piece.`],
+        ['key', String.raw`**Total probability:** $P(B) = \sum_{i=1}^{k} P(A_i)\,P(B \mid A_i)$.`],
+        ['p', String.raw`Now reverse the question: given that $B$ happened, which group did it come from? That is $P(A_r \mid B)$, and the definition of conditional probability with the total above as the denominator gives it.`],
+        ['key', String.raw`**Bayes’ rule:** $P(A_r \mid B) = \dfrac{P(A_r)\,P(B \mid A_r)}{\sum_{i=1}^{k} P(A_i)\,P(B \mid A_i)}$.`],
+        ['why', [String.raw`$P(A_r \mid B) = P(A_r \cap B)/P(B)$ by definition. The numerator is the product rule, $P(A_r)\,P(B \mid A_r)$; the denominator is total probability.`, 'On a tree: the first branches are the groups, the second whether $B$ happens. Multiply along each path to $B$, add the paths for $P(B)$, and Bayes’ rule is one path over the sum of all of them.'], 'Derivation'],
+        [
+          'ex',
+          {
+            n: '2.E',
+            title: 'a screening test',
+            q: 'A condition affects 1% of a population. A test is positive for 95% of the people who have it and for 5% of those who don’t. A randomly chosen person tests positive. What is the probability they have the condition?',
+            a: [
+              String.raw`Let $A$ = has the condition and $B$ = tests positive: $P(A) = 0.01$, $P(B \mid A) = 0.95$, $P(B \mid A') = 0.05$.`,
+              String.raw`Total probability: $P(B) = (0.01)(0.95) + (0.99)(0.05) = 0.0095 + 0.0495 = 0.059$.`,
+              String.raw`Bayes: $P(A \mid B) = \dfrac{0.0095}{0.059} = 0.161$.`,
+            ],
+            answer: 'Only 0.161: about 1 positive in 6 has the condition. The healthy 99% are so many that their 5% of false positives outnumber the true positives five to one.',
+            show: 'cond:rare',
+            checks: () => [
+              ['P(B)', 0.01 * 0.95 + 0.99 * 0.05, 0.059, 1e-12],
+              ['true positives', 0.01 * 0.95, 0.0095, 1e-12],
+              ['false positives', 0.99 * 0.05, 0.0495, 1e-12],
+              ['P(A|B)', (0.01 * 0.95) / (0.01 * 0.95 + 0.99 * 0.05), 0.161, 5e-4],
+            ],
+          },
+        ],
+        ['warn', String.raw`$P(B \mid A)$ and $P(A \mid B)$ are different numbers. A test that catches 95% of cases does not mean a positive is 95% likely to be a case: that depends on how common the condition is.`],
+        [
+          'ex',
+          {
+            n: '2.F',
+            title: 'three shifts',
+            q: 'A plant runs three shifts. The day shift makes 50% of the output, the evening shift 30% and the night shift 20%; their defect rates are 1%, 2% and 4%. (a) What fraction of all output is defective? (b) A defective item is found. What is the probability it was made on the night shift?',
+            data: {
+              head: ['Shift', '$P(A_i)$', String.raw`$P(D \mid A_i)$`, String.raw`$P(A_i)\,P(D \mid A_i)$`],
+              rows: [
+                ['Day', '0.50', '0.01', '0.005'],
+                ['Evening', '0.30', '0.02', '0.006'],
+                ['Night', '0.20', '0.04', '0.008'],
+                ['Total', '1', '', '0.019'],
+              ],
+            },
+            a: [String.raw`(a) $P(D) = 0.005 + 0.006 + 0.008 = 0.019$.`, String.raw`(b) $P(\text{night} \mid D) = \dfrac{0.008}{0.019} = 0.421$.`],
+            answer: '(a) 1.9% defective; (b) 0.421. The night shift makes 20% of the output but 42% of the defects.',
+            checks: () => [
+              ['day', 0.5 * 0.01, 0.005, 1e-12],
+              ['evening', 0.3 * 0.02, 0.006, 1e-12],
+              ['night', 0.2 * 0.04, 0.008, 1e-12],
+              ['P(D)', 0.5 * 0.01 + 0.3 * 0.02 + 0.2 * 0.04, 0.019, 1e-12],
+              ['P(night|D)', (0.2 * 0.04) / (0.5 * 0.01 + 0.3 * 0.02 + 0.2 * 0.04), 0.421, 5e-4],
+            ],
+          },
+        ],
+        ['p', 'The column of products is the whole calculation: its total is $P(D)$, and each row’s share of the total is the Bayes probability for that group. The three shares, $0.263$, $0.316$ and $0.421$, add to 1.'],
+        ['bridge', 'So far the outcomes have been words: heads, defective, on time. Chapter 3 attaches a number to each outcome, a random variable, and the probabilities become a distribution.'],
+      ],
+    },
+  ],
+  formulas: [
+    ['Equally likely outcomes', String.raw`$P(A) = \dfrac{\#A}{\#S}$`],
+    ['Multiplication rule', String.raw`$n_1 \times n_2 \times \cdots \times n_k$ ways`],
+    ['Permutations', String.raw`$_nP_r = \dfrac{n!}{(n-r)!}$ (order matters)`],
+    ['Combinations', String.raw`$_nC_r = \dfrac{n!}{r!\,(n-r)!}$ (order does not)`],
+    ['Like objects, partitions', String.raw`$\dfrac{n!}{n_1!\,n_2!\cdots n_k!}$`, 'Walpole §2.3'],
+    ['Additive rule', String.raw`$P(A \cup B) = P(A) + P(B) - P(A \cap B)$`],
+    ['Complement', String.raw`$P(A') = 1 - P(A)$`],
+    ['Conditional probability', String.raw`$P(B \mid A) = \dfrac{P(A \cap B)}{P(A)}$`],
+    ['Independence', String.raw`$P(B \mid A) = P(B)$, equivalently $P(A \cap B) = P(A)\,P(B)$`],
+    ['Product rule', String.raw`$P(A \cap B) = P(A)\,P(B \mid A)$`],
+    ['Total probability', String.raw`$P(B) = \sum P(A_i)\,P(B \mid A_i)$`, 'Walpole §2.7'],
+    ['Bayes’ rule', String.raw`$P(A_r \mid B) = \dfrac{P(A_r)\,P(B \mid A_r)}{\sum P(A_i)\,P(B \mid A_i)}$`, 'Walpole §2.7'],
   ],
 };

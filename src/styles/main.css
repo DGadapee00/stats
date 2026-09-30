@@ -42,6 +42,8 @@
   --radius-sm: 4px;
   --font: 'Inter', system-ui, -apple-system, Segoe UI, sans-serif;
   --mono: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+  /* FLUX's notes face: KaTeX's own serif, already loaded with the math fonts. */
+  --serif: KaTeX_Main, 'Latin Modern Roman', 'CMU Serif', Cambria, Georgia, serif;
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --col: 760px;
   --gutter: 16px;
@@ -1002,171 +1004,427 @@ canvas.tappable {
   cursor: pointer;
 }
 
-/* ------------------------------------------------------------------ notes */
-.notes {
-  font-size: var(--fs-body);
-  line-height: 1.6;
-}
-
-.notes p + p {
-  margin-top: 8px;
-}
-
-.nb-toc {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.nb-toc a {
-  font-size: var(--fs-ui);
-  color: var(--text-muted);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 4px 10px;
-  background: var(--panel-2);
-}
-
-.nb-sec {
-  scroll-margin-top: 110px;
-  border-top: 1px solid var(--border);
-  padding-top: 18px;
-}
-
-.nb-sec > * + * {
-  margin-top: 12px;
-}
-
-.nb-num {
-  color: var(--blue);
-  font-family: var(--mono);
-  font-weight: 500;
-  margin-right: 4px;
-}
-
-.nb {
-  border-radius: var(--radius);
-  padding: 10px 12px;
-  border: 1px solid var(--border);
-  background: var(--panel-solid);
-}
-
-.nb-key {
-  border-color: rgba(244, 211, 69, 0.45);
-  background: rgba(244, 211, 69, 0.06);
-}
-
-.nb-def b {
-  color: var(--blue);
-}
-
-.nb-why {
-  border-color: rgba(92, 208, 179, 0.4);
-}
-
-.nb-warn {
-  border-color: rgba(240, 172, 95, 0.5);
-}
-
-.nb-fix {
-  border-color: rgba(252, 98, 85, 0.5);
-  background: var(--bad-soft);
-}
-
-.nb-tag {
-  display: block;
+/* ------------------------------------------------------------------ notes (FLUX's layout) */
+/* A chapter reads as one document: serif prose, sans headings, callout boxes (src/ui/notes.js). */
+.eyebrow {
+  font-family: var(--font);
   font-size: var(--fs-meta);
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-muted);
+}
+
+.nt-doc {
+  font-family: var(--serif);
+  font-size: 17px;
+  line-height: 1.65;
+  color: var(--text);
+}
+
+.nt-doc header.nt-top {
+  padding: 4px 0 18px;
+  border-bottom: 1px solid var(--border-hover);
+}
+
+.nt-doc h1 {
+  margin: 8px 0 10px;
+  font-family: var(--font);
+  font-size: var(--fs-display);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.nt-doc .lede {
+  color: var(--text-muted);
+}
+
+.nt-doc h2,
+.nt-doc h3 {
+  font-family: var(--font);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.nt-doc h3 {
+  margin-top: 22px;
+  font-size: var(--fs-body);
+}
+
+.nt-doc p {
+  margin: 10px 0;
+}
+
+.nt-doc ul,
+.nt-doc ol {
+  margin: 10px 0;
+  padding-left: 1.3em;
+}
+
+.nt-doc li {
+  margin: 4px 0;
+}
+
+.nt-doc .def b {
+  color: var(--blue);
+}
+
+.nt-doc .katex {
+  font-size: 1.04em;
+}
+
+.nt-doc a:not(.btn) {
+  color: var(--blue);
+}
+
+.nt-doc .note {
+  font-family: var(--font);
+}
+
+.nt-doc .part {
+  margin-top: 44px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-hover);
+}
+
+.nt-doc .part .eyebrow {
+  color: var(--blue);
+}
+
+.nt-doc .part h2 {
+  margin-top: 4px;
+  font-size: var(--fs-display);
+}
+
+section.topic {
+  margin-top: 34px;
+  scroll-margin-top: 110px;
+}
+
+section.topic h2 {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  font-size: var(--fs-title);
+}
+
+section.topic h2 .n {
+  min-width: 2.4em;
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--blue);
+}
+
+.nt-doc .bridge {
+  margin-top: 22px;
+  padding-left: 14px;
+  border-left: 2px solid var(--border-hover);
+  font-style: italic;
+  color: var(--text-muted);
+}
+
+/* Callouts: worked example, why it works, key idea, correction, watch out, TI-84. */
+.nt-doc .box {
+  margin: 18px 0;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: rgba(236, 230, 226, 0.03);
+}
+
+.nt-doc .box > .tag {
+  display: block;
   margin-bottom: 2px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  white-space: normal;
+  font-family: var(--font);
+  font-size: var(--fs-meta);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
 }
 
-.nb-why .nb-tag {
-  color: var(--teal);
+.nt-doc .box p {
+  margin: 6px 0;
 }
 
-.nb-warn .nb-tag {
+.nt-doc .box.ex > .tag {
+  color: var(--blue);
+}
+
+.nt-doc .box.why {
+  border-color: transparent;
+  background: rgba(88, 196, 221, 0.1);
+}
+
+.nt-doc .box.why > .tag {
+  color: var(--blue);
+}
+
+.nt-doc .box.key {
+  border-color: var(--border-hover);
+  border-left: 3px solid var(--text);
+}
+
+.nt-doc .box.key > .tag {
+  color: var(--text);
+}
+
+.nt-doc .box.fix {
+  border-color: rgba(240, 172, 95, 0.3);
+  background: rgba(240, 172, 95, 0.09);
+}
+
+.nt-doc .box.fix > .tag {
   color: var(--gold);
 }
 
-.nb-fix .nb-tag {
+.nt-doc .box.warn {
+  border-color: rgba(252, 98, 85, 0.35);
+  background: var(--bad-soft);
+}
+
+.nt-doc .box.warn > .tag {
   color: var(--red);
 }
 
-.nb-list {
-  padding-left: 22px;
+.nt-doc .box.ti {
+  border-style: dashed;
 }
 
-.nb-list li + li,
-.nb-sol li + li,
-.nb-ti li + li {
-  margin-top: 4px;
-}
-
-.nb-ex {
-  display: grid;
-  gap: 10px;
-}
-
-.nb-ex-head {
-  font-weight: 600;
-  color: var(--yellow);
-}
-
-.nb-sol summary,
-.nb-ti summary {
-  cursor: pointer;
-  color: var(--blue);
+.nt-doc .box.ti ol {
+  font-family: var(--font);
   font-size: var(--fs-ui);
-  min-height: 44px;
-  display: flex;
-  align-items: center;
 }
 
-.nb-sol ol,
-.nb-ti ol {
-  padding-left: 22px;
-  margin-top: 6px;
+.nt-doc .ex-steps {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border);
 }
 
-.nb-answer {
-  margin-top: 8px;
+.nt-doc .ex-answer {
+  margin-top: 10px;
   padding-top: 8px;
   border-top: 1px solid var(--border);
   font-weight: 600;
 }
 
-.nb-ti ol {
+/* Where to go from an example, and from a section. */
+.nt-setup,
+.nt-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-family: var(--font);
+}
+
+.nt-setup {
+  margin-top: 12px;
+}
+
+.nt-links {
+  margin: 18px 0 4px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--border-hover);
+}
+
+.nt-setup .nt-show,
+.nt-links .nt-lab {
+  border-color: var(--blue);
+  color: var(--blue);
+}
+
+/* The textbook's material: a violet rule, so it never passes for the class notes. */
+.nt-doc .book {
+  margin: 20px 0;
+  padding: 2px 0 2px 14px;
+  border-left: 3px solid var(--purple);
+}
+
+.nt-doc .book-sec {
+  padding-left: 14px;
+  border-left: 3px solid var(--purple);
+}
+
+.nt-doc .book-tag,
+.nt-doc .book-note {
+  display: block;
+  font-family: var(--font);
+  font-size: var(--fs-meta);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #bf9fd0;
+}
+
+.nt-doc .book-note {
+  text-transform: none;
+  letter-spacing: 0;
   font-size: var(--fs-ui);
-}
-
-table.nb-table {
-  border-collapse: collapse;
-  font: 13px var(--mono);
-}
-
-table.nb-table th,
-table.nb-table td {
-  padding: 3px 10px 3px 0;
-  text-align: right;
-  border-bottom: 1px solid rgba(236, 230, 226, 0.06);
-  white-space: nowrap;
-}
-
-table.nb-table th {
-  color: var(--text-muted);
   font-weight: 500;
 }
 
-.nb-foot {
+.bk {
+  margin-left: 6px;
+  padding: 0 5px;
+  border: 1px solid rgba(154, 114, 172, 0.55);
+  border-radius: 8px;
+  font-family: var(--font);
+  font-size: 10.5px;
+  font-style: normal;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #bf9fd0;
+  vertical-align: 1px;
+}
+
+.nt-doc .tbl {
+  margin: 16px 0;
+}
+
+.nt-doc table {
+  border-collapse: collapse;
+  font-family: var(--font);
   font-size: var(--fs-ui);
+  font-variant-numeric: tabular-nums;
+}
+
+.nt-doc th,
+.nt-doc td {
+  padding: 6px 10px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border);
+}
+
+.nt-doc th {
+  font-weight: 600;
+  color: var(--text-muted);
+  border-bottom-color: var(--border-hover);
+}
+
+#sformulas table {
+  width: 100%;
+}
+
+.nt-doc nav.toc {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 24px;
+  margin-top: 18px;
+  font-family: var(--font);
+  font-size: var(--fs-ui);
+}
+
+.nt-doc nav.toc h3 {
+  grid-column: 1 / -1;
+  margin-top: 12px;
+  font-size: var(--fs-meta);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.nt-doc nav.toc a {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  min-height: 36px;
+  color: var(--text);
+}
+
+.nt-doc nav.toc a span {
+  min-width: 2.6em;
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--blue);
+}
+
+.nt-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin-top: 16px;
+  font-family: var(--font);
+  font-size: var(--fs-meta);
+  color: var(--text-muted);
+}
+
+.nt-legend i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 6px;
+  border-radius: 2px;
+  vertical-align: -1px;
+}
+
+.sw-ex {
+  background: var(--blue);
+}
+
+.sw-why {
+  background: rgba(88, 196, 221, 0.25);
+  outline: 1px solid var(--blue);
+}
+
+.sw-key {
+  background: var(--text);
+}
+
+.sw-fix {
+  background: var(--gold);
+}
+
+.sw-book {
+  background: var(--purple);
+}
+
+.nt-doc footer {
+  margin-top: 40px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  font-family: var(--font);
+  font-size: var(--fs-ui);
+  color: var(--text-muted);
+}
+
+.nt-card {
+  display: block;
+  color: var(--text);
+}
+
+.nt-card h3 {
+  margin: 4px 0 6px;
 }
 
 .nb-pager {
   justify-content: space-between;
+  gap: 8px;
   margin-top: 24px;
+  font-family: var(--font);
+}
+
+@media (max-width: 560px) {
+  .nt-doc {
+    font-size: 16.5px;
+  }
+
+  .nt-doc nav.toc {
+    grid-template-columns: 1fr;
+  }
+
+  .nt-doc nav.toc a {
+    min-height: 44px;
+  }
+
+  .nt-doc .box {
+    padding: 12px 14px;
+  }
 }
 
 .lab-side.locked .controls,

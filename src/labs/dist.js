@@ -14,13 +14,15 @@ const DISTS = [
   ['binom', 'Binomial'],
   ['geom', 'Geometric'],
   ['pois', 'Poisson'],
+  ['hyper', 'Hypergeometric'],
   ['unif', 'Uniform'],
   ['norm', 'Normal'],
+  ['exp', 'Exponential'],
   ['t', 't'],
   ['chi2', 'Chi-squared'],
   ['f', 'F'],
 ];
-const DISCRETE = new Set(['binom', 'geom', 'pois']);
+const DISCRETE = new Set(['binom', 'geom', 'pois', 'hyper']);
 
 /** Everything about the chosen distribution: support, pmf/pdf, cdf, mean, sd, plot range. */
 export function model(s) {
@@ -36,6 +38,25 @@ export function model(s) {
       while (D.poisCdf(hi, s.lam) < 0.9995) hi++;
       return { disc: true, lo: 0, hi: Math.max(hi, 5), pmf: (x) => D.poisPmf(x, s.lam), cdf: (x) => D.poisCdf(x, s.lam), mean: s.lam, sd: Math.sqrt(s.lam), name: String.raw`\text{Poisson}(${s.lam})` };
     }
+    case 'hyper': {
+      // hN items, hK of them successes, a sample of hn drawn without replacement.
+      const N = s.hN;
+      const K = Math.min(s.hK, N);
+      const n = Math.min(s.hn, N);
+      const q = K / N;
+      return {
+        disc: true,
+        lo: Math.max(0, n - (N - K)),
+        hi: Math.min(n, K),
+        pmf: (x) => D.hyperPmf(x, N, n, K),
+        cdf: (x) => D.hyperCdf(x, N, n, K),
+        mean: n * q,
+        sd: Math.sqrt(N > 1 ? n * q * (1 - q) * ((N - n) / (N - 1)) : 0),
+        name: String.raw`h(x;\ ${N}, ${n}, ${K})`,
+      };
+    }
+    case 'exp':
+      return { disc: false, lo: 0, hi: Math.max(1, 7 * s.beta), pdf: (x) => D.expPdf(x, s.beta), cdf: (x) => D.expCdf(x, s.beta), mean: s.beta, sd: s.beta, name: String.raw`\text{Exp}(\beta = ${s.beta})` };
     case 'unif': {
       const A = Math.min(s.ua, s.ub - 0.5);
       const B = Math.max(s.ub, A + 0.5);
@@ -89,6 +110,20 @@ function mode(M) {
 }
 
 const cont = (s) => !DISCRETE.has(s.dist);
+/**
+ * The step for a and b: a power of ten, about a two-hundredth of the plotted range. The slider runs
+ * between multiples of it, so a round value (35 inches, 0.52) is one the slider can hold exactly.
+ */
+const stepOf = (s) => {
+  if (!cont(s)) return 1;
+  const M = model(s);
+  return 10 ** Math.floor(Math.log10((M.hi - M.lo) / 200));
+};
+const edge = (s, i) => {
+  const M = model(s);
+  const st = stepOf(s);
+  return Number((i ? Math.ceil(M.hi / st) * st : Math.floor(M.lo / st) * st).toFixed(6));
+};
 const span = (s) => {
   const M = model(s);
   return [M.lo, M.hi];
@@ -104,6 +139,10 @@ export default defineLab({
     { id: 'n', label: '$n$', type: 'range', min: 1, max: 60, step: 1, value: 10, show: (s) => s.dist === 'binom' },
     { id: 'p', label: '$p$', type: 'range', min: 0.01, max: 0.99, step: 0.01, value: 0.3, show: (s) => s.dist === 'binom' || s.dist === 'geom' },
     { id: 'lam', label: String.raw`$\mu = \lambda t$`, type: 'range', min: 0.1, max: 30, step: 0.1, value: 4, show: (s) => s.dist === 'pois' },
+    { id: 'hN', label: '$N$ (items in all)', type: 'range', min: 2, max: 60, step: 1, value: 20, show: (s) => s.dist === 'hyper' },
+    { id: 'hK', label: '$k$ (successes among them)', type: 'range', min: 0, max: (s) => s.hN, step: 1, value: 4, show: (s) => s.dist === 'hyper' },
+    { id: 'hn', label: '$n$ (sample, no replacement)', type: 'range', min: 1, max: (s) => s.hN, step: 1, value: 5, show: (s) => s.dist === 'hyper' },
+    { id: 'beta', label: String.raw`$\beta$ (mean)`, type: 'range', min: 0.1, max: 20, step: 0.1, value: 2, show: (s) => s.dist === 'exp' },
     { id: 'ua', label: '$A$', type: 'range', min: -10, max: 20, step: 0.5, value: 0, show: (s) => s.dist === 'unif' },
     { id: 'ub', label: '$B$', type: 'range', min: -9, max: 30, step: 0.5, value: 4, show: (s) => s.dist === 'unif' },
     { id: 'm', label: String.raw`$\mu$`, type: 'range', min: -50, max: 200, step: 0.5, value: 0, show: (s) => s.dist === 'norm' },
@@ -113,8 +152,8 @@ export default defineLab({
     { id: 'd1', label: String.raw`$\nu_1$`, type: 'range', min: 1, max: 40, step: 1, value: 3, show: (s) => s.dist === 'f' },
     { id: 'd2', label: String.raw`$\nu_2$`, type: 'range', min: 1, max: 40, step: 1, value: 10, show: (s) => s.dist === 'f' },
     { id: 'ev', label: 'Event', type: 'choice', options: [['le', '≤ a'], ['ge', '≥ a'], ['between', 'a to b'], ['eq', '= a']], value: 'le' },
-    { id: 'a', label: '$a$', type: 'range', min: (s) => span(s)[0], max: (s) => span(s)[1], step: (s) => (cont(s) ? Number(((span(s)[1] - span(s)[0]) / 200).toPrecision(1)) : 1), value: 3 },
-    { id: 'b', label: '$b$', type: 'range', min: (s) => span(s)[0], max: (s) => span(s)[1], step: (s) => (cont(s) ? Number(((span(s)[1] - span(s)[0]) / 200).toPrecision(1)) : 1), value: 5, show: (s) => s.ev === 'between' },
+    { id: 'a', label: '$a$', type: 'range', min: (s) => edge(s, 0), max: (s) => edge(s, 1), step: stepOf, value: 3 },
+    { id: 'b', label: '$b$', type: 'range', min: (s) => edge(s, 0), max: (s) => edge(s, 1), step: stepOf, value: 5, show: (s) => s.ev === 'between' },
     { id: 'zref', label: 'Show the standard normal for comparison', type: 'toggle', value: true, show: (s) => s.dist === 't' },
   ],
   scenarios: [
@@ -125,6 +164,16 @@ export default defineLab({
     { id: 'heights', label: 'Normal: heights of girls (38.72, 3.17)', state: { dist: 'norm', m: 38.72, sd: 3.17, ev: 'le', a: 35, b: 40 } },
     { id: 'tz', label: 't with 3 df against z', state: { dist: 't', df: 3, zref: true, ev: 'ge', a: 2, b: 3 } },
     { id: 'f', label: 'F(3, 10): the upper 5% point', state: { dist: 'f', d1: 3, d2: 10, ev: 'ge', a: 3.71, b: 5 } },
+    // The worked examples in the notes, one scenario each ("Show this in the lab").
+    { id: 'bin4', label: 'Notes Ex 3.3: cars with airbags, Bin(4, 0.5)', state: { dist: 'binom', n: 4, p: 0.5, ev: 'le', a: 2, b: 3 } },
+    { id: 'favor', label: 'Notes Ex 5.3: at most 6 of 15 in favor, Bin(15, 0.65)', state: { dist: 'binom', n: 15, p: 0.65, ev: 'le', a: 6, b: 10 } },
+    { id: 'wireless', label: 'Notes Ex 5.4: 5 to 7 of 20 households, Bin(20, 0.41)', state: { dist: 'binom', n: 20, p: 0.41, ev: 'between', a: 5, b: 7 } },
+    { id: 'items', label: 'Notes Ex 5.6: first defective within 5 items, p = 0.01', state: { dist: 'geom', p: 0.01, ev: 'le', a: 5, b: 8 } },
+    { id: 'deaths', label: 'Notes Ex 5.8: at least one death, μ = 1.5', state: { dist: 'pois', lam: 1.5, ev: 'ge', a: 1, b: 3 } },
+    { id: 'lot', label: 'Hypergeometric: 2 defectives in a sample of 5 from 20 (4 bad)', state: { dist: 'hyper', hN: 20, hK: 4, hn: 5, ev: 'eq', a: 2, b: 3 } },
+    { id: 'z052', label: 'Notes Ex 6.2: P(Z < 0.52)', state: { dist: 'norm', m: 0, sd: 1, ev: 'le', a: 0.52, b: 1 } },
+    { id: 'run', label: 'Notes Ex 6.4: a 10-km time between 55 and 70 minutes', state: { dist: 'norm', m: 61, sd: 9, ev: 'between', a: 55, b: 70 } },
+    { id: 'wait', label: 'Exponential: a wait over 1 minute, β = 0.5', state: { dist: 'exp', beta: 0.5, ev: 'ge', a: 1, b: 2 } },
   ],
   compute(s) {
     const M = model(s);
@@ -180,6 +229,8 @@ export default defineLab({
     if (r.M.disc) out.push('Each bar is P(X = x); the gold bars make up the event, and their heights add to the probability shown.');
     else out.push('The probability of the event is the gold area under the density curve. For a continuous variable, P(X = a) = 0: a single value has no width.');
     if (s.dist === 'binom') out.push(String.raw`$\mu = np$, $\sigma = \sqrt{np(1-p)}$. With $p = 0.5$ the bars are symmetric; otherwise they lean away from the nearer end, less so as $n$ grows.`);
+    if (s.dist === 'hyper') out.push(String.raw`Drawing without replacement changes the chance of a success from draw to draw, so this is not a binomial. $\mu = n\frac{k}{N}$, the same as the binomial with $p = k/N$, but the variance carries the extra factor $\frac{N - n}{N - 1}$: a smaller spread, because each draw tells you something about what is left.`);
+    if (s.dist === 'exp') out.push(String.raw`The exponential is the waiting time between events of a Poisson process: with $\lambda$ events per unit of time, the wait has $\beta = 1/\lambda$. $\mu = \sigma = \beta$, and $P(X > x) = e^{-x/\beta}$. It forgets: having waited $t$ already, the chance of waiting $x$ more is still $e^{-x/\beta}$.`);
     if (s.dist === 'geom') out.push(String.raw`$\mu = 1/p$. Whatever $p$ is, the most likely trial for the first success is the first one: every later trial needs failures first.`);
     if (s.dist === 'pois') out.push(String.raw`For a Poisson, $\sigma^2 = \mu$: the spread grows like $\sqrt{\mu}$, and the shape looks more and more normal as $\mu$ grows.`);
     if (s.dist === 'norm') out.push(String.raw`About 68% of the area lies within one $\sigma$ of $\mu$, 95% within two, whatever $\mu$ and $\sigma$ are: standardizing, $z = (x-\mu)/\sigma$, turns every normal into the same curve.`);

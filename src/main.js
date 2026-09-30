@@ -41,7 +41,7 @@ function route() {
   badge.hidden = !due;
   badge.textContent = due;
 
-  const key = `${r.unitId}|${r.mode}|${r.problemId}|${r.seed}|${r.labId}|${r.chapter}`;
+  const key = `${r.unitId}|${r.mode}|${r.problemId}|${r.seed}|${r.labId}|${r.scenario}|${r.chapter}`;
   // Each screen sets the handlers it needs on the shared view; none carries over to the next one.
   view.onclick = view.oninput = view.onchange = view.onkeydown = null;
   if (r.mode === 'practice' && r.problemId) renderProblem(view, r);

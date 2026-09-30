@@ -1,5 +1,7 @@
 /**
- * Chapter 3, rewritten from the teacher's notes (Ch 3, pp. 41–46). Example numbers are the notes'.
+ * Chapter 3, rewritten from the teacher's notes (Ch 3, pp. 41–46), laid out like FLUX's notes.
+ * Example numbers are the notes'; the textbook's material (Walpole §3.4, joint distributions) is
+ * marked, and its example is lettered (3.A). Chapter 4 reuses the welds table of Ex 3.A.
  */
 import { binomPmf } from '../stats/dist.js';
 
@@ -12,15 +14,26 @@ const integrate = (f, a, b, n = 2000) => {
 };
 const f35 = (x) => (x >= -1 && x <= 2 ? (x * x) / 3 : 0);
 
+/** Ex 3.A: two welds per part. WELDS[y][x] = P(X = x, Y = y), x defective welds, y = 1 for the old machine. */
+export const WELDS = [
+  [0.3, 0.2, 0.1],
+  [0.1, 0.2, 0.1],
+];
+const gX = (x) => WELDS[0][x] + WELDS[1][x];
+const hY = (y) => WELDS[y].reduce((a, b) => a + b, 0);
+
 export default {
   ch: '3',
   title: 'Random variables and probability distributions',
+  lede: 'A random variable puts a number on each outcome of an experiment, and its distribution says how likely each number is. This chapter sets up the two kinds, discrete (counts, with probabilities listed value by value) and continuous (measurements, with probability as area under a curve), and the cumulative distribution function that works for both. Chapters 5 and 6 are catalogues of the distributions built here.',
   sections: [
     {
       id: '3.1',
+      part: 'Numbers from outcomes',
       title: 'Random variables',
       problems: ['c3.discrete-continuous'],
       blocks: [
+        ['p', 'Chapter 2’s outcomes were words: RB, heads then a 4, defective. Most questions are about a number computed from the outcome: how many red balls, how long the wait. Making that number the object of study is the step from probability to statistics.'],
         ['def', 'Random variable.', 'A variable whose numerical value is set by the outcome of a random experiment: exactly one number for each sample point. Written with capital letters, $X$, $Y$; a value it takes, with lower case, $x$, $y$.'],
         [
           'ex',
@@ -34,6 +47,7 @@ export default {
             case: 0,
           },
         ],
+        ['p', 'Two sample points, RB and BR, give the same value $y = 1$. That is normal: a random variable can map many outcomes to one number, and $P(Y = 1)$ collects all of them.'],
         [
           'ex',
           {
@@ -46,15 +60,20 @@ export default {
           },
         ],
         ['list', ['A **discrete** random variable takes a countable set of separate values, usually whole numbers you can list (counts).', 'A **continuous** random variable takes any value in a range, decimals and fractions included (measurements).']],
+        ['warn', 'Money and scores are recorded in whole cents or points but are usually treated as continuous; what matters is whether the variable counts or measures.'],
+        ['bridge', 'The two kinds need two different ways of attaching probabilities. A discrete variable gets a probability at each value (Part II, first); a continuous one gets probability only on intervals, as area (Part II, second).'],
       ],
     },
     {
       id: '3.2',
+      part: 'Distributions of one variable',
       title: 'Discrete probability distributions',
       lab: 'dist',
       problems: ['c3.build-distribution', 'c3.pmf-table', 'c3.pmf-constant'],
       blocks: [
+        ['p', 'A discrete distribution is a list: each value the variable can take, and its probability. The list can be a table, a formula, or a graph.'],
         ['def', 'Probability mass function (pmf).', String.raw`$f(x) = P(X = x)$, listed for every value $x$. It must satisfy (1) $f(x) \ge 0$ and (2) $\sum_x f(x) = 1$.`],
+        ['why', 'The values of $X$ are mutually exclusive (it cannot be 1 and 2 at once) and between them they cover every outcome, so their probabilities must add to $P(S) = 1$. Exercises that ask for the constant $c$ in a pmf use exactly this: set the sum to 1 and solve.'],
         [
           'ex',
           {
@@ -68,13 +87,15 @@ export default {
             answer: 'f(x) = 1/16, 4/16, 6/16, 4/16, 1/16 for x = 0, …, 4: symmetric about 2.',
             problem: 'c3.build-distribution',
             case: 0,
+            show: 'dist:bin4',
             checks: () => [
               ...[1, 4, 6, 4, 1].map((k, x) => [`f(${x})`, binomPmf(x, 4, 0.5), k / 16, 1e-12]),
               ['sum', [0, 1, 2, 3, 4].reduce((t, x) => t + binomPmf(x, 4, 0.5), 0), 1, 1e-12],
             ],
           },
         ],
-        ['p', 'Plot a pmf as spikes (a line at each $x$ of height $f(x)$) or as a **probability histogram**: a bar of width 1 centered at each $x$, so each bar’s AREA is its probability.'],
+        ['p', 'Plot a pmf as spikes (a line at each $x$ of height $f(x)$) or as a **probability histogram**: a bar of width 1 centered at each $x$, so each bar’s AREA is its probability. The area picture is the bridge to continuous variables, where area is the only way probability is shown.'],
+        ['p', 'Many questions ask for "at most" or "up to": the probability accumulated from the left. That running total has its own name.'],
         ['def', 'Cumulative distribution function (CDF).', String.raw`$F(x) = P(X \le x) = \sum_{t \le x} f(t)$, for every real $x$.`],
         ['fix', String.raw`The notes' definition box writes the sum over $t < x$. It must be $t \le x$: $F(x)$ is $P(X \le x)$, which includes $f(x)$ itself (in Ex 3.4, $F(0) = f(0) = 1/16$, not 0).`],
         [
@@ -97,6 +118,7 @@ export default {
           },
         ],
         ['key', 'For a discrete $X$: $P(a < X \\le b) = F(b) - F(a)$. Watch the endpoints: $P(X < 3) = P(X \\le 2) = F(2)$.'],
+        ['p', String.raw`Going back is as easy: the size of each jump is the pmf, $f(x) = F(x) - F(x - 1)$ for integer values. In Ex 3.4, $f(2) = F(2) - F(1) = \tfrac{11}{16} - \tfrac{5}{16} = \tfrac{6}{16}$.`],
       ],
     },
     {
@@ -106,6 +128,7 @@ export default {
       problems: ['c3.density-cdf', 'c3.pdf-constant', 'c3.cdf'],
       blocks: [
         ['p', String.raw`For a continuous $X$, any single value has probability 0: there are infinitely many values between 0 and 1, so $P(X = 0.5) = 1/\infty = 0$. Probability lives on intervals instead.`],
+        ['p', 'Picture a probability histogram of a measurement with narrower and narrower bars: the bar tops smooth into a curve, and the area under the curve over an interval is the probability of landing in it. That curve is the density.'],
         ['def', 'Probability density function (pdf).', String.raw`A function $f(x)$ with (1) $f(x) \ge 0$ for all $x$; (2) $\int_{-\infty}^{\infty} f(x)\,dx = 1$; and (3) $P(a < X < b) = \int_a^b f(x)\,dx$, the area under $f$ between $a$ and $b$.`],
         ['key', 'For a continuous $X$, $P(a < X < b) = P(a \\le X \\le b)$: including an endpoint adds probability 0. (Not so for a discrete $X$.)'],
         [
@@ -123,11 +146,14 @@ export default {
             checks: () => [
               ['total area', integrate(f35, -1, 2), 1, 1e-9],
               ['P(0<X≤1)', integrate(f35, 0, 1), 1 / 9, 1e-9],
+              ['f(2) > 1', f35(2), 4 / 3, 1e-12],
             ],
           },
         ],
         ['ti', ['MATH ▸ 9:fnInt(, then fill in the template: lower 0, upper 1, the function X²/3, variable X.', 'ENTER gives 0.1111111111.']],
+        ['warn', String.raw`A density is not a probability, and it can be bigger than 1: in Ex 3.5, $f(2) = 4/3$. Only its AREA over an interval is a probability.`],
         ['def', 'CDF of a continuous $X$:', String.raw`$F(x) = P(X \le x) = \int_{-\infty}^{x} f(t)\,dt$. Then $P(a < X < b) = F(b) - F(a)$, and $f(x) = F'(x)$ wherever the derivative exists.`],
+        ['why', String.raw`$F(x)$ is the area to the left of $x$. Moving $x$ right by a small $h$ adds a thin strip of area about $f(x)\,h$, so $F(x + h) - F(x) \approx f(x)\,h$, and dividing by $h$ gives $F'(x) = f(x)$: the fundamental theorem of calculus.`],
         [
           'ex',
           {
@@ -146,7 +172,72 @@ export default {
           },
         ],
         ['key', 'Every CDF is non-decreasing, from 0 on the far left to 1 on the far right. A discrete CDF is a step function; a continuous one is a continuous curve.'],
+        ['bridge', 'One variable at a time covers most of the course. But a part has more than one feature, a student more than one score, and the interesting question is often how two variables move together. That takes a joint distribution.'],
       ],
     },
+    {
+      id: '3.4',
+      part: 'Two variables at once',
+      title: 'Joint distributions',
+      source: 'Walpole §3.4',
+      blocks: [
+        ['p', String.raw`Two discrete random variables $X$ and $Y$ measured on the same outcome have a **joint probability distribution**: a table of $f(x, y) = P(X = x \text{ and } Y = y)$, one cell for each pair of values. It is a two-way table of Chapter 2, with probabilities in the cells instead of counts.`],
+        ['def', 'Joint pmf.', String.raw`$f(x, y) \ge 0$ for every pair, $\sum_x \sum_y f(x, y) = 1$, and $P((X, Y) \in A) = \sum_{A} f(x, y)$ for any region $A$ of pairs.`],
+        ['def', 'Marginal distributions.', String.raw`$g(x) = \sum_y f(x, y)$ and $h(y) = \sum_x f(x, y)$: the column and row totals. Each is the ordinary distribution of one variable, ignoring the other.`],
+        ['def', 'Conditional distribution.', String.raw`$f(x \mid y) = \dfrac{f(x, y)}{h(y)}$: one row of the table, rescaled to add to 1. It is the distribution of $X$ among outcomes with that value of $Y$.`],
+        ['def', 'Independence.', String.raw`$X$ and $Y$ are independent if $f(x, y) = g(x)\,h(y)$ for EVERY pair $(x, y)$. One cell that fails is enough to show they are dependent.`],
+        [
+          'ex',
+          {
+            n: '3.A',
+            title: 'welds and machines',
+            q: 'Each part has two welds. For a randomly chosen part, $X$ is the number of welds that need rework and $Y = 1$ if the part came from the older of two machines ($Y = 0$ for the newer). The joint distribution is below. (a) Check it is a joint pmf. (b) Find the marginal distributions. (c) Find the distribution of $X$ for parts from the old machine, and $P(X \\ge 1 \\mid Y = 1)$. (d) Are $X$ and $Y$ independent?',
+            data: {
+              head: ['$f(x, y)$', '$x = 0$', '$x = 1$', '$x = 2$', '$h(y)$'],
+              rows: [
+                ['$y = 0$ (new)', '0.30', '0.20', '0.10', '0.60'],
+                ['$y = 1$ (old)', '0.10', '0.20', '0.10', '0.40'],
+                ['$g(x)$', '0.40', '0.40', '0.20', '1'],
+              ],
+            },
+            a: [
+              '(a) Every cell is at least 0, and $0.30 + 0.20 + 0.10 + 0.10 + 0.20 + 0.10 = 1$. ✓',
+              String.raw`(b) Column totals: $g(0) = 0.40$, $g(1) = 0.40$, $g(2) = 0.20$. Row totals: $h(0) = 0.60$, $h(1) = 0.40$.`,
+              String.raw`(c) Divide the $y = 1$ row by $h(1) = 0.40$: $f(0 \mid 1) = 0.25$, $f(1 \mid 1) = 0.50$, $f(2 \mid 1) = 0.25$. So $P(X \ge 1 \mid Y = 1) = 0.50 + 0.25 = 0.75$.`,
+              String.raw`(d) Try the first cell: $f(0, 0) = 0.30$, but $g(0)\,h(0) = (0.40)(0.60) = 0.24$. They differ, so $X$ and $Y$ are dependent.`,
+            ],
+            answer: 'Dependent: 75% of old-machine parts need some rework, against 50% of new-machine parts ($P(X \\ge 1 \\mid Y = 0) = 0.30/0.60$).',
+            checks: () => [
+              ['total', hY(0) + hY(1), 1, 1e-12],
+              ['g(0)', gX(0), 0.4, 1e-12],
+              ['g(1)', gX(1), 0.4, 1e-12],
+              ['g(2)', gX(2), 0.2, 1e-12],
+              ['h(0)', hY(0), 0.6, 1e-12],
+              ['h(1)', hY(1), 0.4, 1e-12],
+              ['f(0|1)', WELDS[1][0] / hY(1), 0.25, 1e-12],
+              ['f(1|1)', WELDS[1][1] / hY(1), 0.5, 1e-12],
+              ['f(2|1)', WELDS[1][2] / hY(1), 0.25, 1e-12],
+              ['P(X≥1|Y=1)', (WELDS[1][1] + WELDS[1][2]) / hY(1), 0.75, 1e-12],
+              ['P(X≥1|Y=0)', (WELDS[0][1] + WELDS[0][2]) / hY(0), 0.5, 1e-12],
+              ['g(0)h(0)', gX(0) * hY(0), 0.24, 1e-12],
+            ],
+          },
+        ],
+        ['warn', 'To show independence you must check every cell; to show dependence one cell is enough. A table whose rows are multiples of each other is independent.'],
+        ['p', String.raw`Two continuous variables work the same way with a **joint density** $f(x, y)$: probabilities are volumes under the surface, $P((X, Y) \in A) = \iint_A f(x, y)\,dx\,dy$, and the marginals integrate out the other variable instead of summing it.`],
+        ['bridge', 'A distribution is a whole list of numbers. Chapter 4 boils it down to two: the mean, where the distribution is centered, and the variance, how far it spreads. It also measures how two variables in a joint table move together, using the welds table above.'],
+      ],
+    },
+  ],
+  formulas: [
+    ['pmf', String.raw`$f(x) = P(X = x)$, $\;f(x) \ge 0$, $\;\sum_x f(x) = 1$`],
+    ['Discrete CDF', String.raw`$F(x) = P(X \le x) = \sum_{t \le x} f(t)$`],
+    ['Probability from a discrete CDF', String.raw`$P(a < X \le b) = F(b) - F(a)$`],
+    ['pdf', String.raw`$f(x) \ge 0$, $\;\int_{-\infty}^{\infty} f(x)\,dx = 1$, $\;P(a < X < b) = \int_a^b f(x)\,dx$`],
+    ['Continuous CDF', String.raw`$F(x) = \int_{-\infty}^{x} f(t)\,dt$, $\;f(x) = F'(x)$`],
+    ['A single value', String.raw`$P(X = a) = 0$ when $X$ is continuous`],
+    ['Marginals', String.raw`$g(x) = \sum_y f(x, y)$, $\;h(y) = \sum_x f(x, y)$`, 'Walpole §3.4'],
+    ['Conditional distribution', String.raw`$f(x \mid y) = f(x, y) / h(y)$`, 'Walpole §3.4'],
+    ['Independence', String.raw`$f(x, y) = g(x)\,h(y)$ for every $(x, y)$`, 'Walpole §3.4'],
   ],
 };

@@ -56,3 +56,9 @@ holds the plan and the course decisions (tables, quartile rule, exam dates, buil
 - Every worked example that states a number carries `checks`; notes-check recomputes each one.
   Link an example to its practice case (`problem`, `case`) only when the case cites that example.
 - Where the source slips, keep its example and add a `fix` block (and a line in ERRATA.md).
+- Chapters read like FLUX's notes: a `lede`, sections grouped by `part`, prose before formulas,
+  `why` boxes, `bridge` paragraphs, and a `formulas` sheet. `show: 'lab:scenario'` on an example
+  opens that lab preset (route `?sc=`); add the scenario to the lab first.
+- Material beyond the class notes comes from Walpole and is marked: a `book` block inside a class
+  section, or a whole section with `source`. Its examples are lettered (2.A, 2.B) and never link a
+  practice case.

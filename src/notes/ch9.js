@@ -33,6 +33,7 @@ const PAIN = { n1: 13, n2: 10, x1: 16.2, x2: 14.9, v1: 12.7, v2: 26.4 };
 export default {
   ch: '9',
   title: 'Two-sample inference',
+  lede: String.raw`Most real questions compare: a new method against the old, one group against another. This chapter extends Chapter 8’s intervals and tests to the difference between two proportions or two means, and to the ratio of two variances, and separates independent samples from paired ones, which need a different analysis.`,
   sections: [
     {
       id: '9.1',

@@ -46,11 +46,15 @@ node scripts/smoke.mjs   # every screen at 380px and 1280px (needs the dev serve
   - *Paired vs independent* (Ch 9): the same subjects twice, tested both ways.
   - *Regression* (Ch 10): drag points; line, residuals, R², residual plot, leverage.
   Worked solutions link to the lab for their chapter.
-- **Notes** — the teacher's notes for Ch 1–10, rewritten: 101 worked examples, each with its
-  solution folded until you want it and a link to practice the same numbers; TI-84 steps; each
-  section linked to its lab. Where the notes leave an example to be worked in class, the answer is
-  computed both from the printed tables and exactly. Slips in the source are marked as corrections
-  (and listed in [ERRATA.md](ERRATA.md)).
+- **Notes** — the teacher's notes for Ch 1–10, rewritten and laid out like FLUX's: one continuous
+  document per chapter, with a lede, a contents list grouped into parts, prose with the idea before
+  the formula, "why it works" and derivation boxes, bridges between parts, and a formula sheet.
+  Worked examples are open, with a button to work the same numbers in Practice and, where a lab can
+  show the example, one to open that lab set up on it (`?sc=` presets). Each section ends with its
+  lab and practice problems. Where the class notes are thin, textbook material (Walpole) fills in,
+  marked by section, with its examples lettered (2.A) so no textbook number is invented. Where the
+  notes leave an example to be worked in class, the answer is computed both from the printed tables
+  and exactly. Slips in the source are marked as corrections (and listed in [ERRATA.md](ERRATA.md)).
 
 ## How it is checked
 
@@ -63,8 +67,9 @@ node scripts/smoke.mjs   # every screen at 380px and 1280px (needs the dev serve
   - 200 seeded versions each stay valid and render,
   - KaTeX parses every formula,
   - and each probability agrees with a seeded Monte Carlo simulation of the same problem.
-- `scripts/notes-check.mjs` recomputes every number the notes state (263 of them) from the
-  examples' data, checks each linked practice case cites the same example, and parses all TeX.
+- `scripts/notes-check.mjs` recomputes every number the notes state (342 of them) from the
+  examples' data, checks each linked practice case cites the same example, that every lab preset
+  exists, that textbook material names its Walpole section, and parses all TeX.
 - `scripts/labs-check.mjs` runs every lab headless:
   - every default, scenario and prediction state computes and draws,
   - every Predict-first verdict is what the lab's own numbers show (over several seeds),

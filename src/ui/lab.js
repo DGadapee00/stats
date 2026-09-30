@@ -33,10 +33,10 @@ function saveTally(t) {
   }
 }
 
-export function renderExplore(root, { unitId, labId }) {
+export function renderExplore(root, { unitId, labId, scenario = null }) {
   if (labId) {
     const lab = labById(labId);
-    if (lab) return renderLab(root, { unitId, lab });
+    if (lab) return renderLab(root, { unitId, lab, scenario });
   }
   const unit = unitById(unitId);
   const tally = loadTally();
@@ -90,8 +90,10 @@ function controlHTML(p) {
       <div class="seg" role="radiogroup">${p.options.map(([v, l]) => `<button type="button" role="radio" data-seg="${p.id}" data-v="${esc(v)}">${mathProse(l)}</button>`).join('')}</div></div>`;
 }
 
-export function renderLab(root, { unitId, lab }) {
-  let state = lab.defaults();
+export function renderLab(root, { unitId, lab, scenario = null }) {
+  // Opened from a notes example (`?sc=`): start on that example's scenario.
+  const opening = scenario ? lab.scenarios.find((x) => x.id === scenario) : null;
+  let state = opening ? { ...lab.defaults(), ...opening.state } : lab.defaults();
   let result = null;
   let view = null;
   let frame = 0;
@@ -236,6 +238,7 @@ export function renderLab(root, { unitId, lab }) {
   );
 
   if (scenarioEl) {
+    if (opening) scenarioEl.value = opening.id;
     scenarioEl.addEventListener('change', () => {
       if (locked) return;
       const sc = lab.scenarios.find((x) => x.id === scenarioEl.value);

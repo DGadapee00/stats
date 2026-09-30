@@ -15,6 +15,7 @@ const steam = () => linRegTest({ xs: STEAM_X, ys: STEAM_Y, side: 'two' });
 export default {
   ch: '10',
   title: 'Simple linear regression',
+  lede: String.raw`When two quantitative variables are measured on the same individuals, a scatter plot shows how they move together and a straight line can summarize it. This chapter fits that line by least squares, measures the strength of the relation with the correlation coefficient, and tests whether an apparent linear relation is real.`,
   sections: [
     {
       id: '10.1',
