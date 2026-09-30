@@ -1,0 +1,328 @@
+/**
+ * Practice: the problem list for an exam, and the problem sheet.
+ *
+ * The loop, as in FLUX: open a problem (its first attempt uses the notes' or textbook's numbers,
+ * later ones fresh numbers), answer, Check. A wrong part says why when it can (the complement,
+ * one tail for two, s for σ). Hints come one at a time; the worked solution names every table
+ * lookup. A clean solve (right on the first check, no hints, no solution) moves the problem up the
+ * spaced-review ladder; anything less brings it back sooner (src/problems/progress.js).
+ *
+ * Sessions: working down the list, a mixed set or the review queue, Next follows the session.
+ */
+import { PROBLEMS, problemById, problemsForUnit } from '../problems/index.js';
+import { instance, render, grade, accepted } from '../problems/engine.js';
+import { createProgress, pickSet, MASTERED_BOX } from '../problems/progress.js';
+import { CHAPTER_TITLES, unitById, unitLabel } from '../data/catalog.js';
+import { hashFor } from '../engine/router.js';
+import { mathProse, escapeHTML as esc } from './shared.js';
+
+export const progress = createProgress();
+
+/** The list a Next button walks: set by whatever opened the problem. */
+let session = null;
+
+const STATUS_TEXT = { new: 'New', learning: 'Learning', due: 'Due for review', missed: 'Missed last time', mastered: 'Mastered' };
+
+function daysUntil(dateStr, now = new Date()) {
+  const d = new Date(`${dateStr}T12:00:00`);
+  return Math.round((d - now) / 864e5);
+}
+
+/** Problems in list order: chapter by chapter, in the bank's order within each. */
+function ordered(unitId) {
+  return problemsForUnit(unitId);
+}
+
+export function dueCount(unitId) {
+  return progress.dueIds(ordered(unitId).map((t) => t.id)).length;
+}
+
+// ---------------------------------------------------------------- list
+export function renderList(root, { unitId }) {
+  const unit = unitById(unitId);
+  const list = ordered(unitId);
+  const ids = list.map((t) => t.id);
+  const due = progress.dueIds(ids);
+  const days = daysUntil(unit.date);
+  const when = days > 1 ? `in ${days} days` : days === 1 ? 'tomorrow' : days === 0 ? 'today' : `${-days} days ago`;
+  const byCh = new Map();
+  for (const t of list) {
+    if (!byCh.has(t.ch)) byCh.set(t.ch, []);
+    byCh.get(t.ch).push(t);
+  }
+  const missingChapters = unit.chapters.filter((ch) => !byCh.has(ch));
+
+  root.innerHTML = `
+    <div class="stack">
+      <div class="unit-head">
+        <h2>${esc(unitLabel(unit))}</h2>
+        <span class="countdown">${esc(when)}</span>
+      </div>
+      <div class="actions">
+        <button class="btn ${due.length ? 'primary' : ''}" data-act="review" ${due.length ? '' : 'disabled'}>Review due<small>${due.length} problem${due.length === 1 ? '' : 's'}</small></button>
+        <button class="btn ${due.length ? '' : 'primary'}" data-act="mixed">Mixed set<small>5, weakest first</small></button>
+        <a class="btn" href="${hashFor({ unitId, mode: 'exam' })}">Practice exam<small>8 problems · 50 min</small></a>
+      </div>
+      <div class="legend" aria-label="Status key">
+        ${['new', 'learning', 'due', 'missed', 'mastered'].map((s) => `<span><i class="dot ${s}"></i>${STATUS_TEXT[s]}</span>`).join('')}
+      </div>
+      ${[...byCh.entries()]
+        .map(([ch, tpls]) => {
+          const m = progress.mastery(tpls.map((t) => t.id));
+          const c = progress.counts(tpls.map((t) => t.id));
+          return `
+          <details class="chapter" ${c.seen < c.total ? 'open' : ''}>
+            <summary>
+              <span class="ch-title"><b>Ch ${ch}</b>${esc(CHAPTER_TITLES[ch])}</span>
+              <span class="dim">${c.mastered}/${c.total} mastered</span>
+              <span class="mastery" aria-hidden="true"><i style="width:${Math.round(m * 100)}%"></i></span>
+            </summary>
+            <ul class="plist">
+              ${tpls
+                .map((t) => {
+                  const st = progress.status(t.id);
+                  return `<li><a href="${hashFor({ unitId, problemId: t.id })}" data-open="${t.id}">
+                    <i class="dot ${st}" title="${STATUS_TEXT[st]}"></i>
+                    <span>${esc(t.title)}</span>
+                    <span class="tag">${t.kind === 'conceptual' ? 'concept' : t.level > 1 ? 'multi-step' : 'compute'}</span>
+                  </a></li>`;
+                })
+                .join('')}
+            </ul>
+          </details>`;
+        })
+        .join('')}
+      ${missingChapters.length ? `<p class="note">Problems for Ch ${missingChapters.join(', ')} are not written yet.</p>` : ''}
+    </div>`;
+
+  root.onclick = (e) => {
+    const open = e.target.closest('[data-open]');
+    if (open) session = { name: 'list', ids, unitId };
+    const act = e.target.closest('[data-act]')?.dataset.act;
+    if (act === 'review' && due.length) startSession(unitId, 'review', due);
+    if (act === 'mixed') startSession(unitId, 'mixed', pickSet(list, progress, { n: 5, seed: Date.now() }).map((t) => t.id));
+  };
+}
+
+function startSession(unitId, name, ids) {
+  if (!ids.length) return;
+  session = { name, ids, unitId };
+  location.hash = hashFor({ unitId, problemId: ids[0] });
+}
+
+// ---------------------------------------------------------------- problem sheet
+
+/** One attempt at one version of one template. */
+function newAttempt(tpl, seed) {
+  const inst = instance(tpl, seed);
+  return {
+    tpl,
+    seed,
+    inst,
+    view: render(inst),
+    answers: {},
+    results: {},
+    checks: 0,
+    firstRight: null,
+    hints: 0,
+    revealed: false,
+    finished: false,
+    correct: false,
+  };
+}
+
+let current = null;
+
+export function renderProblem(root, { unitId, problemId, seed }) {
+  const tpl = problemById(problemId);
+  if (!tpl) {
+    root.innerHTML = `<p class="note">No problem called “${esc(problemId)}”. <a href="${hashFor({ unitId })}">Back to the list</a>.</p>`;
+    return;
+  }
+  if (seed == null) {
+    // No version in the link: the notes' numbers first, fresh numbers after that. Write it into
+    // the URL so a reload or a shared link opens the same version.
+    const s = progress.nextSeed(tpl.id);
+    history.replaceState(null, '', hashFor({ unitId, problemId, seed: s }));
+    seed = s;
+  }
+  if (!current || current.tpl.id !== tpl.id || current.seed !== seed) current = newAttempt(tpl, seed);
+  draw(root, unitId);
+}
+
+function sessionInfo(unitId) {
+  if (!session || session.unitId !== unitId || !current) return null;
+  const i = session.ids.indexOf(current.tpl.id);
+  if (i < 0) return null;
+  const label = { list: 'Chapter list', review: 'Review', mixed: 'Mixed set' }[session.name] || '';
+  return { i, n: session.ids.length, next: session.ids[i + 1] || null, label };
+}
+
+function partHTML(p, a) {
+  const res = a.results[p.id];
+  const cls = res ? (res.correct ? 'right' : 'wrong') : '';
+  const locked = a.finished;
+  const label = p.label ? `<div class="part-label">${mathProse(p.label)}</div>` : '';
+  let body = '';
+  if (p.kind === 'numeric') {
+    const val = a.answers[p.id] ?? '';
+    body = `<div class="answer-row">
+      <input type="text" inputmode="decimal" autocomplete="off" spellcheck="false" data-part="${p.id}" value="${esc(val)}" ${locked ? 'readonly' : ''} aria-label="${esc((p.label || 'Answer').replace(/\$/g, ''))}" placeholder="${p.prob ? 'e.g. 0.3085' : 'your answer'}" />
+      ${p.unit ? `<span class="dim">${esc(p.unit)}</span>` : ''}
+    </div>`;
+  } else if (p.kind === 'choice') {
+    const picked = a.answers[p.id];
+    body = `<div class="opts" role="radiogroup">${p.options
+      .map((o) => {
+        const isPicked = picked === o.value;
+        const mark = a.finished && res ? (o.value === a.expected?.[p.id] ? 'right' : isPicked ? 'wrong' : '') : res && isPicked ? (res.correct ? 'right' : 'wrong') : isPicked ? 'picked' : '';
+        return `<label class="opt ${mark}">
+          <input type="radio" name="${p.id}" value="${esc(JSON.stringify(o.value))}" ${isPicked ? 'checked' : ''} ${locked ? 'disabled' : ''} />
+          <span>${mathProse(o.label)}</span>
+        </label>`;
+      })
+      .join('')}</div>`;
+  }
+  let verdict = '';
+  if (res) {
+    verdict = res.correct
+      ? `<div class="verdict ok">Right${res.note ? ` <span class="why">${mathProse(res.note)}</span>` : ''}</div>`
+      : `<div class="verdict bad">${res.empty ? 'Not answered' : 'Not yet'}${res.feedback ? `<span class="why">${mathProse(res.feedback)}</span>` : ''}</div>`;
+  }
+  if (a.finished && p.kind === 'numeric' && !res?.correct) {
+    const vals = accepted(current.tpl.parts.find((q) => q.id === p.id), a.inst.$);
+    verdict += `<div class="verdict"><span class="why">Answer: ${vals.length > 1 ? `${fmt(vals[0])} (table route ${[...new Set(vals.slice(1).map(fmt))].join(' or ')})` : fmt(vals[0])}</span></div>`;
+  }
+  return `<div class="part ${cls}">${label}${body}${verdict}</div>`;
+}
+
+const fmt = (v) => String(Number(Number(v).toPrecision(5)));
+
+function draw(root, unitId) {
+  const a = current;
+  const tpl = a.tpl;
+  const v = a.view;
+  const s = sessionInfo(unitId);
+  const hintsLeft = v.hints.length - a.hints;
+  const status = progress.status(tpl.id);
+
+  root.innerHTML = `
+    <div class="stack">
+      <div class="crumbs">
+        <a href="${hashFor({ unitId })}">← ${s && s.label !== 'Chapter list' ? `${s.label} ${s.i + 1} of ${s.n}` : 'All problems'}</a>
+        <span class="dim">Ch ${tpl.ch} · ${esc(tpl.src || '')}</span>
+      </div>
+      <h2>${esc(tpl.title)}</h2>
+      ${a.seed === 0 && tpl.cases[0] ? `<p class="dim">These are the numbers from ${esc(tpl.cases[0].src)}. Try it again for new numbers.</p>` : ''}
+      <div class="card statement">${mathProse(v.text)}</div>
+      ${v.figure ? `<div class="figure card">${v.figure}</div>` : ''}
+      <div class="parts stack">${tpl.parts.map((p) => partHTML(v.parts.find((q) => q.id === p.id), a)).join('')}</div>
+      ${a.hints ? `<div class="card hints"><h3>Hints</h3><ol>${v.hints.slice(0, a.hints).map((h) => `<li>${mathProse(h)}</li>`).join('')}</ol></div>` : ''}
+      ${a.finished ? finishedHTML(a, status) : ''}
+      ${a.finished || a.revealed ? `<div class="card steps"><h3>Worked solution</h3><ol>${v.steps.map((st) => `<li>${mathProse(st)}</li>`).join('')}</ol></div>` : ''}
+      <div class="sheet-actions">
+        ${
+          a.finished
+            ? `<button class="btn primary" data-act="next">${s?.next ? 'Next problem →' : 'Back to the list'}</button>
+               <button class="btn" data-act="again">Same problem, new numbers</button>`
+            : `<button class="btn primary" data-act="check">Check</button>
+               <button class="btn" data-act="hint" ${hintsLeft ? '' : 'disabled'}>Hint${hintsLeft ? ` (${hintsLeft})` : ''}</button>
+               <button class="btn ghost" data-act="reveal">Show solution</button>`
+        }
+      </div>
+    </div>`;
+
+  root.oninput = (e) => {
+    const id = e.target.dataset.part;
+    if (id) a.answers[id] = e.target.value;
+  };
+  root.onchange = (e) => {
+    if (e.target.type === 'radio') {
+      a.answers[e.target.name] = JSON.parse(e.target.value);
+      delete a.results[e.target.name];
+      draw(root, unitId);
+    }
+  };
+  root.onkeydown = (e) => {
+    if (e.key === 'Enter' && e.target.dataset.part && !a.finished) {
+      e.preventDefault();
+      check(root, unitId);
+    }
+  };
+  root.onclick = (e) => {
+    const act = e.target.closest('[data-act]')?.dataset.act;
+    if (!act) return;
+    if (act === 'check') check(root, unitId);
+    if (act === 'hint' && a.hints < v.hints.length) {
+      a.hints++;
+      draw(root, unitId);
+    }
+    if (act === 'reveal') {
+      a.revealed = true;
+      finish(false);
+      draw(root, unitId);
+    }
+    if (act === 'again') {
+      const seed = 1 + Math.floor(Math.random() * 99999);
+      current = newAttempt(tpl, seed);
+      location.hash = hashFor({ unitId, problemId: tpl.id, seed });
+    }
+    if (act === 'next') {
+      current = null;
+      location.hash = s?.next ? hashFor({ unitId, problemId: s.next }) : hashFor({ unitId });
+    }
+  };
+}
+
+function finishedHTML(a) {
+  if (a.correct && a.firstRight && !a.hints) return `<div class="card done-banner">Right first time. It comes back for review in a few days.</div>`;
+  if (a.correct) return `<div class="card done-banner">Solved. Because it took ${a.hints ? 'hints' : 'more than one check'}, it comes back sooner for review.</div>`;
+  return `<div class="card done-banner missed">Study the worked solution, then try “Same problem, new numbers”. This one comes back in 10 minutes.</div>`;
+}
+
+function check(root, unitId) {
+  const a = current;
+  const tpl = a.tpl;
+  a.checks++;
+  let all = true;
+  for (const p of tpl.parts) {
+    if (p.kind === 'self') continue;
+    const input = a.answers[p.id];
+    if (input == null || input === '') {
+      a.results[p.id] = { correct: false, empty: true, feedback: '' };
+      all = false;
+      continue;
+    }
+    const g = grade(p, a.inst.$, input);
+    // A right answer that matches only the table route is still right; say which one it matched.
+    a.results[p.id] = g;
+    if (!g.correct) all = false;
+  }
+  if (a.firstRight === null) a.firstRight = all;
+  if (all) finish(true);
+  draw(root, unitId);
+  announce(all ? 'All parts right.' : 'Some parts are not right yet.');
+}
+
+function finish(correct) {
+  const a = current;
+  if (a.finished) return;
+  a.finished = true;
+  a.correct = correct && !a.revealed;
+  a.expected = Object.fromEntries(a.tpl.parts.filter((p) => p.kind === 'choice').map((p) => [p.id, typeof p.correct === 'function' ? p.correct(a.inst.$) : p.correct]));
+  for (const p of a.tpl.parts) if (p.kind === 'choice' && !a.results[p.id]) a.results[p.id] = { correct: false, empty: true };
+  progress.record(a.tpl.id, {
+    correct: a.correct,
+    clean: a.correct && a.firstRight && a.hints === 0,
+    hints: a.hints,
+    revealed: a.revealed,
+    seed: a.seed,
+  });
+}
+
+function announce(msg) {
+  const el = document.getElementById('sr-announce');
+  if (el) el.textContent = msg;
+}
+
+export { PROBLEMS, MASTERED_BOX };
