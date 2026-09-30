@@ -159,7 +159,7 @@ export default [
       num('v', ($) => $.v, { label: String.raw`Check: $np(1-p)$` }),
       prob('p', ($) => $.exact, {
         alt: ($) => [$.table],
-        label: ($T, $) => String.raw`$P(X ${{ le: '\le', lt: '<', ge: '\ge', gt: '>' }[$.qt]} ${$.r})$`,
+        label: ($T, $) => String.raw`$P(X ${{ le: '\\le', lt: '<', ge: '\\ge', gt: '>' }[$.qt]} ${$.r})$`,
         traps: [
           [($) => $.noCc, 'That skips the continuity correction. X is a count, so stretch each value half a unit: use r ± 0.5.'],
           [($) => $.binom, 'That is the exact binomial probability (binomcdf). The question asks for the normal approximation, with the continuity correction.'],
@@ -171,7 +171,7 @@ export default [
     steps: ($) => [
       String.raw`$np(1-p) = ${$.n}(${$.p})(${fx(1 - $.p, 2)}) = ${tn($.v, 6)} \ge 10$, so the normal approximation applies.`,
       String.raw`$\mu = np = ${tn($.mu, 6)}$, $\sigma = \sqrt{${tn($.v, 6)}} = ${tn($.sd, 4)}$`,
-      String.raw`Continuity correction: $P(X ${{ le: '\le', lt: '<', ge: '\ge', gt: '>' }[$.qt]} ${$.r}) \approx P(Y ${$.left ? '<' : '>'} ${$.cut})$`,
+      String.raw`Continuity correction: $P(X ${{ le: '\\le', lt: '<', ge: '\\ge', gt: '>' }[$.qt]} ${$.r}) \approx P(Y ${$.left ? '<' : '>'} ${$.cut})$`,
       String.raw`$$z = \dfrac{${$.cut} - ${tn($.mu, 6)}}{${tn($.sd, 4)}} = ${fx($.z, 4)}$$`,
       zLook($.z).line,
       String.raw`$P \approx ${fx($.table, 4)}$ (exact normal: $${fx($.exact, 4)}$; the true binomial value is $${fx($.binom, 4)}$)`,
@@ -192,7 +192,7 @@ export default [
     parts: [
       num('m', ($) => $.p, { label: String.raw`$\mu_{\hat p}$`, tol: 0, abs: 1e-9 }),
       num('se', ($) => $.se, { label: String.raw`$\sigma_{\hat p}$`, traps: [[($) => ($.p * (1 - $.p)) / $.n, String.raw`That is the variance. Take the square root: $\sqrt{p(1-p)/n}$.`]] }),
-      prob('pr', ($) => $.exact, { alt: ($) => [$.table], label: ($T, $) => String.raw`$P(\hat p ${$.side === 'le' ? '\le' : '\ge'} ${$.c})$` }),
+      prob('pr', ($) => $.exact, { alt: ($) => [$.table], label: ($T, $) => String.raw`$P(\hat p ${$.side === 'le' ? '\\le' : '\\ge'} ${$.c})$` }),
     ],
     hints: [String.raw`If $np(1-p) \ge 10$, $\hat p$ is approximately $N\!\left(p, \dfrac{p(1-p)}{n}\right)$.`, String.raw`$z = \dfrac{\hat p - p}{\sqrt{p(1-p)/n}}$`],
     steps: ($) => [
@@ -200,7 +200,7 @@ export default [
       String.raw`$$\mu_{\hat p} = p = ${$.p}, \qquad \sigma_{\hat p} = \sqrt{\dfrac{${$.p}(${fx(1 - $.p, 2)})}{${$.n}}} = ${tn($.se, 4)}$$`,
       String.raw`$$z = \dfrac{${$.c} - ${$.p}}{${tn($.se, 4)}} = ${fx($.z, 4)}$$`,
       zLook($.z).line,
-      String.raw`$P(\hat p ${$.side === 'le' ? '\le' : '\ge'} ${$.c}) = ${fx($.table, 4)}$ (exact $${fx($.exact, 4)}$)`,
+      String.raw`$P(\hat p ${$.side === 'le' ? '\\le' : '\\ge'} ${$.c}) = ${fx($.table, 4)}$ (exact $${fx($.exact, 4)}$)`,
     ],
     cases: [kase('Notes Ex 7.8', { p: 0.76, n: 60, side: 'le', k: (0.7 - 0.76) / Math.sqrt((0.76 * 0.24) / 60) }, { m: 0.76, se: 0.0551, pr: 0.1383 })],
   }),

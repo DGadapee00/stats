@@ -46,6 +46,25 @@ function literals(src) {
   return out;
 }
 
+/** Template text with each `${…}` (code, not TeX) replaced by a space. */
+function withoutInterpolations(text) {
+  let out = '';
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] === '$' && text[i + 1] === '{') {
+      let d = 1;
+      i += 2;
+      while (i < text.length && d) {
+        if (text[i] === '{') d++;
+        else if (text[i] === '}') d--;
+        i++;
+      }
+      i--;
+      out += ' ';
+    } else out += text[i];
+  }
+  return out;
+}
+
 const problems = [];
 for (const file of walk(ROOT)) {
   const src = fs.readFileSync(file, 'utf8');
@@ -56,7 +75,7 @@ for (const file of walk(ROOT)) {
     if (lit.raw) {
       // The opposite slip: inside String.raw a doubled backslash stays doubled, and KaTeX reads \\
       // as a line break followed by the letters ("R_{\\text{eq}}" prints "text eq").
-      for (const m of lit.text.matchAll(/(?<!\\)\\\\[A-Za-z]/g)) {
+      for (const m of withoutInterpolations(lit.text).matchAll(/(?<!\\)\\\\[A-Za-z]/g)) {
         const line = src.slice(0, lit.start).split('\n').length;
         problems.push(`${file}:${line}: doubled backslash inside String.raw — …${lit.text.slice(Math.max(0, m.index - 30), m.index + 30)}…`);
       }
@@ -68,6 +87,77 @@ for (const file of walk(ROOT)) {
       const line = src.slice(0, lit.start).split('\n').length;
       const near = lit.text.slice(Math.max(0, m.index - 40), m.index + 30);
       problems.push(`${file}:${line}: \\${m[0].slice(-1)} is read as a JS escape here, so the TeX is broken — …${near}…`);
+    }
+  }
+}
+
+/**
+ * Quoted strings ('…' and "…") in code, including those nested in a template's `${…}`:
+ * `String.raw\`$P(X ${'\le'} 3)$\`` looks right but JavaScript turns '\le' into "le". A backslash
+ * before a letter that is not a JS escape (\n \r \t \b \f \v \u \x) is always a lost one.
+ * Template text and comments are blanked first so their apostrophes do not look like quotes.
+ */
+function codeOnly(src) {
+  const out = src.split('');
+  const blank = (a, b) => {
+    for (let k = a; k < b; k++) if (out[k] !== '\n') out[k] = ' ';
+  };
+  let i = 0;
+  const stack = []; // template nesting: brace depth at which each open template's ${ } closes
+  let depth = 0;
+  while (i < src.length) {
+    const c = src[i];
+    const inTemplateText = stack.length && stack[stack.length - 1].text;
+    if (inTemplateText) {
+      const start = i;
+      while (i < src.length && src[i] !== '`' && !(src[i] === '$' && src[i + 1] === '{')) i += src[i] === '\\' ? 2 : 1;
+      blank(start, i);
+      if (src[i] === '`') {
+        stack.pop();
+        i++;
+      } else {
+        stack[stack.length - 1].text = false;
+        stack[stack.length - 1].depth = depth;
+        depth++;
+        i += 2;
+      }
+      continue;
+    }
+    if (c === '/' && src[i + 1] === '/') {
+      const e = src.indexOf('\n', i);
+      blank(i, e < 0 ? src.length : e);
+      i = e < 0 ? src.length : e;
+    } else if (c === '/' && src[i + 1] === '*') {
+      const e = src.indexOf('*/', i + 2);
+      blank(i, e < 0 ? src.length : e + 2);
+      i = e < 0 ? src.length : e + 2;
+    } else if (c === "'" || c === '"') {
+      i++;
+      while (i < src.length && src[i] !== c && src[i] !== '\n') i += src[i] === '\\' ? 2 : 1;
+      i++;
+    } else if (c === '`') {
+      stack.push({ text: true, depth: 0 });
+      i++;
+    } else if (c === '{') {
+      depth++;
+      i++;
+    } else if (c === '}') {
+      depth--;
+      if (stack.length && !stack[stack.length - 1].text && depth === stack[stack.length - 1].depth) stack[stack.length - 1].text = true;
+      i++;
+    } else i++;
+  }
+  return out.join('');
+}
+
+for (const file of walk(ROOT)) {
+  const code = codeOnly(fs.readFileSync(file, 'utf8'));
+  for (const m of code.matchAll(/(['"])((?:(?!\1)[^\\\n]|\\.)*)\1/g)) {
+    for (const e of m[2].matchAll(/\\(.)/g)) {
+      if (/[A-Za-z]/.test(e[1]) && !'nrtbfvux'.includes(e[1])) {
+        const line = code.slice(0, m.index).split('\n').length;
+        problems.push(`${file}:${line}: ${m[0]} — JavaScript drops the backslash before "${e[1]}"`);
+      }
     }
   }
 }
