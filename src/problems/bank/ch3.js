@@ -1,5 +1,6 @@
 /** Chapter 3 · Random variables and probability distributions. */
 import { problem, kase, range, choice, data, num, prob, mc, tn, fx } from '../kit.js';
+import { binomPmf, binomCdf, choose } from '../../stats/dist.js';
 
 const C3 = { ch: '3' };
 
@@ -11,6 +12,9 @@ function pmfOf(rand, k) {
     if (parts.every((p) => p >= 1)) return parts.map((p) => p / 20);
   }
 }
+
+/** 3x²/D written the way a person would: x²/(D/3) when D is a multiple of 3. */
+const dens = (D, v = 'x') => (D % 3 === 0 ? String.raw`\dfrac{${v}^2}{${D / 3}}` : String.raw`\dfrac{3${v}^2}{${D}}`);
 
 const pmfTable = (xs, ps, missing = -1) =>
   `<table class="results" style="max-width:420px"><tbody><tr><th>x</th>${xs.map((x) => `<td>${x}</td>`).join('')}</tr><tr><th>f(x)</th>${ps.map((p, i) => `<td>${i === missing ? '?' : fx(p, 2)}</td>`).join('')}</tr></tbody></table>`;
@@ -28,14 +32,66 @@ export default [
         ['c2', 'X = the weight of a randomly chosen apple'],
         ['c3', 'X = the distance a car travels on one tank of gas'],
         ['c4', 'X = the amount of rain in a day'],
+        ['d5', 'Two balls are drawn in succession, without replacement, from an urn with 4 red and 3 black balls. Y = the number of red balls drawn'],
+        ['c5', 'X = the waiting time, in hours, between successive speeders spotted by a radar unit'],
       ),
     },
     derive: ($) => ({ kind: $.s[0] }),
-    text: (T) => `${T.s}. Is X a discrete or a continuous random variable?`,
+    text: (T, $) => `${T.s}. Is ${$.s === 'd5' ? 'Y' : 'X'} a discrete or a continuous random variable?`,
     parts: [mc('k', [['d', 'Discrete: its values can be counted'], ['c', 'Continuous: it can take any value in an interval']], ($) => $.kind)],
     hints: ['A discrete random variable takes a countable set of values (often counts: 0, 1, 2, …). A continuous one takes any value in an interval (measurements).', 'Is X a count or a measurement?'],
     steps: ($) => [$.kind === 'd' ? 'X counts something, so its values are 0, 1, 2, …: a countable set. X is discrete.' : 'X is a measurement: between any two possible values there is another. X is continuous.'],
-    cases: [kase('Walpole §3.1', { s: 'd4' }, { k: 'd' })],
+    cases: [kase('Notes Ex 3.1', { s: 'd5' }, { k: 'd' }), kase('Notes Ex 3.2', { s: 'c5' }, { k: 'c' })],
+  }),
+
+  problem({
+    ...C3, id: 'c3.build-distribution', title: 'Building a distribution and its CDF', kind: 'numeric', level: 2, topics: ['pmf', 'cdf'], src: 'Notes Ex 3.3–3.4',
+    vars: { n: range(3, 6, 1), p: choice([0.5, '50%'], [0.3, '30%'], [0.6, '60%'], [0.2, '20%'], [0.75, '75%']), k: range(0, 5, 1) },
+    derive: ($) => ({ q: 1 - $.p, f: binomPmf($.k, $.n, $.p), F: binomCdf($.k, $.n, $.p), C: choose($.n, $.k) }),
+    valid: ($) => $.k < $.n,
+    text: (T, $) => `A car agency sells ${T.p} of its inventory of a certain foreign car equipped with side airbags. Let X be the number of cars with side airbags among the next ${$.n} cars sold. Find the probability distribution f(x) = P(X = x), and use it for f(${$.k}) and the cumulative distribution F(${$.k}) = P(X ≤ ${$.k}).`,
+    parts: [
+      prob('f', ($) => $.f, { label: ($T, $) => `$f(${$.k})$` }),
+      prob('F', ($) => $.F, { label: ($T, $) => `$F(${$.k})$`, traps: [[($) => $.F - $.f, String.raw`That stops short of $x = k$. $F(k) = P(X \le k)$ includes $f(k)$.`]] }),
+    ],
+    hints: [
+      String.raw`Each car is a trial with two outcomes (airbags or not), independent, with the same chance. A particular order of x "airbag" cars has probability $p^x(1-p)^{n-x}$.`,
+      String.raw`There are $\dbinom{n}{x}$ orders with x airbag cars, so $f(x) = \dbinom{n}{x}p^x(1-p)^{n-x}$.`,
+      String.raw`The CDF adds: $F(k) = f(0) + f(1) + \cdots + f(k)$.`,
+    ],
+    steps: ($) => [
+      String.raw`$$f(x) = \binom{${$.n}}{x}(${$.p})^x(${fx($.q, 2)})^{${$.n} - x}, \quad x = 0, 1, \ldots, ${$.n}$$`,
+      String.raw`$$f(${$.k}) = ${$.C}\,(${$.p})^{${$.k}}(${fx($.q, 2)})^{${$.n - $.k}} = ${fx($.f, 4)}$$`,
+      String.raw`$$F(${$.k}) = ${Array.from({ length: $.k + 1 }, (_, x) => `f(${x})`).join(' + ')} = ${fx($.F, 4)}$$`,
+      'A discrete CDF is a step function: it jumps by f(x) at each value x and is flat in between.',
+    ],
+    cases: [kase('Notes Ex 3.3–3.4', { n: 4, p: 0.5, k: 2 }, { f: 0.375, F: 0.6875 }, { key: 'f(2) = 6/16, F(2) = 11/16' })],
+  }),
+
+  problem({
+    ...C3, id: 'c3.density-cdf', title: 'A density on an interval, and its CDF', kind: 'numeric', level: 2, topics: ['pdf', 'cdf'], src: 'Notes Ex 3.5–3.6',
+    vars: { a: range(0, 2, 1), b: range(1, 3, 1), c: range(-2, 2, 0.5), w: range(0.5, 2, 0.5) },
+    derive: ($) => {
+      const D = $.a ** 3 + $.b ** 3;
+      const lo = $.c;
+      const hi = $.c + $.w;
+      const F = (x) => (x <= -$.a ? 0 : x >= $.b ? 1 : (x ** 3 + $.a ** 3) / D);
+      return { D, lo, hi, p: F(hi) - F(lo), Fhi: F(hi) };
+    },
+    valid: ($) => $.lo >= -$.a && $.hi <= $.b && $.p > 0.01,
+    text: (T, $) => String.raw`The error X in the reaction temperature, in °C, of a laboratory experiment has density $f(x) = ${dens($.D)}$ for $${-$.a} < x < ${$.b}$, and 0 elsewhere. Find $P(${$.lo} < X \le ${$.hi})$, and the CDF value $F(${$.hi})$.`,
+    parts: [
+      prob('p', ($) => $.p, { label: ($T, $) => String.raw`$P(${$.lo} < X \le ${$.hi})$` }),
+      prob('F', ($) => $.Fhi, { label: ($T, $) => `$F(${$.hi})$` }),
+    ],
+    hints: [String.raw`$P(a < X \le b) = \int_a^b f(x)\,dx$. For a continuous variable, < and ≤ give the same probability.`, String.raw`$F(x) = \int_{-\infty}^{x} f(t)\,dt$: here, integrate from the left end of the interval.`, 'On the TI-84: MATH → 9:fnInt( evaluates the integral.'],
+    steps: ($) => [
+      String.raw`Check: $f(x) \ge 0$ and $\displaystyle\int_{${-$.a}}^{${$.b}} ${dens($.D)}\,dx = \dfrac{x^3}{${$.D}}\Big|_{${-$.a}}^{${$.b}} = \dfrac{${$.b ** 3} - (${-($.a ** 3)})}{${$.D}} = 1$, so f is a density.`,
+      String.raw`$$P(${$.lo} < X \le ${$.hi}) = \int_{${$.lo}}^{${$.hi}} ${dens($.D)}\,dx = \dfrac{(${$.hi})^3 - (${$.lo})^3}{${$.D}} = ${fx($.p, 4)}$$`,
+      String.raw`$$F(x) = \int_{${-$.a}}^{x} ${dens($.D, 't')}\,dt = \dfrac{x^3 + ${$.a ** 3}}{${$.D}}, \qquad F(${$.hi}) = ${fx($.Fhi, 4)}$$`,
+    ],
+    twin: { part: 'p', draw: (r, $) => { const x = Math.cbrt(r.next() * $.D - $.a ** 3); return x > $.lo && x <= $.hi; } },
+    cases: [kase('Notes Ex 3.5–3.6', { a: 1, b: 2, c: 0, w: 1 }, { p: 1 / 9, F: 2 / 9 }, { key: 'P(0 < X ≤ 1) = 1/9' })],
   }),
 
   problem({

@@ -10,7 +10,7 @@
  * Sessions: working down the list, a mixed set or the review queue, Next follows the session.
  */
 import { PROBLEMS, problemById, problemsForUnit } from '../problems/index.js';
-import { instance, render, grade, accepted } from '../problems/engine.js';
+import { instance, render, grade, accepted, caseIndex, seedForAttempt } from '../problems/engine.js';
 import { createProgress, pickSet, MASTERED_BOX } from '../problems/progress.js';
 import { CHAPTER_TITLES, unitById, unitLabel } from '../data/catalog.js';
 import { hashFor } from '../engine/router.js';
@@ -115,10 +115,13 @@ function startSession(unitId, name, ids) {
 /** One attempt at one version of one template. */
 function newAttempt(tpl, seed) {
   const inst = instance(tpl, seed);
+  const ci = caseIndex(tpl, seed);
   return {
     tpl,
     seed,
     inst,
+    caseIndex: ci,
+    case: ci >= 0 ? tpl.cases[ci] : null,
     view: render(inst),
     answers: {},
     results: {},
@@ -142,7 +145,7 @@ export function renderProblem(root, { unitId, problemId, seed }) {
   if (seed == null) {
     // No version in the link: the notes' numbers first, fresh numbers after that. Write it into
     // the URL so a reload or a shared link opens the same version.
-    const s = progress.nextSeed(tpl.id);
+    const s = seedForAttempt(tpl, progress.get(tpl.id)?.attempts || 0);
     history.replaceState(null, '', hashFor({ unitId, problemId, seed: s }));
     seed = s;
   }
@@ -213,18 +216,18 @@ function draw(root, unitId) {
         <span class="dim">Ch ${tpl.ch} · ${esc(tpl.src || '')}</span>
       </div>
       <h2>${esc(tpl.title)}</h2>
-      ${a.seed === 0 && tpl.cases[0] ? `<p class="dim">These are the numbers from ${esc(tpl.cases[0].src)}. Try it again for new numbers.</p>` : ''}
+      ${a.case ? `<p class="dim">These are the numbers from ${esc(a.case.src)}.${a.caseIndex < tpl.cases.length - 1 ? ' Your next attempts go through the other worked examples, then new numbers.' : ' Try it again for new numbers.'}</p>` : ''}
       <div class="card statement">${mathProse(v.text)}</div>
       ${v.figure ? `<div class="figure card">${v.figure}</div>` : ''}
       <div class="parts stack">${tpl.parts.map((p) => partHTML(v.parts.find((q) => q.id === p.id), a)).join('')}</div>
       ${a.hints ? `<div class="card hints"><h3>Hints</h3><ol>${v.hints.slice(0, a.hints).map((h) => `<li>${mathProse(h)}</li>`).join('')}</ol></div>` : ''}
       ${a.finished ? finishedHTML(a, status) : ''}
-      ${a.finished || a.revealed ? `<div class="card steps"><h3>Worked solution</h3><ol>${v.steps.map((st) => `<li>${mathProse(st)}</li>`).join('')}</ol></div>` : ''}
+      ${a.finished || a.revealed ? `<div class="card steps"><h3>Worked solution</h3><ol>${v.steps.map((st) => `<li>${mathProse(st)}</li>`).join('')}</ol>${a.case?.note ? `<p class="note" style="margin-top:10px"><b>About the source:</b> ${mathProse(a.case.note)}</p>` : ''}</div>` : ''}
       <div class="sheet-actions">
         ${
           a.finished
             ? `<button class="btn primary" data-act="next">${s?.next ? 'Next problem →' : 'Back to the list'}</button>
-               <button class="btn" data-act="again">Same problem, new numbers</button>`
+               <button class="btn" data-act="again">${a.caseIndex >= 0 && a.caseIndex + 1 < tpl.cases.length ? 'Next worked example' : 'Same problem, new numbers'}</button>`
             : `<button class="btn primary" data-act="check">Check</button>
                <button class="btn" data-act="hint" ${hintsLeft ? '' : 'disabled'}>Hint${hintsLeft ? ` (${hintsLeft})` : ''}</button>
                <button class="btn ghost" data-act="reveal">Show solution</button>`
@@ -263,7 +266,8 @@ function draw(root, unitId) {
       draw(root, unitId);
     }
     if (act === 'again') {
-      const seed = 1 + Math.floor(Math.random() * 99999);
+      // Next worked example if there is one this student has not met, else fresh numbers.
+      const seed = a.caseIndex >= 0 && a.caseIndex + 1 < tpl.cases.length ? seedForAttempt(tpl, a.caseIndex + 1) : 1 + Math.floor(Math.random() * 99999);
       current = newAttempt(tpl, seed);
       location.hash = hashFor({ unitId, problemId: tpl.id, seed });
     }

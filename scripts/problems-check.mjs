@@ -17,7 +17,7 @@
  *   node scripts/problems-check.mjs [--samples 200] [--only c5.] [--list]
  */
 import { PROBLEMS, CHAPTER_ORDER } from '../src/problems/index.js';
-import { build, instance, render, expected, accepted, grade, choiceOptions, tolerance } from '../src/problems/engine.js';
+import { build, instance, render, expected, accepted, grade, choiceOptions, tolerance, seedForAttempt, caseIndex } from '../src/problems/engine.js';
 import { createProgress, memoryStorage, pickSet, INTERVAL_DAYS } from '../src/problems/progress.js';
 import { mathPieces, texError } from '../src/ui/shared.js';
 import { createRng } from '../src/stats/rng.js';
@@ -143,6 +143,12 @@ for (const tpl of bank) {
     checkParts(id, inst, `case ${c.src}`);
     checkStrings(id, inst, `case ${c.src}`);
   }
+
+  // Every case is reachable: attempt k opens case k.
+  tpl.cases.forEach((c, k) => {
+    const seed = seedForAttempt(tpl, k);
+    if (caseIndex(tpl, seed) !== k || JSON.stringify(instance(tpl, seed).values) !== JSON.stringify(c.v)) err(id, `attempt ${k + 1} does not open case ${c.src}`);
+  });
 
   // 2–4. seeded versions
   for (let s = 1; s <= SAMPLES; s++) {

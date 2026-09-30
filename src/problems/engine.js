@@ -71,9 +71,29 @@ export function sampleValues(tpl, rand) {
   throw new Error(`${tpl.id}: could not satisfy valid() in 4000 tries`);
 }
 
-/** Instance from a seed; seed 0 gives the first worked case (the notes' or worksheet's numbers). */
+/**
+ * Seeds for the worked cases: 0 is the first case, CASE_SEED + i the i-th. A student's first
+ * attempts walk through every case (the notes' own examples) before fresh numbers start.
+ */
+export const CASE_SEED = 1000000;
+
+/** Which worked case a seed names, or -1 for a generated version. */
+export function caseIndex(tpl, seed) {
+  if (seed === 0) return tpl.cases.length ? 0 : -1;
+  const i = seed - CASE_SEED;
+  return i >= 0 && i < tpl.cases.length ? i : -1;
+}
+
+/** The seed for a student's attempt number k (0-based): the cases first, then fresh numbers. */
+export function seedForAttempt(tpl, k, rand = Math.random) {
+  if (k < tpl.cases.length) return k === 0 ? 0 : CASE_SEED + k;
+  return 1 + Math.floor(rand() * 99999);
+}
+
+/** Instance from a seed: a worked case (see CASE_SEED) or a generated version. */
 export function instance(tpl, seed, { worksheet = false } = {}) {
-  if ((worksheet || seed === 0) && tpl.cases[0]) return build(tpl, tpl.cases[0].v);
+  const i = worksheet ? 0 : caseIndex(tpl, seed);
+  if (i >= 0 && tpl.cases[i]) return build(tpl, tpl.cases[i].v);
   return build(tpl, sampleValues(tpl, rng(hashSeed(`${tpl.id}:${seed}`))));
 }
 

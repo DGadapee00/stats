@@ -14,10 +14,10 @@ node scripts/smoke.mjs   # every screen at 380px and 1280px (needs the dev serve
 
 ## What is here
 
-- **Practice** — 44 problem generators for the midterm (Ch 1–6). Each draws fresh numbers,
+- **Practice** — 53 problem generators for the midterm (Ch 1–6). Each draws fresh numbers,
   computes the answer, and shows a worked solution that names every table lookup. The first
-  attempt uses the numbers from the teacher's notes or the textbook. After that, every attempt
-  gets new numbers.
+  attempts go through the teacher's own worked examples (64 of them, from her notes for Ch 1–5)
+  and the textbook's; after that, every attempt gets new numbers.
   - **Grading:** answers are graded to table precision. A problem accepts both the exact value
     and the value you get from the printed tables (z rounded to 2 places, the t row either
     side of your df).
@@ -40,5 +40,5 @@ node scripts/smoke.mjs   # every screen at 380px and 1280px (needs the dev serve
   - KaTeX parses every formula,
   - and each probability agrees with a seeded Monte Carlo simulation of the same problem.
 
-Quartiles follow the teacher's notes (TI-84: the median of each half). The tables are those of the
+[ERRATA.md](ERRATA.md) lists where a printed answer is wrong. Quartiles follow the teacher's notes (TI-84: the median of each half). The tables are those of the
 textbook's Appendix A (`src/stats/tables-data.js`, extracted by `scripts/extract_tables.py`).
