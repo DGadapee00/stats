@@ -17,7 +17,6 @@ Not errors, but worth knowing:
 
 - The calculator screens under Ex 1.15 show a different list (19.95, 28.58, …), not the 18
   collision claims of the example.
-
 - Ex 8.14 runs a one-proportion z-test with np₀(1 − p₀) = 200(0.05)(0.95) = 9.5, just under the
   notes' own condition of 10. The app keeps the example and says so in its solution.
 - Ex 9.15's calculator steps mention the dominant hand; that wording belongs to Ex 9.16.
