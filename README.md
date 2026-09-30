@@ -26,7 +26,7 @@ node scripts/smoke.mjs   # every screen at 380px and 1280px (needs the dev serve
   - **Review:** spaced review, mixed sets, and a timed 8-problem practice exam.
 - **Tables** — Appendix A as a lookup, with the printed value beside the exact one and the full z
   table highlighted.
-- **Explore** — eight labs, all 2D, each built to correct one or two intuitions. Every lab has
+- **Explore** — ten labs, all 2D, each built to correct one or two intuitions. Every lab has
   Predict-first cards: you commit to what a change will do, then make it, and the lab says what
   happened from its own numbers.
   - *Describing data* (Ch 1): histogram, dot plot, box plot; mean vs median, s vs IQR, bin width.
@@ -36,7 +36,9 @@ node scripts/smoke.mjs   # every screen at 380px and 1280px (needs the dev serve
     approximation to the binomial with and without the continuity correction.
   - *CI coverage* (Ch 8): 100 intervals; z, t, and the wrong z-with-s.
   - *Errors and power* (Ch 8): H₀ and H₁ curves, α, β, power.
+  - *Normal probability plot* (Ch 8): skew, heavy tails, and how much a normal sample wiggles.
   - *Which test?* (Ch 8–10): a decision tree ending at the formula, assumptions and TI-84 menu.
+  - *Paired vs independent* (Ch 9): the same subjects twice, tested both ways.
   - *Regression* (Ch 10): drag points; line, residuals, R², residual plot, leverage.
   Worked solutions link to the lab for their chapter.
 - **Notes** — coming, from the weekly Canvas drop. See [PLAN.md](PLAN.md).

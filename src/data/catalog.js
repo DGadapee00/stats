@@ -36,7 +36,7 @@ export const UNITS = [
     chapters: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'],
     date: '2026-12-07',
     label: 'Mon 12/7, 3 pm',
-    labs: ['describe', 'cond', 'dist', 'clt', 'ci', 'power', 'tests', 'reg'],
+    labs: ['describe', 'cond', 'dist', 'clt', 'ci', 'power', 'npp', 'tests', 'paired', 'reg'],
     final: true,
   },
 ];

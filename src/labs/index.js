@@ -7,8 +7,10 @@ import tests from './tests.js';
 import reg from './reg.js';
 import describe from './describe.js';
 import cond from './cond.js';
+import npp from './npp.js';
+import paired from './paired.js';
 
-export const LABS = [describe, cond, dist, clt, ci, power, tests, reg];
+export const LABS = [describe, cond, dist, clt, ci, power, npp, tests, paired, reg];
 
 export const labById = (id) => LABS.find((l) => l.id === id) || null;
 
@@ -21,8 +23,8 @@ const FOR_CHAPTER = {
   5: ['dist'],
   6: ['dist', 'clt'],
   7: ['clt'],
-  8: ['ci', 'power', 'tests'],
-  9: ['tests', 'dist'],
+  8: ['ci', 'power', 'tests', 'npp'],
+  9: ['paired', 'tests'],
   10: ['reg', 'tests'],
 };
 export const labsForChapter = (ch) => (FOR_CHAPTER[ch] || []).map(labById).filter(Boolean);

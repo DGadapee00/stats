@@ -168,9 +168,9 @@ const run = (id, over) => {
 
 {
   // Distributions: the picture's probabilities against published values.
-  near(run('dist', { dist: 'binom', n: 15, p: 0.4, ev: 'ge', a: 10 }).E.p, 0.0338, 5e-5, 'dist: Bin(15,.4) P(X≥10) (Walpole Ex 5.3)');
+  near(run('dist', { dist: 'binom', n: 15, p: 0.4, ev: 'ge', a: 10 }).E.p, 0.0338, 5e-5, 'dist: Bin(15,.4) P(X≥10)');
   near(run('dist', { dist: 'norm', m: 0, sd: 1, ev: 'between', a: -1.96, b: 1.96 }).E.p, 0.95, 1e-4, 'dist: P(|Z|<1.96)');
-  near(run('dist', { dist: 'pois', lam: 10, ev: 'ge', a: 16 }).E.p, 1 - 0.9513, 1e-4, 'dist: Poisson(10) P(X≥16) (Walpole Ex 5.18)');
+  near(run('dist', { dist: 'pois', lam: 10, ev: 'ge', a: 16 }).E.p, 1 - 0.9513, 1e-4, 'dist: Poisson(10) P(X≥16)');
   near(run('dist', { dist: 't', df: 10, ev: 'ge', a: 2.228 }).E.p, 0.025, 1e-4, 'dist: t10 upper .025 point');
   near(run('dist', { dist: 'f', d1: 3, d2: 10, ev: 'ge', a: 3.71 }).E.p, 0.05, 5e-4, 'dist: F(3,10) upper .05 point');
 }
@@ -214,7 +214,7 @@ if (lab('power')) {
     near(r.simPower, r.power, 4 * Math.sqrt((r.power * (1 - r.power)) / 20000) + 0.002, `power n=${n} d=${effect} α=${alpha} ${tail}`);
     near(r.simAlpha, alpha, 4 * Math.sqrt((alpha * (1 - alpha)) / 20000) + 0.002, `power size n=${n} α=${alpha} ${tail}`);
   }
-  // Walpole-style check: n = 16, σ = 1, μ0 = 0, μ1 = 0.5, one-sided α = .05 → power = 1 − Φ(1.645 − 2) = 0.6387.
+  // Hand-computed: n = 16, σ = 1, μ0 = 0, μ1 = 0.5, one-sided α = .05 → power = 1 − Φ(1.645 − 2) = 0.6387.
   near(run('power', { n: 16, effect: 0.5, alpha: 0.05, tail: 'right' }).power, 0.6387, 5e-4, 'power: textbook value');
 }
 

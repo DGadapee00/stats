@@ -229,9 +229,9 @@ Every ★ lab ships with 2–3 Predict-first prompts and the generators for its 
 | 10 | Secondary labs in the order listed in the brief | |
 | 11 | Deploy (Cloudflare Pages project `flux-stats`), PROVENANCE, README | |
 
-**Status (30 Sep 2026):** 0–7 and 9 done, plus two secondary labs (describing data, conditional
-probability) moved ahead for the midterm. Remaining secondary labs: normal probability plot,
-t vs z and F shape (partly covered by Distributions), paired vs independent. Then 8 (notes) and 11.
+**Status (30 Sep 2026):** 0–7, 9 and 10 done: ten labs (the five ★ labs; describing data,
+conditional probability, distributions, normal probability plot, paired vs independent; t vs z and
+the F shape live in the Distributions lab). Next: 8 (notes, from the weekly drop) and 11 (deploy).
 
 ---
 
