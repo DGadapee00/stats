@@ -27,6 +27,7 @@ export const UNITS = [
     chapters: ['1', '2', '3', '4', '5', '6'],
     date: '2026-10-12',
     label: 'Mon 10/12',
+    // The labs this exam's Explore list leads with (the rest follow, under "After the midterm").
     labs: ['dist'],
   },
   {
@@ -35,15 +36,10 @@ export const UNITS = [
     chapters: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'],
     date: '2026-12-07',
     label: 'Mon 12/7, 3 pm',
-    labs: ['dist'],
+    labs: ['dist', 'clt', 'ci', 'power', 'tests', 'reg'],
     final: true,
   },
 ];
-
-/** Labs, by id. `ch` is where each lab belongs; a unit lists the ones it shows. */
-export const LAB_META = {
-  dist: { id: 'dist', title: 'Distributions', ch: ['3', '5', '6'] },
-};
 
 export const unitById = (id) => UNITS.find((u) => u.id === id) || null;
 

@@ -1,5 +1,5 @@
 /**
- * Notes and Explore, until their content arrives. Each says plainly what is coming and when, and
+ * Notes, until their content arrives. Each says plainly what is coming and when, and
  * points at what already works.
  */
 import { CHAPTERS, unitById } from '../data/catalog.js';
@@ -21,25 +21,6 @@ export function renderNotes(root, { unitId }) {
           .map((c) => `<li><a href="${hashFor({ unitId })}"><i class="dot"></i><span>Ch ${c.ch} · ${esc(c.title)}</span><span class="tag">notes soon</span></a></li>`)
           .join('')}
       </ul>
-    </div>`;
-  root.onclick = null;
-}
-
-export function renderExplore(root, { unitId }) {
-  const LABS = [
-    ['Distributions', 'Ch 3, 5, 6', 'Binomial, geometric, Poisson, uniform and normal with sliders and shaded probabilities.', 'next'],
-    ['Sampling distributions (CLT)', 'Ch 7', 'Draw thousands of samples from a skewed population and watch x̄ settle into a normal curve with spread σ/√n.', 'for 14 Oct'],
-    ['Confidence interval coverage', 'Ch 8', '100 intervals at once: which ones catch μ, as you change the confidence level and n.', 'planned'],
-    ['Errors and power', 'Ch 8', 'H₀ and H₁ side by side; drag α, n and the effect and watch β and power move.', 'planned'],
-    ['Which test?', 'Ch 8–9', 'A decision tree from the question to the right test, its formula and its assumptions.', 'planned'],
-    ['Regression', 'Ch 10', 'Drag points; the least-squares line, residuals and R² follow.', 'planned'],
-  ];
-  root.innerHTML = `
-    <div class="stack">
-      <h2>Explore</h2>
-      <p class="note">Labs are interactive pictures you change to test an idea. None is built yet: the practice bank (all ten chapters) and the tables came first. Here is the order the labs arrive in.</p>
-      ${LABS.map(([t, ch, d, when]) => `<div class="card"><div class="row" style="justify-content:space-between"><h3>${esc(t)}</h3><span class="tag">${esc(ch)} · ${esc(when)}</span></div><p class="note" style="margin-top:6px">${esc(d)}</p></div>`).join('')}
-      <a class="btn" href="${hashFor({ unitId, mode: 'tables' })}">Open the tables</a>
     </div>`;
   root.onclick = null;
 }

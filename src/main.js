@@ -4,7 +4,8 @@ import { parseHash, hashFor } from './engine/router.js';
 import { renderList, renderProblem, dueCount } from './ui/practice.js';
 import { renderExam } from './ui/exam.js';
 import { renderTables } from './ui/tables.js';
-import { renderNotes, renderExplore } from './ui/placeholders.js';
+import { renderNotes } from './ui/placeholders.js';
+import { renderExplore } from './ui/lab.js';
 
 // Which build this is, so "is the live site current?" has an answer (see DEPLOY.md, /version.json).
 console.info(`FLUX·stats build ${__BUILD__.commit}${__BUILD__.subject ? ` — ${__BUILD__.subject}` : ''} (built ${__BUILD__.built})`);
@@ -39,7 +40,7 @@ function route() {
   badge.hidden = !due;
   badge.textContent = due;
 
-  const key = `${r.unitId}|${r.mode}|${r.problemId}|${r.seed}`;
+  const key = `${r.unitId}|${r.mode}|${r.problemId}|${r.seed}|${r.labId}`;
   if (r.mode === 'practice' && r.problemId) renderProblem(view, r);
   else if (r.mode === 'practice') renderList(view, r);
   else if (r.mode === 'exam') renderExam(view, r);
@@ -48,7 +49,7 @@ function route() {
   else if (r.mode === 'explore') renderExplore(view, r);
   if (key !== last) window.scrollTo(0, 0);
   last = key;
-  document.title = `FLUX·stats — ${r.problemId ? 'Practice' : r.mode[0].toUpperCase() + r.mode.slice(1)}`;
+  document.title = `FLUX·stats — ${r.problemId ? 'Practice' : r.labId ? 'Lab' : r.mode[0].toUpperCase() + r.mode.slice(1)}`;
 }
 
 window.addEventListener('hashchange', route);

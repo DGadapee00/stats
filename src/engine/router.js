@@ -7,6 +7,7 @@ import { unitById, nextUnit } from '../data/catalog.js';
  *   #/mid?p=c5.binom-table&s=3    that problem, version 3 (s=0 is the notes' or book's numbers)
  *   #/mid/exam                    the practice exam
  *   #/mid/notes · /explore · /tables
+ *   #/final/explore/clt           a lab
  *
  * With no link, the app opens the practice list for the exam coming up next.
  */
@@ -16,7 +17,7 @@ export function parseHash(hash = typeof location === 'undefined' ? '' : location
   const full = hash.replace(/^#\/?/, '');
   const [path, query = ''] = full.split('?');
   const params = new URLSearchParams(query);
-  const [a, b] = path.split('/').filter(Boolean);
+  const [a, b, c] = path.split('/').filter(Boolean);
   const unit = unitById(a) || nextUnit();
   const mode = MODES.includes(b) ? b : 'practice';
   const s = params.get('s');
@@ -26,17 +27,19 @@ export function parseHash(hash = typeof location === 'undefined' ? '' : location
     problemId: params.get('p') || null,
     seed: s != null && Number.isFinite(Number(s)) ? Math.max(0, Math.floor(Number(s))) : null,
     set: params.get('set') || null,
+    labId: mode === 'explore' && c ? c : null,
     bare: !full,
   };
 }
 
-export function hashFor({ unitId, mode = 'practice', problemId = null, seed = null, set = null }) {
+export function hashFor({ unitId, mode = 'practice', problemId = null, seed = null, set = null, labId = null }) {
   const q = new URLSearchParams();
   if (problemId) q.set('p', problemId);
   if (problemId && seed != null) q.set('s', String(seed));
   if (set) q.set('set', set);
   const qs = q.toString();
-  return `#/${unitId}${mode === 'practice' ? '' : `/${mode}`}${qs ? `?${qs}` : ''}`;
+  const lab = mode === 'explore' && labId ? `/${labId}` : '';
+  return `#/${unitId}${mode === 'practice' ? '' : `/${mode}`}${lab}${qs ? `?${qs}` : ''}`;
 }
 
 export function go(route, { replace = false } = {}) {
