@@ -14,7 +14,7 @@ const view = document.getElementById('view');
 const unitSelect = document.getElementById('unit-select');
 const modes = document.getElementById('modes');
 
-unitSelect.innerHTML = UNITS.map((u) => `<option value="${u.id}">${u.title} · ${u.label.split(",")[0]}</option>`).join("");
+unitSelect.innerHTML = UNITS.map((u) => `<option value="${u.id}">${u.title} · ${u.label.split(',')[0]}</option>`).join('');
 unitSelect.addEventListener('change', () => {
   const r = parseHash();
   location.hash = hashFor({ unitId: unitSelect.value, mode: r.mode === 'exam' ? 'practice' : r.mode });
