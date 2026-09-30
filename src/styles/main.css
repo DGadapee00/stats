@@ -1199,3 +1199,22 @@ table.ztab tr > :first-child {
   z-index: 1;
   background: var(--panel-solid);
 }
+
+.today {
+  border-color: rgba(244, 211, 69, 0.4);
+}
+
+.today h3 {
+  color: var(--yellow);
+}
+
+.today ol {
+  padding-left: 20px;
+  margin-top: 6px;
+  font-size: var(--fs-ui);
+  line-height: 1.6;
+}
+
+.today li + li {
+  margin-top: 6px;
+}

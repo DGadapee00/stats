@@ -39,6 +39,36 @@ export function dueCount(unitId) {
 }
 
 // ---------------------------------------------------------------- list
+/**
+ * Today: at most three concrete next steps, so a first visit (or a stressed one) knows what to do.
+ * Due reviews first; then the earliest chapter not started (read its notes, then its first
+ * problem) or, when every chapter is started, the next unmastered problem in the weakest one;
+ * then when to sit a practice exam.
+ */
+function todayHTML(unitId, unit, byCh, due, days) {
+  const steps = [];
+  if (due.length) steps.push(`<a href="#" data-act="review">Review the ${due.length} problem${due.length === 1 ? '' : 's'} due</a>: spaced review is what makes it stick.`);
+  const chapters = [...byCh.entries()].map(([ch, tpls]) => ({ ch, tpls, c: progress.counts(tpls.map((t) => t.id)), m: progress.mastery(tpls.map((t) => t.id)) }));
+  const fresh = chapters.find((x) => x.c.seen === 0);
+  if (fresh) {
+    steps.push(
+      `Start Ch ${fresh.ch}, ${esc(CHAPTER_TITLES[fresh.ch])}: <a href="${hashFor({ unitId, mode: 'notes', chapter: fresh.ch })}">read its notes</a>, then try <a href="${hashFor({ unitId, problemId: fresh.tpls[0].id })}">${esc(fresh.tpls[0].title)}</a>.`,
+    );
+  } else {
+    const weak = chapters.filter((x) => x.c.mastered < x.c.total).sort((a, b) => a.m - b.m)[0];
+    if (weak) {
+      const next = weak.tpls.find((t) => progress.status(t.id) !== 'mastered') || weak.tpls[0];
+      steps.push(`Your weakest chapter is Ch ${weak.ch} (${weak.c.mastered}/${weak.c.total} mastered): try <a href="${hashFor({ unitId, problemId: next.id })}">${esc(next.title)}</a>.`);
+    }
+  }
+  const examAt = new Date(`${unit.date}T00:00:00`);
+  const fmt = (d) => d.toLocaleDateString('en-US', { weekday: 'short', month: 'numeric', day: 'numeric' });
+  if (days >= 1 && days <= 4) steps.push(`<a href="${hashFor({ unitId, mode: 'exam' })}">Take a practice exam</a> today, timed, then review what you missed.`);
+  else if (days > 4) steps.push(`Plan a timed <a href="${hashFor({ unitId, mode: 'exam' })}">practice exam</a> around ${fmt(new Date(examAt - 4 * 864e5))} and another on ${fmt(new Date(examAt - 864e5))}.`);
+  if (!steps.length) return '';
+  return `<div class="card today"><h3>Today</h3><ol>${steps.map((x) => `<li>${x}</li>`).join('')}</ol></div>`;
+}
+
 export function renderList(root, { unitId }) {
   const unit = unitById(unitId);
   const list = ordered(unitId);
@@ -59,8 +89,9 @@ export function renderList(root, { unitId }) {
         <h2>${esc(unitLabel(unit))}</h2>
         <span class="countdown">${esc(when)}</span>
       </div>
+      ${todayHTML(unitId, unit, byCh, due, days)}
       <div class="actions">
-        <button class="btn ${due.length ? 'primary' : ''}" data-act="review" ${due.length ? '' : 'disabled'}>Review due<small>${due.length} problem${due.length === 1 ? '' : 's'}</small></button>
+        <button class="btn ${due.length ? 'primary' : ''}" data-act="review" ${due.length ? '' : 'disabled'}>Review due<small>${due.length ? `${due.length} problem${due.length === 1 ? '' : 's'}` : 'nothing due yet'}</small></button>
         <button class="btn ${due.length ? '' : 'primary'}" data-act="mixed">Mixed set<small>5, weakest first</small></button>
         <a class="btn" href="${hashFor({ unitId, mode: 'exam' })}">Practice exam<small>8 problems · 50 min</small></a>
       </div>
@@ -72,7 +103,7 @@ export function renderList(root, { unitId }) {
           const m = progress.mastery(tpls.map((t) => t.id));
           const c = progress.counts(tpls.map((t) => t.id));
           return `
-          <details class="chapter" ${c.seen < c.total ? 'open' : ''}>
+          <details class="chapter" ${c.seen > 0 && c.mastered < c.total ? 'open' : ''}>
             <summary>
               <span class="ch-title"><b>Ch ${ch}</b>${esc(CHAPTER_TITLES[ch])}</span>
               <span class="dim">${c.mastered}/${c.total} mastered</span>
@@ -100,6 +131,7 @@ export function renderList(root, { unitId }) {
     const open = e.target.closest('[data-open]');
     if (open) session = { name: 'list', ids, unitId };
     const act = e.target.closest('[data-act]')?.dataset.act;
+    if (act) e.preventDefault();
     if (act === 'review' && due.length) startSession(unitId, 'review', due);
     if (act === 'mixed') startSession(unitId, 'mixed', pickSet(list, progress, { n: 5, seed: Date.now() }).map((t) => t.id));
   };
