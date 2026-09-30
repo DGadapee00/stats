@@ -21,7 +21,8 @@
  *   ['warn', text]                   a common mistake
  */
 import ch1 from './ch1.js';
+import ch2 from './ch2.js';
 
-export const NOTES = [ch1];
+export const NOTES = [ch1, ch2];
 
 export const notesFor = (ch) => NOTES.find((n) => n.ch === String(ch)) || null;
