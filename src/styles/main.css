@@ -1168,3 +1168,9 @@ table.nb-table th {
   justify-content: space-between;
   margin-top: 24px;
 }
+
+.lab-side.locked .controls,
+.lab-side.locked .ctl-choice select,
+.lab-side.locked [data-act] {
+  opacity: 0.45;
+}

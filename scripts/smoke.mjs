@@ -99,6 +99,13 @@ for (const [name, vp] of [['phone', { width: 380, height: 800 }], ['laptop', { w
     if (lab.predictions.length) {
       const p = lab.predictions[0];
       await page.click('[data-pred=start]');
+      // Fiddling with a control before committing must not change the verdict (it is locked).
+      await page.evaluate(() => {
+        const el = document.querySelector('#lab-controls input[type=range]');
+        if (!el) return;
+        el.value = el.max;
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+      });
       await page.click(`[data-pick="${p.expect}"]`);
       await page.click('[data-pred=change]');
       await page.waitForTimeout(80);

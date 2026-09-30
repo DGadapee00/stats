@@ -192,6 +192,7 @@ export function renderLab(root, { unitId, lab }) {
   };
 
   controls.addEventListener('input', (e) => {
+    if (locked) return;
     const t = e.target;
     const id = t.dataset.in || t.dataset.num;
     const p = lab.params.find((q) => q.id === id);
@@ -208,12 +209,14 @@ export function renderLab(root, { unitId, lab }) {
     update();
   });
   controls.addEventListener('change', (e) => {
+    if (locked) return;
     if (e.target.dataset.num) {
       e.target.blur();
       update();
     }
   });
   controls.addEventListener('click', (e) => {
+    if (locked) return;
     const b = e.target.closest('[data-seg]');
     if (!b) return;
     const p = lab.params.find((q) => q.id === b.dataset.seg);
@@ -224,6 +227,7 @@ export function renderLab(root, { unitId, lab }) {
 
   root.querySelectorAll('[data-act]').forEach((b) =>
     b.addEventListener('click', () => {
+      if (locked) return;
       const a = lab.actions.find((x) => x.id === b.dataset.act);
       const next = a.run(state, result);
       if (next) state = next;
@@ -233,6 +237,7 @@ export function renderLab(root, { unitId, lab }) {
 
   if (scenarioEl) {
     scenarioEl.addEventListener('change', () => {
+      if (locked) return;
       const sc = lab.scenarios.find((x) => x.id === scenarioEl.value);
       if (!sc) return;
       state = { ...lab.defaults(), ...sc.state, seed: state.seed };
@@ -249,6 +254,7 @@ export function renderLab(root, { unitId, lab }) {
     };
     let dragging = false;
     canvas.addEventListener('pointerdown', (e) => {
+      if (locked) return;
       if (!view) return;
       const [x, y] = at(e);
       if (lab.pointer.down(view, state, x, y)) {
@@ -277,6 +283,7 @@ export function renderLab(root, { unitId, lab }) {
   if (lab.tap) {
     canvas.classList.add('tappable');
     canvas.addEventListener('click', (e) => {
+      if (locked) return;
       if (!view) return;
       const r = canvas.getBoundingClientRect();
       const next = lab.tap(view, state, e.clientX - r.left, e.clientY - r.top);
@@ -288,6 +295,14 @@ export function renderLab(root, { unitId, lab }) {
   }
 
   /* ---------------- Predict first */
+
+  // While a prediction is open, the controls are locked: the student commits before seeing.
+  let locked = false;
+  function lock(on) {
+    locked = on;
+    root.querySelector('.lab-side').classList.toggle('locked', on);
+    for (const el of root.querySelectorAll('#lab-controls input, #lab-controls select, #lab-controls button, #lab-scenario, [data-act]')) el.disabled = on;
+  }
   function renderPredict() {
     if (!predictEl) return;
     const tally = loadTally()[lab.id] || {};
@@ -311,7 +326,7 @@ export function renderLab(root, { unitId, lab }) {
     if (pred.done) {
       const ok = pred.picked === pred.actual;
       const actualLabel = p.options.find(([v]) => v === pred.actual)?.[1] ?? pred.actual;
-      foot = `<div class="verdict ${ok ? 'ok' : 'bad'}"><b>${ok ? 'As you predicted.' : 'Not what you predicted.'}</b> It ${mathProse(actualLabel)}.<div class="why">${mathProse(p.why)}</div></div>
+      foot = `<div class="verdict ${ok ? 'ok' : 'bad'}"><b>${ok ? 'As you predicted.' : 'Not what you predicted.'}</b> What happened: ${mathProse(actualLabel)}.<div class="why">${mathProse(p.why)}</div></div>
         <div class="row"><button class="btn small" data-pred="again">Back to the set-up</button>${lab.predictions.length > 1 ? '<button class="btn small primary" data-pred="next">Next prediction</button>' : ''}</div>`;
     }
     predictEl.innerHTML = `${head}<p class="note">${mathProse(p.prompt)}</p><div class="opts pred-opts">${opts}</div>${foot}`;
@@ -331,14 +346,17 @@ export function renderLab(root, { unitId, lab }) {
       const p = lab.predictions[predIndex];
       if (act === 'start' || act === 'again') {
         state = { ...lab.defaults(), ...p.setup, seed: state.seed };
-        pred = { picked: null, done: false };
+        sync();
+        // The verdict is computed from this set-up, never from whatever is on screen by then.
+        pred = { picked: null, done: false, base: { ...state } };
         update();
       } else if (act === 'next') {
         predIndex = (predIndex + 1) % lab.predictions.length;
         pred = null;
+        lock(false);
       } else if (act === 'change' && pred && pred.picked != null) {
-        const before = compute({ ...state });
-        state = { ...state, ...p.change };
+        const before = compute({ ...pred.base });
+        state = { ...pred.base, ...p.change };
         sync();
         const after = compute(state);
         pred.actual = p.outcome(before, after, state);
@@ -351,6 +369,7 @@ export function renderLab(root, { unitId, lab }) {
         saveTally(all);
         schedule();
       }
+      lock(!!pred && !pred.done);
       renderPredict();
     });
   }
