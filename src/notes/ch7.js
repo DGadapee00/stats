@@ -1,11 +1,17 @@
 /**
- * Chapter 7, rewritten from the teacher's notes (Ch 7, pp. 86–94). The notes pose these examples and
- * leave the working for class; every answer here is computed, by the printed z table and exactly.
+ * Chapter 7, rewritten from the teacher's notes (Ch 7, pp. 86–94), laid out like FLUX's notes. The
+ * notes pose these examples and leave the working for class; every answer here is computed, by the
+ * printed z table and exactly. Example numbers are the notes'; the textbook's material (Walpole §8.4,
+ * the difference of two means, and §8.5, the sample variance) is marked, and its examples lettered.
  */
-import { normCdf, binomCdf } from '../stats/dist.js';
-import { zTable as zLook } from '../stats/tables.js';
+import { normCdf, binomCdf, chi2Sf } from '../stats/dist.js';
+import { zTable as zLook, chi2Table } from '../stats/tables.js';
 
 const zTable = (z) => zLook(z).value;
+const chi = (a, df) => {
+  const v = chi2Table(a, df);
+  return typeof v === 'number' ? v : v.value;
+};
 const r2 = (x) => Math.round(x * 100) / 100;
 
 export default {
@@ -15,9 +21,11 @@ export default {
   sections: [
     {
       id: '7.1',
+      part: 'Sums of normal variables',
       title: 'Linear functions of normal random variables',
       problems: ['c7.linear-normal'],
       blocks: [
+        ['p', 'Chapters 4 to 6 were about one random variable at a time. Statistics works with samples: $n$ measurements, each a random variable, combined into a single number such as their average. This chapter finds the distribution of that number. The first step is what happens when normal variables are added.'],
         ['p', String.raw`Recall from §4.3: $E(a_0 + a_1X_1 + \cdots + a_nX_n) = a_0 + a_1E(X_1) + \cdots + a_nE(X_n)$, and for INDEPENDENT $X_i$, $\sigma^2_{a_0 + a_1X_1 + \cdots + a_nX_n} = a_1^2\sigma^2_{X_1} + \cdots + a_n^2\sigma^2_{X_n}$.`],
         ['key', String.raw`A linear function of INDEPENDENT normal random variables is itself NORMAL: if $X_1, \ldots, X_n$ are independent and normal, so is $Y = a_0 + a_1X_1 + \cdots + a_nX_n$. (Most distributions lose their shape when added: a sum of uniforms is not uniform, a sum of exponentials is not exponential.)`],
         ['p', 'So the mean and variance from §4.3 are all you need to know $Y$ completely.'],
@@ -65,16 +73,19 @@ export default {
             answer: String.raw`$\bar{X} \sim N\!\left(\mu, \dfrac{\sigma^2}{n}\right)$ exactly, for every $n$.`,
           },
         ],
+        ['bridge', 'Examples 7.2 and 7.3 are the heart of the chapter: the average of a sample is centered on $\\mu$ and spreads less than one observation does. Part II puts numbers on it, and then drops the assumption that the population is normal.'],
       ],
     },
     {
       id: '7.2',
+      part: 'The sample mean',
       title: 'The sampling distribution of x̄ and the central limit theorem',
       lab: 'clt',
       problems: ['c7.xbar-mean-sd', 'c7.xbar-prob', 'c7.clt-when'],
       blocks: [
         ['p', 'A statistic is computed from a random sample, so it is itself random: another sample would give another value. Its probability distribution is its **sampling distribution**.'],
         ['key', String.raw`From a NORMAL population with mean $\mu$ and variance $\sigma^2$: $\bar{X} \sim N\!\left(\mu, \dfrac{\sigma^2}{n}\right)$, and $Z = \dfrac{\bar{X} - \mu}{\sigma/\sqrt{n}}$.`],
+        ['why', String.raw`In a sample some values fall above $\mu$ and some below, and averaging lets them partly cancel. The cancelling is only partial: the variance falls as $1/n$, so the spread $\sigma/\sqrt{n}$ falls as $1/\sqrt{n}$. Four times the data halves the spread of $\bar{X}$.`],
         [
           'ex',
           {
@@ -119,10 +130,42 @@ export default {
             ],
           },
         ],
+        ['p', 'The CLT lab draws thousands of samples from a skewed population: at $n = 2$ the means are still skewed, by $n = 40$ they are close to a normal curve.'],
+        [
+          'book',
+          'Walpole §8.4',
+          [
+            ['p', String.raw`Chapter 9 compares two populations through the difference of their sample means. Independent samples of sizes $n_1$ and $n_2$ give a difference $\bar{X}_1 - \bar{X}_2$ that is a linear combination (§4.3), so its mean and variance follow at once, and it is normal when both populations are (or approximately, by the CLT, when both samples are large):`],
+            ['p', String.raw`$$\mu_{\bar{X}_1 - \bar{X}_2} = \mu_1 - \mu_2, \qquad \sigma^2_{\bar{X}_1 - \bar{X}_2} = \frac{\sigma_1^2}{n_1} + \frac{\sigma_2^2}{n_2}.$$`],
+            ['p', 'The variances add even though the means subtract, as in Ex 4.8.'],
+            [
+              'ex',
+              {
+                n: '7.A',
+                title: 'two filling machines',
+                q: 'Machine A fills cans with mean 12.1 oz and standard deviation 0.5; machine B with mean 12.0 oz and standard deviation 0.4. Fill volumes are normal. Take 10 cans from A and 8 from B. What is the probability that A’s sample mean beats B’s by more than 0.3 oz?',
+                a: [
+                  String.raw`$\bar{X}_A - \bar{X}_B$ is normal with mean $12.1 - 12.0 = 0.1$ and variance $\dfrac{0.5^2}{10} + \dfrac{0.4^2}{8} = 0.025 + 0.02 = 0.045$, so standard deviation $\sqrt{0.045} = 0.2121$.`,
+                  String.raw`$P(\bar{X}_A - \bar{X}_B > 0.3) = P\!\left(Z > \dfrac{0.3 - 0.1}{0.2121}\right) = P(Z > 0.94) = 1 - 0.8264 = 0.1736$. Exact: 0.1729.`,
+                ],
+                answer: 'About 0.17.',
+                checks: () => [
+                  ['var', 0.25 / 10 + 0.16 / 8, 0.045, 1e-12],
+                  ['sd', Math.sqrt(0.045), 0.2121, 5e-5],
+                  ['z', r2(0.2 / Math.sqrt(0.045)), 0.94, 0],
+                  ['table', 1 - zTable(0.94), 0.1736, 1e-9],
+                  ['exact', 1 - normCdf(0.3, 0.1, Math.sqrt(0.045)), 0.1729, 5e-5],
+                ],
+              },
+            ],
+          ],
+        ],
+        ['bridge', 'A count of successes is a sum too: $n$ trials, each adding 1 or 0. So the central limit theorem applies to the binomial as well, which is Part III.'],
       ],
     },
     {
       id: '7.3',
+      part: 'Counts and proportions',
       title: 'The normal approximation to the binomial',
       lab: 'clt',
       problems: ['c7.normal-approx-binomial'],
@@ -177,6 +220,7 @@ export default {
           },
         ],
         ['warn', '"More than 950" does not include 950. Translate to whole numbers first ($X \\ge 951$), then take the whole bar: $X > 950.5$.'],
+        ['why', 'The binomial’s probability for $x$ is a bar of width 1 centered at $x$ (§3.2). The normal curve approximates the tops of the bars, so to capture all of each bar the event includes, the area must run from half a unit below the first bar to half a unit above the last.'],
       ],
     },
     {
@@ -212,6 +256,7 @@ export default {
             answer: '(a) approximately N(0.76, 0.0551²); (b) about 0.138.',
             problem: 'c7.phat',
             case: 0,
+            show: 'clt:morals',
             checks: () => [
               ['np(1-p)', 60 * 0.76 * 0.24, 10.94, 5e-3],
               ['σ', Math.sqrt((0.76 * 0.24) / 60), 0.0551, 5e-5],
@@ -221,7 +266,64 @@ export default {
             ],
           },
         ],
+        ['bridge', String.raw`Means and proportions cover most of the inference in Chapters 8 to 10. But a variance is a statistic too, and its distribution is not normal: the textbook gives it, and it is behind the variance tests of Chapter 9.`],
       ],
     },
+    {
+      id: '7.5',
+      part: 'The sample variance',
+      title: 'The sampling distribution of S²',
+      source: 'Walpole §8.5',
+      lab: 'dist',
+      blocks: [
+        ['p', String.raw`From a NORMAL population with variance $\sigma^2$, the sample variance of a random sample of size $n$, rescaled, has a **chi-squared distribution** with $n - 1$ degrees of freedom:`],
+        ['key', String.raw`$\chi^2 = \dfrac{(n - 1)S^2}{\sigma^2}$ has the $\chi^2$ distribution with $\nu = n - 1$ degrees of freedom.`],
+        [
+          'list',
+          [
+            'It takes only positive values (a variance cannot be negative) and is skewed right.',
+            String.raw`Its mean is $\nu$, so $S^2$ is centered on $\sigma^2$: $E(S^2) = \sigma^2$, the unbiasedness promised in §1.4.`,
+            String.raw`$\chi^2_{\alpha,\nu}$ is the value with area $\alpha$ to its RIGHT (Table A.5), as for $z_\alpha$ and $t_{\alpha,\nu}$. The curve is not symmetric, so the left-tail value has to be read separately, as $\chi^2_{1-\alpha,\nu}$.`,
+          ],
+        ],
+        ['why', String.raw`The degrees of freedom are the $n - 1$ of §1.4: the deviations $x_i - \bar{x}$ add to zero, so only $n - 1$ of them are free. The $\chi^2$ distribution is the gamma of §6.4 with $\alpha = \nu/2$ and $\beta = 2$.`],
+        [
+          'ex',
+          {
+            n: '7.B',
+            title: 'how variable is a sample of 10 cans?',
+            q: String.raw`Fill volumes are normal with $\sigma = 0.5$ oz. For a random sample of 10 cans, find (a) the probability that the sample variance $s^2$ exceeds 0.5, twice the population variance; (b) the value that $s^2$ exceeds with probability 0.05.`,
+            a: [
+              String.raw`$\dfrac{(n - 1)S^2}{\sigma^2} = \dfrac{9S^2}{0.25}$ has the $\chi^2$ distribution with 9 df.`,
+              String.raw`(a) $s^2 = 0.5$ gives $\chi^2 = \dfrac{9(0.5)}{0.25} = 18.0$. Table A.5, row 9: $\chi^2_{0.05} = 16.919$ and $\chi^2_{0.025} = 19.023$, so the probability is between 0.025 and 0.05. Exact: $\chi^2$cdf$(18, 10^{99}, 9) = 0.0352$.`,
+              String.raw`(b) $\chi^2_{0.05,9} = 16.919$, so $s^2 = \dfrac{0.25 \times 16.919}{9} = 0.470$ (that is, $s = 0.686$).`,
+            ],
+            answer: 'Even with normal data, a sample of 10 gives a variance more than twice the true one about 3.5% of the time.',
+            show: 'dist:chi9',
+            checks: () => [
+              ['χ²', (9 * 0.5) / 0.25, 18, 1e-12],
+              ['χ².05', chi(0.05, 9), 16.919, 5e-4],
+              ['χ².025', chi(0.025, 9), 19.023, 5e-4],
+              ['(a) exact', chi2Sf(18, 9), 0.0352, 5e-5],
+              ['(b) s²', (0.25 * 16.919) / 9, 0.47, 5e-4],
+              ['(b) s', Math.sqrt((0.25 * 16.919) / 9), 0.686, 5e-4],
+            ],
+          },
+        ],
+        ['ti', ['2nd VARS ▸ 8:χ²cdf(: lower, upper, df. For a right tail use upper $10^{99}$ (1E99).']],
+        ['p', String.raw`Two more distributions grow out of this one, and the class meets both later. Replace $\sigma$ by $S$ in $Z = \frac{\bar{X} - \mu}{\sigma/\sqrt{n}}$ and the result has the $t$ distribution with $n - 1$ df (Walpole §8.6; Chapter 8). Divide one sample variance by another (each over its $\sigma^2$) and the ratio has the $F$ distribution (Walpole §8.7; Chapter 9).`],
+        ['warn', 'Unlike the CLT for means, this needs a normal population at every sample size. Variance procedures are sensitive to skew and outliers: check the normal probability plot first.'],
+        ['bridge', 'Chapter 8 turns these sampling distributions around: instead of asking how a statistic behaves when the parameter is known, it uses the statistic to estimate an unknown parameter and to test claims about it.'],
+      ],
+    },
+  ],
+  formulas: [
+    ['Linear functions of independent normals', 'normal, with mean and variance from §4.3'],
+    ['Sample mean', String.raw`$\mu_{\bar{X}} = \mu$, $\;\sigma_{\bar{X}} = \sigma/\sqrt{n}$`],
+    ['Standardizing $\\bar{X}$', String.raw`$Z = \dfrac{\bar{X} - \mu}{\sigma/\sqrt{n}}$ (normal population, or $n \ge 30$ by the CLT)`],
+    ['Normal approximation', String.raw`$X \sim \text{Bin}(n, p)$ with $np(1-p) \ge 10$: $\mu = np$, $\sigma = \sqrt{np(1-p)}$, correct by $\pm 0.5$`],
+    ['Sample proportion', String.raw`$\mu_{\hat{p}} = p$, $\;\sigma_{\hat{p}} = \sqrt{p(1-p)/n}$`],
+    ['Difference of means', String.raw`$\mu = \mu_1 - \mu_2$, $\;\sigma^2 = \sigma_1^2/n_1 + \sigma_2^2/n_2$`, 'Walpole §8.4'],
+    ['Sample variance', String.raw`$(n-1)S^2/\sigma^2 \sim \chi^2_{n-1}$ (normal population)`, 'Walpole §8.5'],
   ],
 };

@@ -76,6 +76,7 @@ export default defineLab({
     { id: 'phat-small', label: 'p̂ with n = 20, p = 0.1 (np(1−p) < 10)', state: { mode: 'phat', n: 20, pp: 0.1, reps: 5000 } },
     { id: 'phat-ok', label: 'p̂ with n = 150, p = 0.3', state: { mode: 'phat', n: 150, pp: 0.3, reps: 5000 } },
     { id: 'approx', label: 'Bin(100, 0.4): P(35 ≤ X ≤ 45)', state: { mode: 'binom', n: 100, pp: 0.4, a: 35, b: 45, cc: true } },
+    { id: 'morals', label: 'Notes Ex 7.8: p̂ with n = 60, p = 0.76', state: { mode: 'phat', n: 60, pp: 0.76, reps: 5000 } },
     { id: 'approx-small', label: 'Bin(15, 0.4): P(X ≤ 5), the correction matters', state: { mode: 'binom', n: 15, pp: 0.4, a: 0, b: 5, cc: true } },
   ],
 

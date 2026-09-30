@@ -1,8 +1,11 @@
 /**
- * Chapter 9, rewritten from the teacher's notes (Ch 9, pp. 129–170). The notes pose these examples and
- * work them on the TI-84 in class; every answer here is computed. Example numbers are the notes'.
+ * Chapter 9, rewritten from the teacher's notes (Ch 9, pp. 129–170), laid out like FLUX's notes. The
+ * notes pose these examples and work them on the TI-84 in class; every answer here is computed.
+ * Example numbers are the notes'; the textbook's material (Walpole §10.7, comparing samples by their
+ * box plots) is marked, and its example is lettered (9.A).
  */
 import { fCrit } from '../stats/dist.js';
+import { boxPlot } from '../stats/describe.js';
 import {
   twoPropTest,
   twoPropInterval,
@@ -37,17 +40,21 @@ export default {
   sections: [
     {
       id: '9.1',
+      part: 'Two kinds of comparison',
       title: 'Independent versus dependent samples',
       lab: 'paired',
       problems: ['c9.independent-or-paired'],
       blocks: [
+        ['p', 'Chapter 8 compared one sample with a number someone claimed. Most real questions compare two groups with each other: a new drug and the old one, metropolitan and rural water, two machines. The procedures are Chapter 8’s, applied to a difference (or, for variances, a ratio). The first decision is how the two samples were collected.'],
         ['def', 'Independent samples:', 'choosing an individual for one sample says nothing about who is in the other. Drug A patients vs Drug B patients; customers in City A vs City B.'],
         ['def', 'Dependent (matched-pairs) samples:', 'each individual in one sample determines one in the other, and an individual can be matched with itself. The same patients before and after treatment; pre-test and post-test; identical twins; husbands and wives.'],
         ['key', 'Ask: does each value in sample 1 have a partner in sample 2? If yes, the samples are paired, and you analyze the differences (§9.6).'],
+        ['bridge', 'Parts II and III handle independent samples, parameter by parameter: proportions, then means and variances. Part IV returns to pairs.'],
       ],
     },
     {
       id: '9.2',
+      part: 'Two proportions',
       title: 'Comparing two proportions',
       lab: 'tests',
       problems: ['c9.two-prop-test', 'c9.two-prop-interval'],
@@ -126,12 +133,14 @@ export default {
     },
     {
       id: '9.3',
+      part: 'Two means, two variances',
       title: 'Comparing two means, variances known',
       lab: 'tests',
       problems: ['c9.two-z-test', 'c9.two-z-interval'],
       blocks: [
         ['p', 'Assumptions: independent samples; both populations normal, or $n_1 \\ge 30$ and $n_2 \\ge 30$. Hypotheses compare $\\mu_1 - \\mu_2$ with an assumed difference $\\Delta_0$, usually 0.'],
         ['key', String.raw`**Two-sample z-test**: $z_0 = \dfrac{(\bar{x}_1 - \bar{x}_2) - \Delta_0}{\sqrt{\sigma_1^2/n_1 + \sigma_2^2/n_2}}$. **Interval**: $(\bar{x}_1 - \bar{x}_2) \pm z_{\alpha/2}\sqrt{\sigma_1^2/n_1 + \sigma_2^2/n_2}$.`],
+        ['why', String.raw`The samples are independent, so the variance of $\bar{X}_1 - \bar{X}_2$ is the SUM $\sigma_1^2/n_1 + \sigma_2^2/n_2$ (§4.3, and Ex 7.A): the uncertainty of both means adds, even though the means subtract. $\Delta_0$ is the difference claimed by $H_0$, usually 0.`],
         [
           'ex',
           {
@@ -204,6 +213,7 @@ export default {
       lab: 'dist',
       problems: ['c9.f-critical', 'c9.f-interval', 'c9.f-test'],
       blocks: [
+        ['p', String.raw`Chapter 8 tested one variance with $\chi^2$ (§8.6). Two variances are compared through their ratio $s_1^2/s_2^2$: near 1 if the population variances are equal. From normal populations, $\dfrac{S_1^2/\sigma_1^2}{S_2^2/\sigma_2^2}$ has the $F$ distribution, and under $H_0: \sigma_1^2 = \sigma_2^2$ the $\sigma$’s cancel, leaving $f_0 = s_1^2/s_2^2$.`],
         [
           'list',
           [
@@ -221,12 +231,14 @@ export default {
             answer: '(a) 3.71 (b) 0.1138.',
             problem: 'c9.f-critical',
             case: 0,
+            show: 'dist:f',
             checks: () => [
               ['(a)', fCrit(0.05, 3, 10), 3.71, 5e-3],
               ['(b)', 1 / fCrit(0.05, 10, 3), 0.1138, 5e-4],
             ],
           },
         ],
+        ['why', String.raw`If $F$ has $(u, v)$ df, then $1/F$ is the same ratio upside down, with $(v, u)$ df. So $P(F < c) = P(1/F > 1/c)$: a lower-tail point of $F_{u,v}$ is one over an upper-tail point of $F_{v,u}$.`],
         ['key', String.raw`**F-interval** for $\sigma_1^2/\sigma_2^2$ (normal populations, independent samples): lower bound $\dfrac{s_1^2/s_2^2}{f_{\alpha/2}(n_1-1,\,n_2-1)}$, upper bound $\dfrac{s_1^2}{s_2^2}\,f_{\alpha/2}(n_2-1,\,n_1-1)$.`],
         ['p', 'Table A.6 prints only $\\alpha = 0.05$ and $0.01$, so table intervals are 90% or 98%.'],
         [
@@ -299,6 +311,7 @@ export default {
       problems: ['c9.pooled-t-test', 'c9.pooled-t-interval', 'c9.welch-t-test', 'c9.welch-t-interval', 'c9.which-test'],
       blocks: [
         ['p', 'With $\\sigma_1$, $\\sigma_2$ unknown there are two cases. Which one? Run the F-test of §9.4 (or check the F-interval for 1): if the variances could be equal, pool; if they differ, do not.'],
+        ['p', String.raw`With $\sigma_1$ and $\sigma_2$ unknown, replace them with $s_1$ and $s_2$ and use $t$, as in Chapter 8. There are two versions, and the F test of §9.4 (or the problem statement) chooses between them.`],
         ['key', String.raw`**Pooled** ($\sigma_1^2 = \sigma_2^2$): $t_0 = \dfrac{(\bar{x}_1 - \bar{x}_2) - \Delta_0}{\sqrt{s_p^2\left(\frac{1}{n_1} + \frac{1}{n_2}\right)}}$, $s_p^2 = \dfrac{(n_1 - 1)s_1^2 + (n_2 - 1)s_2^2}{n_1 + n_2 - 2}$, df $= n_1 + n_2 - 2$. Interval: $(\bar{x}_1 - \bar{x}_2) \pm t_{\alpha/2}\sqrt{s_p^2\left(\frac{1}{n_1} + \frac{1}{n_2}\right)}$.`],
         [
           'ex',
@@ -343,6 +356,7 @@ export default {
             },
           },
         ],
+        ['why', String.raw`If the two populations share one variance, both samples estimate it. $s_p^2$ combines them, weighting each $s^2$ by its degrees of freedom, so the larger sample counts for more; and its df are the two samples’ together, $n_1 + n_2 - 2$.`],
         ['key', String.raw`**Unpooled** ($\sigma_1^2 \ne \sigma_2^2$): $t_0 = \dfrac{(\bar{x}_1 - \bar{x}_2) - \Delta_0}{\sqrt{s_1^2/n_1 + s_2^2/n_2}}$ with $\text{df} = \dfrac{(s_1^2/n_1 + s_2^2/n_2)^2}{\frac{(s_1^2/n_1)^2}{n_1 - 1} + \frac{(s_2^2/n_2)^2}{n_2 - 1}}$. Interval: $(\bar{x}_1 - \bar{x}_2) \pm t_{\alpha/2}\sqrt{s_1^2/n_1 + s_2^2/n_2}$.`],
         ['p', 'The calculator uses the fractional df; with the table, round df DOWN (a smaller df is the cautious choice).'],
         [
@@ -387,10 +401,57 @@ export default {
           },
         ],
         ['ti', ['Data in L1 and L2. STAT ▸ TESTS ▸ 4:2-SampTTest (or 0:2-SampTInt), Inpt: Data, Pooled: No.']],
+        [
+          'book',
+          'Walpole §10.7',
+          [
+            ['p', 'Before any two-sample test, look at the two samples side by side. Box plots on one axis (§1.5) show at a glance whether the centers differ, whether the spreads are similar (pooled or not), and whether an outlier or strong skew makes a t procedure doubtful.'],
+            [
+              'ex',
+              {
+                n: '9.A',
+                title: 'arsenic, side by side',
+                q: 'Give the five-number summaries of the metropolitan and rural arsenic samples of Example 9.10. What do they say before any test is run?',
+                data: {
+                  head: ['', 'min', '$Q_1$', 'median', '$Q_3$', 'max', 'IQR'],
+                  rows: [
+                    ['Metro', 3, 7, 11, 15, 25, 8],
+                    ['Rural', 1, 15, 35.5, 42, 78, 27],
+                  ],
+                },
+                a: [
+                  'Sort each sample and take TI-84 quartiles (the medians of the lower and upper halves).',
+                  'Centers: the rural median, 35.5, is above every metropolitan value (the largest is 25), and more than three times the metropolitan median.',
+                  String.raw`Spreads: the rural IQR is more than three times the metropolitan one (27 against 8). That is the unequal variance the F test of Example 9.10 detects.`,
+                  String.raw`Outliers: none by the 1.5 × IQR rule (rural fences $-25.5$ and $82.5$), so the t procedure is reasonable.`,
+                ],
+                answer: 'The box plots already suggest what Examples 9.10 and 9.13 conclude: different spreads, and a higher rural center.',
+                checks: () => {
+                  const M = boxPlot(METRO);
+                  const R = boxPlot(RURAL);
+                  return [
+                    ['metro Q1', M.q1, 7, 0],
+                    ['metro median', M.median, 11, 0],
+                    ['metro Q3', M.q3, 15, 0],
+                    ['rural Q1', R.q1, 15, 0],
+                    ['rural median', R.median, 35.5, 0],
+                    ['rural Q3', R.q3, 42, 0],
+                    ['rural IQR', R.iqr, 27, 0],
+                    ['rural lower fence', R.lowerFence, -25.5, 0],
+                    ['rural upper fence', R.upperFence, 82.5, 0],
+                    ['outliers', M.outliers.length + R.outliers.length, 0, 0],
+                  ];
+                },
+              },
+            ],
+          ],
+        ],
+        ['bridge', 'Everything so far assumed two independent samples. When the same subjects are measured twice, the samples are linked, and treating them as independent throws information away.'],
       ],
     },
     {
       id: '9.6',
+      part: 'Pairs',
       title: 'Paired samples',
       lab: 'paired',
       problems: ['c9.paired-t-test', 'c9.paired-t-interval', 'c9.independent-or-paired'],
@@ -470,7 +531,17 @@ export default {
           },
         ],
         ['warn', 'Running a two-sample test on paired data is a common mistake: it ignores the pairing and usually hides the effect under the variation between pairs.'],
+        ['bridge', 'Every comparison in this chapter asked whether two groups differ. Chapter 10 asks a different question of two variables measured on the same individuals: as one goes up, does the other move with it, and along what line?'],
       ],
     },
+  ],
+  formulas: [
+    ['Two proportions, test', String.raw`$z_0 = \dfrac{\hat{p}_1 - \hat{p}_2}{\sqrt{\hat{p}(1-\hat{p})(1/n_1 + 1/n_2)}}$, $\;\hat{p} = \dfrac{x_1 + x_2}{n_1 + n_2}$`],
+    ['Two proportions, interval', String.raw`$(\hat{p}_1 - \hat{p}_2) \pm z_{\alpha/2}\sqrt{\dfrac{\hat{p}_1(1-\hat{p}_1)}{n_1} + \dfrac{\hat{p}_2(1-\hat{p}_2)}{n_2}}$`],
+    ['Two means, $\\sigma$’s known', String.raw`$z_0 = \dfrac{(\bar{x}_1 - \bar{x}_2) - \Delta_0}{\sqrt{\sigma_1^2/n_1 + \sigma_2^2/n_2}}$`],
+    ['Two variances', String.raw`$f_0 = s_1^2/s_2^2$ on $(n_1 - 1, n_2 - 1)$ df; $\;f_{1-\alpha}(u, v) = 1/f_\alpha(v, u)$`],
+    ['Pooled t', String.raw`$s_p^2 = \dfrac{(n_1-1)s_1^2 + (n_2-1)s_2^2}{n_1 + n_2 - 2}$, $\;$df $= n_1 + n_2 - 2$`],
+    ['Unpooled t', String.raw`$t_0 = \dfrac{(\bar{x}_1 - \bar{x}_2) - \Delta_0}{\sqrt{s_1^2/n_1 + s_2^2/n_2}}$, Welch df (fractional)`],
+    ['Paired t', String.raw`$t_0 = \dfrac{\bar{d} - \Delta_0}{s_d/\sqrt{n}}$, $\;n - 1$ df`],
   ],
 };

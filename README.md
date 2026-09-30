@@ -67,7 +67,7 @@ node scripts/smoke.mjs   # every screen at 380px and 1280px (needs the dev serve
   - 200 seeded versions each stay valid and render,
   - KaTeX parses every formula,
   - and each probability agrees with a seeded Monte Carlo simulation of the same problem.
-- `scripts/notes-check.mjs` recomputes every number the notes state (342 of them) from the
+- `scripts/notes-check.mjs` recomputes every number the notes state (410 of them) from the
   examples' data, checks each linked practice case cites the same example, that every lab preset
   exists, that textbook material names its Walpole section, and parses all TeX.
 - `scripts/labs-check.mjs` runs every lab headless:

@@ -19,19 +19,28 @@ import { labById } from '../labs/index.js';
 import { mathProse, escapeHTML as esc } from './shared.js';
 
 /**
- * Straight double quotes to curly ones, outside the math: the serif body font draws a straight "
- * as a closing quote, so "or" would read ”or”.
+ * Typesetting for the serif prose, outside the math: straight double quotes become curly ones (the
+ * body font draws a straight " as a closing quote, so "or" would read ”or”), and a period, comma,
+ * semicolon or colon right after inline math moves inside it, so a phone never wraps it onto a line
+ * of its own.
  */
 const OPEN_FIRST = /(^|[\s(\[\u2014\u2013-])\x22/g;
 const OPEN_MID = /([\s(\[\u2014\u2013-])\x22/g;
-const curly = (t) =>
-  String(t)
-    .split(/(\$\$[\s\S]*?\$\$|\$[^$]*\$)/)
-    .map((part, i) => (i % 2 ? part : part.replace(i ? OPEN_MID : OPEN_FIRST, '$1\u201c').replace(/\x22/g, '\u201d')))
-    .join('');
+function typeset(t) {
+  const parts = String(t).split(/(\$\$[\s\S]*?\$\$|\$[^$]*\$)/);
+  for (let i = 1; i < parts.length; i += 2) {
+    const punct = /^[.,;:]/.exec(parts[i + 1] || '');
+    // Not when only the mark separates two formulas: "$a$.$b$" would turn into "$$".
+    if (punct && !parts[i].startsWith('$$') && (parts[i + 1].length > 1 || i + 2 >= parts.length)) {
+      parts[i] = `${parts[i].slice(0, -1)}\\text{${punct[0]}}$`;
+      parts[i + 1] = parts[i + 1].slice(1);
+    }
+  }
+  return parts.map((part, i) => (i % 2 ? part : part.replace(i ? OPEN_MID : OPEN_FIRST, '$1\u201c').replace(/\x22/g, '\u201d'))).join('');
+}
 
 /** Notes prose: the panel markup, plus **bold** (applied after escaping, outside the math). */
-const P = (t) => mathProse(curly(t)).replace(/\*\*([^*]+?)\*\*/g, '<b>$1</b>');
+const P = (t) => mathProse(typeset(t)).replace(/\*\*([^*]+?)\*\*/g, '<b>$1</b>');
 const paras = (x) => [].concat(x).map((t) => `<p>${P(t)}</p>`).join('');
 
 const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];

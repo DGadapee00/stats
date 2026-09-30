@@ -173,6 +173,7 @@ export default defineLab({
     { id: 'lot', label: 'Hypergeometric: 2 defectives in a sample of 5 from 20 (4 bad)', state: { dist: 'hyper', hN: 20, hK: 4, hn: 5, ev: 'eq', a: 2, b: 3 } },
     { id: 'z052', label: 'Notes Ex 6.2: P(Z < 0.52)', state: { dist: 'norm', m: 0, sd: 1, ev: 'le', a: 0.52, b: 1 } },
     { id: 'run', label: 'Notes Ex 6.4: a 10-km time between 55 and 70 minutes', state: { dist: 'norm', m: 61, sd: 9, ev: 'between', a: 55, b: 70 } },
+    { id: 'chi9', label: 'Chi-squared, 9 df: a sample variance over twice σ² (n = 10)', state: { dist: 'chi2', k: 9, ev: 'ge', a: 18, b: 20 } },
     { id: 'wait', label: 'Exponential: a wait over 1 minute, β = 0.5', state: { dist: 'exp', beta: 0.5, ev: 'ge', a: 1, b: 2 } },
   ],
   compute(s) {

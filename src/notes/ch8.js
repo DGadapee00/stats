@@ -1,15 +1,26 @@
 /**
- * Chapter 8, rewritten from the teacher's notes (Ch 8, pp. 95–128). The notes pose these examples and
- * work them on the TI-84 in class; every answer here is computed. Example numbers are the notes'.
+ * Chapter 8, rewritten from the teacher's notes (Ch 8, pp. 95–128), laid out like FLUX's notes. The
+ * notes pose these examples and work them on the TI-84 in class; every answer here is computed.
+ * Example numbers are the notes'; the textbook's material (Walpole §9.4, §9.6, §9.10, §9.12, §10.2,
+ * §10.10: sample size, prediction intervals, power, one-variance procedures) is marked, and its
+ * examples are lettered (8.A, 8.B, …).
  */
-import { tCdf } from '../stats/dist.js';
-import { tTable, zCritTable } from '../stats/tables.js';
+import { tCdf, normCdf, normSf, chi2Cdf } from '../stats/dist.js';
+import { tTable, zCritTable, zTable as zLook, chi2Table } from '../stats/tables.js';
 import { zTest, zInterval, tTest, tInterval, propTest, propInterval, mean, sd } from '../stats/infer.js';
 
 const CANDY = [19.68, 20.66, 19.56, 19.98, 20.65, 19.61, 20.55, 20.36, 21.02, 21.5, 19.74];
 const SONGS = [201, 257, 284, 208, 179, 222, 217, 206, 240];
 
 const r2 = (x) => Math.round(x * 100) / 100;
+const zTable = (z) => zLook(z).value;
+const chi = (a, df) => {
+  const v = chi2Table(a, df);
+  return typeof v === 'number' ? v : v.value;
+};
+/** Ex 8.E: 15 fills from the new machine of Ex 8.3(c), s = 0.15 against σ₀ = 0.23. */
+const FILL = { n: 15, s: 0.15, sigma0: 0.23 };
+const FILL_CHI = ((FILL.n - 1) * FILL.s ** 2) / FILL.sigma0 ** 2;
 const tt = (a, df) => {
   const v = tTable(a, df);
   return typeof v === 'number' ? v : v.value;
@@ -29,6 +40,7 @@ export default {
   sections: [
     {
       id: '8.1',
+      part: 'Estimating a parameter',
       title: 'Point estimates and confidence intervals',
       problems: ['c8.z-interval', 'c8.ci-meaning'],
       blocks: [
@@ -82,10 +94,38 @@ export default {
         ],
         ['ti', ['STAT ▸ TESTS ▸ 7:ZInterval.', 'Inpt: Stats (summary numbers given) or Data (a list in L1). Enter $\\sigma$, $\\bar{x}$, $n$, C-Level, then Calculate.']],
         ['why', 'The 95% belongs to the method, not to one interval: any one interval either contains $\\mu$ or does not. The CI coverage lab draws 100 intervals at once.'],
+        ['why', String.raw`Where the formula comes from: $\bar{X}$ is within $z_{\alpha/2}\,\sigma/\sqrt{n}$ of $\mu$ with probability $1 - \alpha$ (Chapter 7). "$\bar{X}$ is within $E$ of $\mu$" and "$\mu$ is within $E$ of $\bar{X}$" are the same event, so the interval $\bar{X} \pm E$ catches $\mu$ with probability $1 - \alpha$.`, 'Derivation'],
+        ['p', 'The margin of error shrinks with a larger sample (the $\\sqrt{n}$) and grows with more confidence (a larger $z$). Wanting both a short interval and high confidence costs data.'],
+        [
+          'book',
+          'Walpole §9.4',
+          [
+            ['p', String.raw`Turn the margin of error around to plan a study. To be $100(1 - \alpha)\%$ confident that $\bar{x}$ is within $e$ of $\mu$, set $z_{\alpha/2}\,\sigma/\sqrt{n} \le e$ and solve for $n$:`],
+            ['key', String.raw`$n = \left(\dfrac{z_{\alpha/2}\,\sigma}{e}\right)^2$, always rounded UP to the next whole number.`],
+            [
+              'ex',
+              {
+                n: '8.A',
+                title: 'how many sandwiches?',
+                q: 'With $\\sigma = 18$ mg as in Example 8.2, how many sandwiches must be sampled to be 95% confident the sample mean is within 2 mg of the true mean sodium content?',
+                a: [String.raw`$z_{0.025} = 1.96$: $n = \left(\dfrac{1.96 \times 18}{2}\right)^2 = 17.64^2 = 311.17$.`, 'Round up: 312. (Rounding down would give a margin slightly over 2 mg.)'],
+                answer: '312 sandwiches.',
+                checks: () => [
+                  ['z', zCritTable(0.025).z, 1.96, 1e-9],
+                  ['n', ((1.96 * 18) / 2) ** 2, 311.17, 5e-3],
+                  ['rounded up', Math.ceil(((1.96 * 18) / 2) ** 2), 312, 0],
+                ],
+              },
+            ],
+            ['p', 'Halving the margin of error takes four times the sample: $n$ grows with $1/e^2$.'],
+          ],
+        ],
+        ['bridge', 'An interval answers "what is the parameter?" Often the question is sharper: is it 920, or more? That is a hypothesis test, Part II.'],
       ],
     },
     {
       id: '8.2',
+      part: 'Testing a claim',
       title: 'Hypothesis tests, p-values and errors',
       lab: 'power',
       problems: ['c8.hypotheses', 'c8.errors'],
@@ -134,6 +174,38 @@ export default {
           },
         ],
         ['why', 'Lowering $\\alpha$ makes Type I errors rarer but Type II errors more common; only a bigger sample lowers both. The errors-and-power lab shows the trade.'],
+        ['p', 'The logic is proof by contradiction, with probabilities: assume $H_0$, work out how surprising the data would be under it, and give up $H_0$ only when the data would be very surprising. A p-value is that surprise, measured.'],
+        [
+          'book',
+          'Walpole §10.2',
+          [
+            ['p', String.raw`$\alpha$ is set in advance, but $\beta$ depends on how wrong $H_0$ is: a true mean far from $\mu_0$ is easy to detect, one close to it is not. So $\beta$ and the **power** $1 - \beta$ are computed for a particular alternative value of the parameter.`],
+            ['steps', ['Find the rejection region in terms of $\\bar{x}$: for a right-tailed z test, reject when $\\bar{x} > \\mu_0 + z_\\alpha\\,\\sigma/\\sqrt{n}$.', 'Power is the probability of landing in that region when the true mean is the alternative $\\mu_1$: a normal probability with mean $\\mu_1$.']],
+            [
+              'ex',
+              {
+                n: '8.B',
+                title: 'the power to detect overfilling',
+                q: 'A plant tests $H_0: \\mu = 12$ against $H_1: \\mu > 12$ oz (overfilling) with $n = 16$ cans, $\\sigma = 0.5$ and $\\alpha = 0.05$. What is the power of the test if the true mean is 12.25 oz?',
+                a: [
+                  String.raw`$\sigma/\sqrt{n} = 0.5/4 = 0.125$. Reject $H_0$ when $\bar{x} > 12 + 1.645(0.125) = 12.2056$.`,
+                  String.raw`If $\mu = 12.25$: power $= P(\bar{X} > 12.2056) = P\!\left(Z > \dfrac{12.2056 - 12.25}{0.125}\right) = P(Z > -0.36) = 1 - 0.3594 = 0.6406$ by the table (exact 0.6387).`,
+                  String.raw`$\beta = 1 - \text{power} \approx 0.36$.`,
+                ],
+                answer: 'Power about 0.64: the test misses an overfill of half a standard deviation more than a third of the time. A larger sample would raise it.',
+                show: 'power:text',
+                checks: () => [
+                  ['cutoff', 12 + 1.645 * 0.125, 12.2056, 5e-5],
+                  ['z', r2((12.2056 - 12.25) / 0.125), -0.36, 0],
+                  ['table', 1 - zTable(-0.36), 0.6406, 1e-9],
+                  ['exact', normSf(12 + 1.645 * 0.125, 12.25, 0.125), 0.6387, 5e-5],
+                ],
+              },
+            ],
+            ['key', 'Power grows with the sample size, with the size of the true effect, and with $\\alpha$. The effect is measured in standard deviations: 0.25 oz is $0.5\\sigma$ here, the lab’s preset.'],
+          ],
+        ],
+        ['bridge', 'Part II’s four steps are the same for every test in the course; only the statistic and its distribution change. The first test is for a mean when $\\sigma$ is known.'],
       ],
     },
     {
@@ -196,6 +268,7 @@ export default {
           },
         ],
         ['key', 'Two-tailed test by interval: for $H_1: \\mu \\ne \\mu_0$ at level $\\alpha$, reject $H_0$ exactly when the $100(1 - \\alpha)\\%$ confidence interval does NOT contain $\\mu_0$.'],
+        ['why', String.raw`Both come from the same inequality. The test rejects when $|\bar{x} - \mu_0| > z_{\alpha/2}\,\sigma/\sqrt{n}$, and the interval leaves out $\mu_0$ exactly when $\mu_0$ is more than $z_{\alpha/2}\,\sigma/\sqrt{n}$ from $\bar{x}$.`],
         [
           'ex',
           {
@@ -214,15 +287,18 @@ export default {
             },
           },
         ],
+        ['bridge', String.raw`The z procedures need $\sigma$, and $\sigma$ is almost never known. Part III replaces it with $s$ and pays for that with a slightly wider curve.`],
       ],
     },
     {
       id: '8.4',
+      part: 'When σ is unknown',
       title: 'Inference on a mean, σ unknown: the t distribution',
       lab: 'ci',
       problems: ['c8.t-critical', 'c8.t-prob', 'c8.t-interval', 'c8.t-test', 'c8.t-test-data'],
       blocks: [
         ['p', 'In practice $\\sigma$ is unknown and we use $s$. That adds uncertainty, and the $t$ distribution allows for it:'],
+        ['p', String.raw`$T = \dfrac{\bar{X} - \mu}{S/\sqrt{n}}$ varies more than $Z$ because its denominator varies too: in a sample whose $s$ happens to come out small, $T$ is large. The heavier tails of $t$ are those samples. With more data $s$ settles near $\sigma$ and $t$ settles onto $z$.`],
         [
           'list',
           [
@@ -280,6 +356,37 @@ export default {
           },
         ],
         ['ti', ['STAT ▸ TESTS ▸ 8:TInterval. Inpt: Data (List L1, Freq 1) or Stats ($\\bar{x}$, $Sx$, $n$); C-Level; Calculate.']],
+        [
+          'book',
+          'Walpole §9.6',
+          [
+            ['p', String.raw`A confidence interval is for the MEAN. To bracket a single future observation $x_0$, allow for the spread of one value as well as the uncertainty in $\bar{x}$. The **prediction interval** is`],
+            ['p', String.raw`$$\bar{x} \pm t_{\alpha/2,\,n-1}\; s\sqrt{1 + \frac{1}{n}}.$$`],
+            ['why', String.raw`$x_0 - \bar{X}$ has variance $\sigma^2 + \sigma^2/n = \sigma^2(1 + 1/n)$: the new value varies on its own, and $\bar{X}$ varies about $\mu$. The confidence interval has only the second part, the $1/n$.`],
+            [
+              'ex',
+              {
+                n: '8.C',
+                title: 'the next song',
+                q: 'For Marissa’s 9 songs of Example 8.9 ($\\bar{x} = 223.78$, $s = 31.88$), find a 99% prediction interval for the length of the next song she picks at random.',
+                a: [
+                  String.raw`$t_{0.005,8} = 3.355$; $E = 3.355 \times 31.88\sqrt{1 + \tfrac19} = 3.355 \times 31.88 \times 1.0541 = 112.75$.`,
+                  String.raw`$223.78 \pm 112.75$: $(111.03,\ 336.53)$.`,
+                ],
+                answer: 'One song: 111 to 337 seconds, with 99% confidence. The mean: 188 to 259 seconds (Example 8.9). Single values vary far more than averages.',
+                checks: () => {
+                  const E = tt(0.005, 8) * sd(SONGS) * Math.sqrt(1 + 1 / 9);
+                  return [
+                    ['√(1+1/n)', Math.sqrt(1 + 1 / 9), 1.0541, 5e-5],
+                    ['E', E, 112.75, 5e-3],
+                    ['lo', mean(SONGS) - E, 111.03, 5e-3],
+                    ['hi', mean(SONGS) + E, 336.53, 5e-3],
+                  ];
+                },
+              },
+            ],
+          ],
+        ],
         ['key', String.raw`**T-test**: $t_0 = \dfrac{\bar{x} - \mu_0}{s/\sqrt{n}}$, with $n - 1$ degrees of freedom. Assumes a roughly normal population. Same four steps as the z test.`],
         [
           'ex',
@@ -343,10 +450,13 @@ export default {
             },
           },
         ],
+        ['warn', 'The t procedures assume a roughly normal population. With a small sample, check a normal probability plot (§6.3) first; with $n \\ge 30$ the CLT covers moderate skew.'],
+        ['bridge', 'Means are one kind of parameter. The other that the course tests is a proportion: the fraction of a population with some characteristic, Part IV.'],
       ],
     },
     {
       id: '8.5',
+      part: 'Proportions',
       title: 'Inference on a proportion',
       lab: 'clt',
       problems: ['c8.prop-test', 'c8.prop-interval', 'c8.ci-and-test'],
@@ -442,7 +552,87 @@ export default {
           },
         ],
         ['warn', String.raw`For a proportion the match between test and interval is close but not exact: the test's standard error uses $p_0$, the interval's uses $\hat{p}$. When $p_0$ sits right at an end of the interval the two can disagree; the test is the one to report.`],
+        [
+          'book',
+          'Walpole §9.10',
+          [
+            ['p', String.raw`The sample size for estimating a proportion to within $e$ solves $z_{\alpha/2}\sqrt{\hat{p}(1-\hat{p})/n} \le e$. Before the study there is no $\hat{p}$; the safe choice is $\hat{p} = 0.5$, which makes $\hat{p}(1-\hat{p})$ as large as it can be, $1/4$.`],
+            ['key', String.raw`$n = \dfrac{z_{\alpha/2}^2\,\hat{p}(1-\hat{p})}{e^2}$, or $n = \dfrac{z_{\alpha/2}^2}{4e^2}$ with no prior estimate. Round up.`],
+            [
+              'ex',
+              {
+                n: '8.D',
+                title: 'the size of a poll',
+                q: 'How large a sample does a poll need to be 95% confident its proportion is within 3 percentage points of the truth, with no prior estimate?',
+                a: [String.raw`$n = \dfrac{1.96^2}{4(0.03)^2} = \dfrac{3.8416}{0.0036} = 1067.1$. Round up.`],
+                answer: '1068 people: why national polls so often sample about a thousand.',
+                checks: () => [
+                  ['n', 1.96 ** 2 / (4 * 0.03 ** 2), 1067.1, 5e-2],
+                  ['rounded up', Math.ceil(1.96 ** 2 / (4 * 0.03 ** 2)), 1068, 0],
+                ],
+              },
+            ],
+          ],
+        ],
+        ['bridge', String.raw`That completes the class’s one-sample procedures: $\mu$ with $\sigma$ known, $\mu$ with $\sigma$ unknown, and $p$. Example 8.3(c) posed a fourth, about a standard deviation, and the notes stop at the hypotheses. The textbook finishes it.`],
       ],
     },
+    {
+      id: '8.6',
+      part: 'Variances',
+      title: 'Inference on a variance',
+      source: 'Walpole §9.12, §10.10',
+      lab: 'dist',
+      blocks: [
+        ['p', String.raw`Consistency is often the point: a filling machine, a drug dose, a manufactured part. The parameter is then $\sigma^2$ (or $\sigma$), and its estimate is $s^2$. From a normal population, $(n-1)S^2/\sigma^2$ has the $\chi^2$ distribution with $n - 1$ df (§7.5), and both procedures come from that.`],
+        ['key', String.raw`**Test:** $\chi^2_0 = \dfrac{(n - 1)s^2}{\sigma_0^2}$ with $n - 1$ df. p-value: the area beyond $\chi^2_0$ in the direction of $H_1$ (doubled, the smaller tail, for $\ne$).`],
+        ['key', String.raw`**Interval:** $\dfrac{(n-1)s^2}{\chi^2_{\alpha/2,\,n-1}} < \sigma^2 < \dfrac{(n-1)s^2}{\chi^2_{1-\alpha/2,\,n-1}}$. Take square roots for $\sigma$.`],
+        ['warn', 'The large $\\chi^2$ value gives the LOWER limit. And the interval is not symmetric about $s^2$, because the $\\chi^2$ curve is not symmetric.'],
+        [
+          'ex',
+          {
+            n: '8.E',
+            title: 'is the new machine less variable?',
+            q: 'Example 8.3(c): an old filling machine has $\\sigma = 0.23$ oz. A random sample of 15 fills from a new machine has $s = 0.15$ oz. Fill volumes are normal. (a) Is the new machine less variable? Use $\\alpha = 0.05$. (b) Find a 90% confidence interval for $\\sigma$.',
+            a: [
+              '(a) $H_0: \\sigma = 0.23$, $H_1: \\sigma < 0.23$ (left-tailed).',
+              String.raw`$\chi^2_0 = \dfrac{14(0.15)^2}{0.23^2} = \dfrac{0.315}{0.0529} = 5.955$, with 14 df.`,
+              String.raw`Table A.5, row 14: $\chi^2_{0.95} = 6.571$ and $5.955 < 6.571$, so the left-tail area is below 0.05. Exact: $\chi^2$cdf$(0, 5.955, 14) = 0.0324$.`,
+              '$0.0324 < 0.05$: reject $H_0$.',
+              String.raw`(b) 90%: $\chi^2_{0.05,14} = 23.685$ and $\chi^2_{0.95,14} = 6.571$. For $\sigma^2$: $\left(\dfrac{0.315}{23.685},\ \dfrac{0.315}{6.571}\right) = (0.01330,\ 0.04794)$.`,
+              String.raw`Square roots: $0.115 < \sigma < 0.219$ oz.`,
+            ],
+            answer: 'There is sufficient evidence the new machine is less variable. Its $\\sigma$ is between 0.115 and 0.219 oz with 90% confidence, all of it below the old 0.23.',
+            checks: () => [
+              ['χ²₀', FILL_CHI, 5.955, 5e-4],
+              ['χ².95', chi(0.95, 14), 6.571, 5e-4],
+              ['χ².05', chi(0.05, 14), 23.685, 5e-4],
+              ['p', chi2Cdf(FILL_CHI, 14), 0.0324, 5e-5],
+              ['σ² lo', 0.315 / 23.685, 0.0133, 5e-5],
+              ['σ² hi', 0.315 / 6.571, 0.04794, 5e-6],
+              ['σ lo', Math.sqrt(0.315 / 23.685), 0.115, 5e-4],
+              ['σ hi', Math.sqrt(0.315 / 6.571), 0.219, 5e-4],
+            ],
+          },
+        ],
+        ['ti', ['The TI-84 has no one-variance test. Compute $\\chi^2_0$ by hand, then 2nd VARS ▸ 8:χ²cdf(: lower, upper, df. Left tail: χ²cdf(0, 5.955, 14).']],
+        ['p', 'A one-sided test at level 0.05 matches the one-sided end of a 90% interval, which is why part (b) uses 90%: the upper limit 0.219 is below 0.23 exactly because the test rejects.'],
+        ['bridge', 'Chapter 9 compares two populations: two means, two proportions, and two variances, where the ratio $s_1^2/s_2^2$ and the $F$ distribution take the place of $\\chi^2$.'],
+      ],
+    },
+  ],
+  formulas: [
+    ['Z-interval ($\\sigma$ known)', String.raw`$\bar{x} \pm z_{\alpha/2}\,\sigma/\sqrt{n}$`],
+    ['T-interval', String.raw`$\bar{x} \pm t_{\alpha/2,\,n-1}\,s/\sqrt{n}$`],
+    ['Proportion interval', String.raw`$\hat{p} \pm z_{\alpha/2}\sqrt{\hat{p}(1-\hat{p})/n}$, $\;n\hat{p}(1-\hat{p}) \ge 10$`],
+    ['Z-test', String.raw`$z_0 = \dfrac{\bar{x} - \mu_0}{\sigma/\sqrt{n}}$`],
+    ['T-test', String.raw`$t_0 = \dfrac{\bar{x} - \mu_0}{s/\sqrt{n}}$, $\;n - 1$ df`],
+    ['Proportion test', String.raw`$z_0 = \dfrac{\hat{p} - p_0}{\sqrt{p_0(1-p_0)/n}}$, $\;np_0(1-p_0) \ge 10$`],
+    ['Decision', String.raw`reject $H_0$ when p-value $< \alpha$`],
+    ['Errors', String.raw`$\alpha = P(\text{Type I})$, $\;\beta = P(\text{Type II})$, power $= 1 - \beta$`],
+    ['Sample size for $\\mu$', String.raw`$n = (z_{\alpha/2}\,\sigma/e)^2$, rounded up`, 'Walpole §9.4'],
+    ['Prediction interval', String.raw`$\bar{x} \pm t_{\alpha/2,\,n-1}\,s\sqrt{1 + 1/n}$`, 'Walpole §9.6'],
+    ['Sample size for $p$', String.raw`$n = z_{\alpha/2}^2\,\hat{p}(1-\hat{p})/e^2$ (use $\hat{p} = 0.5$ if unknown)`, 'Walpole §9.10'],
+    ['One variance', String.raw`$\chi^2_0 = (n-1)s^2/\sigma_0^2$; interval $\dfrac{(n-1)s^2}{\chi^2_{\alpha/2}}$ to $\dfrac{(n-1)s^2}{\chi^2_{1-\alpha/2}}$`, 'Walpole §9.12'],
   ],
 };
