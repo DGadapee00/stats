@@ -227,6 +227,8 @@ if (lab('tests')) {
     ok(e.formula && e.assume.length && e.ti, `tests ${e.id}: needs formula, assumptions and TI menu`);
     texOK(`tests ${e.id} formula`, e.formula);
     for (const a of e.assume) texOK(`tests ${e.id} assumption`, a);
+    texOK(`tests ${e.id} ci`, `$${e.ci}$`);
+    ok(L.leafFor({ ...L.defaults(), ...e.set }) === e, `tests ${e.id}: its answers do not lead to it`);
   }
 }
 

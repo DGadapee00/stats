@@ -12,6 +12,7 @@ import path from 'node:path';
 import { chromium } from './playwright.mjs';
 import { PROBLEMS } from '../src/problems/index.js';
 import { accepted, instance } from '../src/problems/engine.js';
+import { LABS } from '../src/labs/index.js';
 
 const BASE = process.env.SMOKE_URL || 'http://localhost:5175/';
 const OUT = path.resolve('scripts/output/smoke');
@@ -30,6 +31,8 @@ for (const [name, vp] of [['phone', { width: 380, height: 800 }], ['laptop', { w
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
+  await page.addInitScript(() => window.addEventListener('error', (e) => console.log('STACK', e.error && e.error.stack)));
+  page.on('console', (m) => m.text().startsWith('STACK') && console.log(m.text()));
   page.on('console', (m) => {
     // A sandbox without network cannot fetch the web fonts; that is not the app's error.
     if (m.type() === 'error' && !/fonts\.(googleapis|gstatic)|ERR_|Failed to load resource/.test(m.text())) errors.push(m.text());
@@ -60,6 +63,41 @@ for (const [name, vp] of [['phone', { width: 380, height: 800 }], ['laptop', { w
   await settle('tables-lookup');
   await visit('#/mid/notes', 'notes');
   await visit('#/mid/explore', 'explore');
+
+  // Every lab: it draws, a control redraws it, and a prediction runs to its verdict.
+  const inked = () =>
+    page.evaluate(() => {
+      const c = document.querySelector('#lab-canvas');
+      const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+      let n = 0;
+      for (let i = 3; i < d.length; i += 16) if (d[i]) n++;
+      return n;
+    });
+  for (const lab of LABS) {
+    await visit(`#/final/explore/${lab.id}`, `lab-${lab.id}`);
+    const ink = await inked();
+    if (ink < 500) err(`${name} lab ${lab.id}`, `canvas nearly blank (${ink})`);
+    if ((await page.locator('#lab-readout .cell').count()) < 1) err(`${name} lab ${lab.id}`, 'no readout');
+    const range = page.locator('#lab-controls input[type=range]:visible').first();
+    if (await range.count()) {
+      const before = await page.locator('#lab-readout').innerText();
+      await range.evaluate((el) => {
+        el.value = String(Number(el.min) + (Number(el.max) - Number(el.min)) * 0.8);
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+      await page.waitForTimeout(80);
+      if ((await page.locator('#lab-readout').innerText()) === before) err(`${name} lab ${lab.id}`, 'moving a slider changed nothing');
+    }
+    if (lab.predictions.length) {
+      const p = lab.predictions[0];
+      await page.click('[data-pred=start]');
+      await page.click(`[data-pick="${p.expect}"]`);
+      await page.click('[data-pred=change]');
+      await page.waitForTimeout(80);
+      if (!(await page.locator('#lab-predict .verdict.ok').count())) err(`${name} lab ${lab.id}`, `prediction ${p.id}: the expected answer was not marked right`);
+      await settle(`lab-${lab.id}-predicted`, name === 'phone');
+    }
+  }
 
   // Every problem (or a sample) opens, at its worked case and at a fresh version.
   const list = ALL ? PROBLEMS : PROBLEMS.filter((_, i) => i % 3 === 0 || name === 'phone');

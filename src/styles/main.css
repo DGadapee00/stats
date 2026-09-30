@@ -865,6 +865,7 @@ canvas.draggable {
 }
 
 .lab-readout .value {
+  font-family: var(--font);
   font-size: var(--fs-body);
 }
 
@@ -987,4 +988,16 @@ canvas.draggable {
     position: sticky;
     top: 70px;
   }
+}
+
+.canvas-wrap canvas {
+  max-height: 64vh;
+}
+
+.btn[hidden] {
+  display: none;
+}
+
+canvas.tappable {
+  cursor: pointer;
 }

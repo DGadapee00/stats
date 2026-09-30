@@ -79,7 +79,7 @@ const fmtTick = (v) => {
  * A plot area: margins inside the canvas and the x and y scales for it. `y` may be omitted for
  * a plot with no vertical axis (a density drawn to fit).
  */
-export function area(w, h, { x, y, left = 40, right = 12, top = 12, bottom = 28 }) {
+export function area(w, h, { x, y, left = 40, right = 12, top = 20, bottom = 28 }) {
   const box = { x0: left, x1: w - right, y0: top, y1: h - bottom };
   return { ...box, x: scale(x[0], x[1], box.x0, box.x1), y: y ? scale(y[0], y[1], box.y1, box.y0) : null, w, h };
 }

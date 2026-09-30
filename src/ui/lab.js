@@ -178,6 +178,10 @@ export function renderLab(root, { unitId, lab }) {
   };
   const update = () => {
     sync();
+    for (const a of lab.actions) {
+      const b = root.querySelector(`[data-act="${a.id}"]`);
+      if (b) b.hidden = a.show ? !a.show(state) : false;
+    }
     schedule();
   };
 
@@ -265,6 +269,20 @@ export function renderLab(root, { unitId, lab }) {
     canvas.addEventListener('pointercancel', end);
   }
 
+  /* ---------------- tap (labs whose picture is also a menu) */
+  if (lab.tap) {
+    canvas.classList.add('tappable');
+    canvas.addEventListener('click', (e) => {
+      if (!view) return;
+      const r = canvas.getBoundingClientRect();
+      const next = lab.tap(view, state, e.clientX - r.left, e.clientY - r.top);
+      if (next) {
+        state = next;
+        update();
+      }
+    });
+  }
+
   /* ---------------- Predict first */
   function renderPredict() {
     if (!predictEl) return;
@@ -334,7 +352,7 @@ export function renderLab(root, { unitId, lab }) {
   }
 
   root.onclick = null;
-  sync();
+  update();
   renderPredict();
   paint();
 

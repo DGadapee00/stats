@@ -4,10 +4,11 @@
  *   id, title, ch (chapters), blurb     — what it is, for the Explore list
  *   params: [...]                        — the controls, in order (see below)
  *   scenarios: [{ id, label, state }]    — presets for the Scenario menu
- *   actions: [{ id, label, run(state) }] — buttons (Resample, Clear…)
+ *   actions: [{ id, label, run(state), show? }] — buttons (Resample, Clear…)
  *   compute(state, rng) → result         — pure: every number the lab shows comes from here
  *   draw(canvas, state, result) → view   — paints the plot; returns what pointer handling needs
  *   pointer: { down(view, state, x, y) → handled, move, up }  (optional; x, y in CSS px)
+ *   tap(view, state, x, y) → new state or null   (optional; a tap that is not a drag, page still scrolls)
  *   readout(state, result) → [[label, value], …]   — labels and values in the panel markup ($…$)
  *   explain(state, result) → [paragraphs]          — the explainer under the controls
  *   predictions: [{ id, setup, change, prompt, options, outcome(before, after), expect, why }]
