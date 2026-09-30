@@ -203,6 +203,23 @@ for (const tpl of bank) {
     if (!set.length || set.length > 8) err('pickSet', `picked ${set.length}`);
     if (set.filter((x) => x.kind === 'conceptual').length > 2) err('pickSet', 'more than a quarter conceptual');
     if (new Set(set.map((x) => x.id)).size !== set.length) err('pickSet', 'duplicates');
+
+    // Massed repeats are not mastery: five clean solves a minute apart reach box 1, not box 5.
+    const q = createProgress(memoryStorage());
+    for (let k = 0; k < 5; k++) q.record(t.id, { correct: true, clean: true, now: now + k * 60e3 });
+    if (q.get(t.id).box !== 1) err('progress', `massed clean solves reached box ${q.get(t.id).box}`);
+    // Spaced ones are: solving each time it comes due climbs a box each time.
+    const sp = createProgress(memoryStorage());
+    let at = now;
+    for (let k = 0; k < 4; k++) {
+      sp.record(t.id, { correct: true, clean: true, now: at });
+      at = sp.get(t.id).due + 1;
+    }
+    if (sp.get(t.id).box !== 4) err('progress', `spaced clean solves reached box ${sp.get(t.id).box}, not 4`);
+    // Nothing is scheduled past the cap (the day before the exam).
+    const cap = at + 2 * 864e5;
+    sp.record(t.id, { correct: true, clean: true, now: at, cap });
+    if (sp.get(t.id).due > cap) err('progress', 'a review was scheduled after the exam');
   }
 }
 

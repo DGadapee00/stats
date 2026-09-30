@@ -3,9 +3,11 @@
  * No DOM. Storage is injected (localStorage in the browser, a Map-backed stub in tests),
  * and every read/write is guarded because private windows can refuse storage.
  *
- * Spaced review uses Leitner boxes 0–5. A clean solve (right on the first check, no hints,
- * no peeking) moves a problem up a box; needing help keeps it low; missing it or opening
- * the solution sends it back to box 0. A problem is due again after INTERVAL_DAYS[box].
+ * Spaced review uses Leitner boxes 0–5. A clean solve (every part right on its first check, no
+ * hints, no peeking) moves a problem up a box, but only when it was due: solving it again and
+ * again in one sitting shows it is in short-term memory, not that it has stuck. Needing help keeps
+ * it low; missing it or opening the solution sends it back to box 0. A problem is due again after
+ * INTERVAL_DAYS[box], but never later than `cap` (the day before the exam being studied for).
  */
 import { CHAPTER_ORDER } from '../data/catalog.js';
 import { mulberry32 as rng } from '../stats/rng.js';
@@ -61,17 +63,20 @@ export function createProgress(storage = browserStorage()) {
    * right on the first check with no other help. A guided solve is not clean, but it counts
    * (gOk) toward the chapter readiness that withdraws the help.
    */
-  function record(id, { correct, clean = false, hints = 0, peeked = false, revealed = false, seed = 0, principle = null, guided = false, rightFirst = false, now = Date.now() }) {
+  function record(id, { correct, clean = false, hints = 0, peeked = false, revealed = false, seed = 0, principle = null, guided = false, rightFirst = false, now = Date.now(), cap = null }) {
     const it = data.items[id] || { attempts: 0, solved: 0, clean: 0, peeks: 0, hints: 0, box: 0, due: 0, last: 0, lastSeed: 0 };
+    const wasDue = it.due <= now;
     it.attempts++;
     if (correct) it.solved++;
     if (clean) it.clean++;
     if (peeked) it.peeks++;
     it.hints += hints;
-    if (clean) it.box = Math.min(5, it.box + 1);
+    if (clean) it.box = wasDue ? Math.min(5, it.box + 1) : it.box;
     else if (correct && !revealed) it.box = Math.max(1, it.box - 1);
     else it.box = 0;
-    it.due = now + INTERVAL_DAYS[it.box] * DAY;
+    // A clean solve before it was due keeps its place in the queue (and its box).
+    if (!(clean && !wasDue)) it.due = now + INTERVAL_DAYS[it.box] * DAY;
+    if (cap && cap > now) it.due = Math.min(it.due, cap);
     it.last = now;
     it.lastSeed = seed;
     it.lastOk = !!correct && !revealed;

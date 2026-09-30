@@ -113,6 +113,9 @@ function startSession(unitId, name, ids) {
 
 // ---------------------------------------------------------------- problem sheet
 
+/** The exam the student is practising for (it caps review dates). */
+let unitNow = null;
+
 /** One attempt at one version of one template. */
 function newAttempt(tpl, seed) {
   const inst = instance(tpl, seed);
@@ -138,6 +141,7 @@ function newAttempt(tpl, seed) {
 let current = null;
 
 export function renderProblem(root, { unitId, problemId, seed }) {
+  unitNow = unitId;
   const tpl = problemById(problemId);
   if (!tpl) {
     root.innerHTML = `<p class="note">No problem called “${esc(problemId)}”. <a href="${hashFor({ unitId })}">Back to the list</a>.</p>`;
@@ -310,7 +314,14 @@ function check(root, unitId) {
     a.results[p.id] = g;
     if (!g.correct) all = false;
   }
-  if (a.firstRight === null) a.firstRight = all;
+  // Clean is judged part by part: each part must be right the first time it is checked with an
+  // answer in it, so checking (a) before answering (b) does not spoil a clean solve.
+  a.firstPart ||= {};
+  for (const p of tpl.parts) {
+    const r = a.results[p.id];
+    if (r && !r.empty && !(p.id in a.firstPart)) a.firstPart[p.id] = r.correct;
+  }
+  a.firstRight = tpl.parts.every((p) => p.kind === 'self' || a.firstPart[p.id] !== false);
   if (all) finish(true);
   draw(root, unitId);
   announce(all ? 'All parts right.' : 'Some parts are not right yet.');
@@ -329,7 +340,14 @@ function finish(correct) {
     hints: a.hints,
     revealed: a.revealed,
     seed: a.seed,
+    cap: reviewCap(unitNow),
   });
+}
+
+/** No review is scheduled past noon the day before the exam being studied for. */
+export function reviewCap(unitId) {
+  const u = unitById(unitId);
+  return u ? new Date(`${u.date}T00:00:00`).getTime() - 12 * 3600e3 : null;
 }
 
 function announce(msg) {

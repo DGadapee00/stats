@@ -6,7 +6,7 @@
 import { problemById, problemsForUnit } from '../problems/index.js';
 import { instance, render, grade, accepted } from '../problems/engine.js';
 import { pickSet } from '../problems/progress.js';
-import { progress } from './practice.js';
+import { progress, reviewCap } from './practice.js';
 import { CHAPTER_TITLES, unitById, unitLabel } from '../data/catalog.js';
 import { hashFor } from '../engine/router.js';
 import { mathProse, escapeHTML as esc } from './shared.js';
@@ -164,7 +164,7 @@ function submit(ex) {
     const a = ex.answers[k] || {};
     const parts = tpl.parts.map((p) => ({ id: p.id, correct: a[p.id] != null && a[p.id] !== '' && grade(p, inst.$, a[p.id]).correct }));
     const right = parts.filter((p) => p.correct).length;
-    progress.record(id, { correct: right === parts.length, clean: right === parts.length, seed: ex.seeds[k] });
+    progress.record(id, { correct: right === parts.length, clean: right === parts.length, seed: ex.seeds[k], cap: reviewCap(ex.unitId) });
     return { right, of: parts.length, parts };
   });
   save(ex);
