@@ -38,6 +38,7 @@ export default {
             ],
             problem: 'c5.is-binomial',
             case: 0,
+            checks: () => [['(b) p', 2 / 6, 1 / 3, 1e-12]],
           },
         ],
         ['key', String.raw`If $X$ is binomial with $n$ trials and success probability $p$: $P(X = x) = {}_nC_x\,p^x (1 - p)^{n - x}$, for $x = 0, 1, 2, \ldots, n$.`],
