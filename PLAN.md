@@ -231,7 +231,39 @@ Every ★ lab ships with 2–3 Predict-first prompts and the generators for its 
 
 ---
 
-## 9. Decisions needed before Phase 1
+## 9. Decisions (answered 30 Sep 2026)
+
+- **Repo:** build in `dgadapee00/stats`.
+- **Course:** STA 3032, Fall 2026.
+  - Textbook: Walpole, Myers, Myers & Ye, *Probability & Statistics for Engineers & Scientists*.
+  - Notes: the teacher's own typeset notes (TI-84 workflow).
+- **Units:**
+  - **Midterm**, Mon 12 Oct 2026, Ch 1–6.
+  - **Final**, Mon 7 Dec 2026 at 3 pm, Ch 1–10 (cumulative).
+  - As of 30 Sep the class is in Ch 6.
+- **Printed tables:** Appendix A of the textbook. `src/stats/tables.js` models their exact layout:
+
+  | Table | Rows | Columns | Precision |
+  |---|---|---|---|
+  | A.1 binomial cumulative | n 1–20 | p .10–.90 | 4 dp |
+  | A.2 Poisson cumulative | r | μ 0.1–18 | 4 dp |
+  | A.3 z, cumulative from the left | z −3.49 to 3.49 | .00–.09 | 4 dp |
+  | A.4 t, upper-tail α | df 1–30, 40, 60, 120, ∞ | .40, .30, .20, .15, .10, .05, .025, .02, .015, .01, .0075, .005, .0025, .0005 | 3 dp |
+  | A.5 χ², upper-tail α | df 1–30, 40, 50, 60 | .995 … .001 | 3 dp |
+  | A.6 F | ν₁ 1–10, 12, 15, 20, 24, 30, 40, 60, 120, ∞ and ν₂ 1–30, 40, 60, 120, ∞ | **only α = .05 and .01** | 2 dp |
+
+  - Because A.6 has only those two columns, an F interval or two-sided F test in this course uses α/2 ∈ {.05, .01}, so a 90% or 98% interval. Generators respect that, and use \(f_{1-\alpha}(\nu_1,\nu_2) = 1/f_\alpha(\nu_2,\nu_1)\).
+  - A df between table rows is graded as correct from either neighbouring row.
+- **Conventions:**
+  - **Quartiles** use the teacher's TI-84 rule: the median of the lower and upper halves, leaving the median out when n is odd (checked against her Examples 1.6 and 1.13).
+  - **Box plot:** whiskers run to the most extreme values inside 1.5·IQR fences, and outliers are marked `*`.
+  - **Standard deviation** s uses n − 1.
+  - **Welch df** is ν rounded down (Walpole).
+  - **Normal approximation to the binomial** needs np ≥ 5 and nq ≥ 5 (Walpole).
+  - **Critical values and p-values** are both shown, since the textbook does both.
+- **Build order change:** the midterm is 12 days out and covers Ch 1–6, so the **Ch 1–6 generators move ahead of the labs**. The Distribution explorer (Ch 5–6) moves ahead of the other secondary labs. The ★ labs then follow in the original order, starting with Ch 7, which begins 14 Oct.
+
+### Original questions (for the record)
 
 1. **Repo.** This session's repo is `dgadapee00/stats`. Build here, or create `flux-stats`?
 2. **Exams.** Which chapters does each exam cover, and when? This drives the unit picker and practice exams.
