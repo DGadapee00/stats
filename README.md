@@ -5,6 +5,8 @@ Engineers & Scientists*). It is the sibling of [FLUX](https://github.com/DGadape
 for PHY 2049, with the same approach: generated practice problems tied to the course, worked
 solutions, spaced review, and interactive labs. It is built for a phone first.
 
+**Live site: https://flux-stats.pages.dev**
+
 ```bash
 npm install
 npm start          # http://localhost:5175
