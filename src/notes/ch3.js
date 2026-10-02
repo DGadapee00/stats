@@ -1,7 +1,8 @@
 /**
  * Chapter 3, rewritten from the teacher's notes (Ch 3, pp. 41–46), laid out like FLUX's notes.
- * Example numbers are the notes'; the textbook's material (Walpole §3.4, joint distributions) is
- * marked, and its example is lettered (3.A). Chapter 4 reuses the welds table of Ex 3.A.
+ * Example numbers are the notes'; the textbook's material (Walpole §3.3, a density with an unknown
+ * constant, and §3.4, joint distributions) is
+ * marked, and its examples are lettered (3.A, 3.B). Chapter 4 reuses the welds table of Ex 3.B.
  */
 import { binomPmf } from '../stats/dist.js';
 
@@ -14,7 +15,7 @@ const integrate = (f, a, b, n = 2000) => {
 };
 const f35 = (x) => (x >= -1 && x <= 2 ? (x * x) / 3 : 0);
 
-/** Ex 3.A: two welds per part. WELDS[y][x] = P(X = x, Y = y), x defective welds, y = 1 for the old machine. */
+/** Ex 3.B: two welds per part. WELDS[y][x] = P(X = x, Y = y), x defective welds, y = 1 for the old machine. */
 export const WELDS = [
   [0.3, 0.2, 0.1],
   [0.1, 0.2, 0.1],
@@ -125,7 +126,7 @@ export default {
       id: '3.3',
       title: 'Continuous probability distributions',
       lab: 'dist',
-      problems: ['c3.density-cdf', 'c3.pdf-constant', 'c3.cdf'],
+      problems: ['c3.density-cdf', 'c3.pdf-constant', 'c3.cdf', 'c4.density-k'],
       blocks: [
         ['p', String.raw`For a continuous $X$, any single value has probability 0: there are infinitely many values between 0 and 1, so $P(X = 0.5) = 1/\infty = 0$. Probability lives on intervals instead.`],
         ['p', 'Picture a probability histogram of a measurement with narrower and narrower bars: the bar tops smooth into a curve, and the area under the curve over an interval is the probability of landing in it. That curve is the density.'],
@@ -172,6 +173,37 @@ export default {
           },
         ],
         ['key', 'Every CDF is non-decreasing, from 0 on the far left to 1 on the far right. A discrete CDF is a step function; a continuous one is a continuous curve.'],
+        [
+          'book',
+          'Walpole §3.3',
+          [
+            ['p', String.raw`Often the density is given only up to a constant: $f(x) = kx$, or $k(x + 1)$, on some interval. Property (2), total area 1, is what fixes $k$: integrate, set the result equal to 1, and solve. After that the density is complete, and every probability (and in Chapter 4, the mean) comes from it.`],
+            [
+              'ex',
+              {
+                n: '3.A',
+                title: 'finding the constant',
+                q: String.raw`$X$ has density $f(x) = kx$ for $0 \le x \le 4$, and 0 elsewhere. (a) Find $k$. (b) Find $P(1 \le X \le 3)$. (c) Find $E(X)$ (§4.1).`,
+                a: [
+                  String.raw`(a) $\int_0^4 kx\,dx = k\,\dfrac{x^2}{2}\Big|_0^4 = 8k = 1$, so $k = \dfrac{1}{8} = 0.125$.`,
+                  String.raw`(b) $P(1 \le X \le 3) = \int_1^3 \dfrac{x}{8}\,dx = \dfrac{x^2}{16}\Big|_1^3 = \dfrac{9 - 1}{16} = 0.5$.`,
+                  String.raw`(c) $E(X) = \int_0^4 x \cdot \dfrac{x}{8}\,dx = \dfrac{x^3}{24}\Big|_0^4 = \dfrac{64}{24} = 2.667$.`,
+                ],
+                answer: String.raw`$k = 1/8$, $P(1 \le X \le 3) = 0.5$, $E(X) = 8/3 \approx 2.667$: above the middle of the interval, 2, because the density rises to the right.`,
+                checks: () => {
+                  const f = (x) => (x >= 0 && x <= 4 ? x / 8 : 0);
+                  return [
+                    ['total area', integrate(f, 0, 4), 1, 1e-9],
+                    ['k', 1 / 8, 0.125, 0],
+                    ['P(1≤X≤3)', integrate(f, 1, 3), 0.5, 1e-9],
+                    ['E(X)', integrate((x) => x * f(x), 0, 4), 2.667, 5e-4],
+                  ];
+                },
+              },
+            ],
+            ['warn', String.raw`$k$ is not a probability and can be larger than 1: for $f(x) = kx^2$ on $[0, 1]$, $k = 3$. Only the total area has to be 1.`],
+          ],
+        ],
         ['bridge', 'One variable at a time covers most of the course. But a part has more than one feature, a student more than one score, and the interesting question is often how two variables move together. That takes a joint distribution.'],
       ],
     },
@@ -189,7 +221,7 @@ export default {
         [
           'ex',
           {
-            n: '3.A',
+            n: '3.B',
             title: 'welds and machines',
             q: 'Each part has two welds. For a randomly chosen part, $X$ is the number of welds that need rework and $Y = 1$ if the part came from the older of two machines ($Y = 0$ for the newer). The joint distribution is below. (a) Check it is a joint pmf. (b) Find the marginal distributions. (c) Find the distribution of $X$ for parts from the old machine, and $P(X \\ge 1 \\mid Y = 1)$. (d) Are $X$ and $Y$ independent?',
             data: {

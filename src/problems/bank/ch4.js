@@ -125,7 +125,10 @@ export default [
       $.b < 0 ? 'Subtracting Y still adds its variance: the difference is spread out by both variables.' : 'Both variables add their spread.',
     ],
     twin: { part: 'v', n: 60000, draw: (r, $) => { const z = $.a * r.normal($.mx, Math.sqrt($.vx)) + $.b * r.normal($.my, Math.sqrt($.vy)) + $.c; return (z - $.m) ** 2; } },
-    cases: [kase('Notes Ex 4.8', { mx: -1, vx: 2, my: 2, vy: 3, a: 3, b: -2, c: 5 }, { m: -2, v: 30 }, { note: 'The notes also show the wrong route, Var(3X) − Var(2Y) = 6: variances of independent variables always add.' })],
+    cases: [
+      kase('Notes Ex 4.8', { mx: -1, vx: 2, my: 2, vy: 3, a: 3, b: -2, c: 5 }, { m: -2, v: 30 }, { note: 'The notes also show the wrong route, Var(3X) − Var(2Y) = 6: variances of independent variables always add.' }),
+      kase('Review 1, Q3', { mx: 1, vx: 1, my: -3, vy: 4, a: 2, b: -1, c: -5 }, { m: 0, v: 8 }),
+    ],
   }),
 
   problem({

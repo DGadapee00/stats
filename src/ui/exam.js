@@ -1,11 +1,14 @@
 /**
  * Practice exam: 8 problems across the exam's chapters, weakest first (pickSet), 50 minutes, no
- * hints and no feedback until you submit. Answers save as you type, so a reload resumes. Results
- * show a score by chapter, and each problem then opens with its worked solution.
+ * hints and no feedback until you submit. Or a named set sat the same way (the review sheet's eight
+ * questions, src/problems/sets.js), always with fresh numbers. Answers save as you type, so a
+ * reload resumes. Results show a score by chapter, and each problem then opens with its worked
+ * solution.
  */
 import { problemById, problemsForUnit } from '../problems/index.js';
 import { instance, render, grade, accepted } from '../problems/engine.js';
 import { pickSet } from '../problems/progress.js';
+import { setById, setsForUnit } from '../problems/sets.js';
 import { progress, reviewCap } from './practice.js';
 import { CHAPTER_TITLES, unitById, unitLabel } from '../data/catalog.js';
 import { hashFor } from '../engine/router.js';
@@ -21,10 +24,12 @@ function load(unitId) {
 }
 const save = (ex) => progress.saveExam(ex);
 
-function start(unitId) {
-  const tpls = pickSet(problemsForUnit(unitId), progress, { n: SIZE, seed: Date.now() });
+function start(unitId, setId = null) {
+  const set = setById(setId);
+  const tpls = set ? set.items.map((it) => problemById(it.id)) : pickSet(problemsForUnit(unitId), progress, { n: SIZE, seed: Date.now() });
   const ex = {
     unitId,
+    set: set ? set.id : null,
     ids: tpls.map((t) => t.id),
     seeds: tpls.map(() => 1 + Math.floor(Math.random() * 99999)),
     answers: {},
@@ -36,31 +41,46 @@ function start(unitId) {
   return ex;
 }
 
-export function renderExam(root, { unitId }) {
+export function renderExam(root, { unitId, set = null }) {
   clearInterval(tick);
   const ex = load(unitId);
-  if (!ex) return intro(root, unitId);
+  if (!ex) return intro(root, unitId, set);
   if (ex.submitted) return results(root, ex);
   return sheet(root, ex);
 }
 
-function intro(root, unitId) {
+function intro(root, unitId, setId = null) {
   const unit = unitById(unitId);
   const n = problemsForUnit(unitId).length;
+  const sets = setsForUnit(unitId);
+  // The kind the link asked for comes first and is the primary button.
+  const mixedFirst = !setById(setId);
+  const mixed = `
+      <div class="card stack">
+        <h3>Mixed, weakest first</h3>
+        <p>${SIZE} problems from ${esc(unitLabel(unit))}, chosen across the chapters with the ones you know least first. You have ${MINUTES} minutes.</p>
+        ${n < SIZE ? `<p class="note">Only ${n} problems are written for this exam so far.</p>` : ''}
+        <button class="btn ${mixedFirst ? 'primary' : ''}" data-act="start">Start the clock</button>
+      </div>`;
+  const setCards = sets.map(
+    (set) => `
+      <div class="card stack">
+        <h3>Like the ${esc(set.title.toLowerCase())}</h3>
+        <p>The sheet's ${set.items.length} questions in its order, every part of each, with new numbers each time. You have ${MINUTES} minutes.</p>
+        <button class="btn ${set.id === setId ? 'primary' : ''}" data-act="start" data-set="${set.id}">Start the clock</button>
+      </div>`,
+  );
   root.innerHTML = `
     <div class="stack">
       <a href="${hashFor({ unitId })}">← All problems</a>
       <h2>Practice exam</h2>
-      <div class="card stack">
-        <p>${SIZE} problems from ${esc(unitLabel(unit))}, chosen across the chapters with the ones you know least first. You have ${MINUTES} minutes.</p>
-        <p class="note">No hints and no feedback until you submit, like the real thing. Use your TI-84 and your printed tables (or the Tables tab). Answers save as you go.</p>
-        ${n < SIZE ? `<p class="note">Only ${n} problems are written for this exam so far.</p>` : ''}
-        <button class="btn primary" data-act="start">Start the clock</button>
-      </div>
+      <p class="note">No hints and no feedback until you submit, like the real thing. Use your TI-84 and your printed tables (or the Tables tab). Answers save as you go.</p>
+      ${mixedFirst ? mixed + setCards.join('') : setCards.join('') + mixed}
     </div>`;
   root.onclick = (e) => {
-    if (e.target.closest('[data-act="start"]')) {
-      start(unitId);
+    const b = e.target.closest('[data-act="start"]');
+    if (b) {
+      start(unitId, b.dataset.set || null);
       renderExam(root, { unitId });
     }
   };
@@ -187,7 +207,7 @@ function results(root, ex) {
   root.innerHTML = `
     <div class="stack">
       <a href="${hashFor({ unitId: ex.unitId })}">← All problems</a>
-      <h2>Practice exam results</h2>
+      <h2>Practice exam results${ex.set ? ` · ${esc(setById(ex.set)?.short || '')}` : ''}</h2>
       <div class="card">
         <div class="score">${right} / ${of} parts · ${Math.round((100 * right) / Math.max(1, of))}%</div>
         <p class="dim">Time used: ${clock(Math.min(MINUTES * 60e3, ex.submitted - ex.start))}</p>
@@ -210,7 +230,7 @@ function results(root, ex) {
     }
     if (e.target.closest('[data-act="new"]')) {
       progress.saveExam(null);
-      renderExam(root, { unitId: ex.unitId });
+      renderExam(root, { unitId: ex.unitId, set: ex.set });
     }
   };
 }

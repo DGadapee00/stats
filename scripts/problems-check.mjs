@@ -13,6 +13,8 @@
  *    generator and its answer must fall within 4 standard errors of the simulated estimate. This
  *    checks the formula by an independent route, the way FLUX checks a lab against a problem.
  * 6. The progress module's scheduling and set-picking still work.
+ * 7. Named sets (the review sheet): every item exists, belongs to each unit the set is offered in,
+ *    and has the worked case it names, so "the sheet's numbers" opens the sheet's question.
  *
  *   node scripts/problems-check.mjs [--samples 200] [--only c5.] [--list]
  */
@@ -20,6 +22,8 @@ import { PROBLEMS, CHAPTER_ORDER } from '../src/problems/index.js';
 import { build, instance, render, expected, accepted, grade, choiceOptions, tolerance, seedForAttempt, caseIndex } from '../src/problems/engine.js';
 import { createProgress, memoryStorage, pickSet, INTERVAL_DAYS } from '../src/problems/progress.js';
 import { mathPieces, texError } from '../src/ui/shared.js';
+import { SETS, sheetSeed } from '../src/problems/sets.js';
+import { UNITS } from '../src/data/catalog.js';
 import { createRng } from '../src/stats/rng.js';
 
 const arg = (name, dflt) => {
@@ -223,6 +227,24 @@ for (const tpl of bank) {
   }
 }
 
+// 7. named sets
+if (!ONLY) {
+  for (const set of SETS) {
+    for (const u of set.units) if (!UNITS.some((x) => x.id === u)) err(`set ${set.id}`, `unknown unit ${u}`);
+    for (const it of set.items) {
+      const tpl = PROBLEMS.find((t) => t.id === it.id);
+      if (!tpl) {
+        err(`set ${set.id}`, `no problem ${it.id}`);
+        continue;
+      }
+      for (const u of set.units) if (!UNITS.find((x) => x.id === u)?.chapters.includes(tpl.ch)) err(`set ${set.id}`, `${it.id} (Ch ${tpl.ch}) is not on the ${u} exam`);
+      const seed = sheetSeed(it);
+      if (seed == null) err(`set ${set.id}`, `${it.id} has no worked case "${it.src}"`);
+      else if (caseIndex(tpl, seed) < 0 || tpl.cases[caseIndex(tpl, seed)].src !== it.src) err(`set ${set.id}`, `${it.id}: the sheet seed does not open "${it.src}"`);
+    }
+  }
+}
+
 const byCh = CHAPTER_ORDER.map((ch) => `${ch}:${bank.filter((t) => t.ch === ch).length}`).filter((s) => !s.endsWith(':0'));
-console.log(`problems-check: ${bank.length} templates (${byCh.join(' ')}), ${caseCount} worked cases, ${versions} versions, ${twins} simulation twins${fails ? `, ${fails} FAILED` : ', all passed'}`);
+console.log(`problems-check: ${bank.length} templates (${byCh.join(' ')}), ${caseCount} worked cases, ${versions} versions, ${twins} simulation twins, ${SETS.length} named set${SETS.length === 1 ? '' : 's'}${fails ? `, ${fails} FAILED` : ', all passed'}`);
 process.exit(fails ? 1 : 0);

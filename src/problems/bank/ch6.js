@@ -9,13 +9,13 @@ const PLOTTING_POSITION = 'That uses the area i/(n + 1). The notes use (i − 0.
 
 const C6 = { ch: '6' };
 
-/** Normal settings with realistic numbers. dp: decimals the measurement is written to. */
+/** Normal settings with realistic numbers. dp: decimals the measurement is written to; are: plural. */
 const NORMALS = [
   { value: 'battery', what: 'the life of a storage battery', unit: 'years', mu: 3.0, sigma: 0.5, dp: 1 },
   { value: 'bulb', what: 'the life of a light bulb', unit: 'hours', mu: 800, sigma: 40, dp: 0 },
-  { value: 'iq', what: 'IQ scores', unit: 'points', mu: 100, sigma: 15, dp: 0 },
+  { value: 'iq', what: 'IQ scores', are: true, unit: 'points', mu: 100, sigma: 15, dp: 0 },
   { value: 'bolt', what: 'the diameter of a machined bolt', unit: 'mm', mu: 10, sigma: 0.03, dp: 3 },
-  { value: 'score', what: 'scores on a final exam', unit: 'points', mu: 72, sigma: 9, dp: 0 },
+  { value: 'score', what: 'scores on a final exam', are: true, unit: 'points', mu: 72, sigma: 9, dp: 0 },
   { value: 'fill', what: 'the amount of soda in a bottle', unit: 'mL', mu: 500, sigma: 3.5, dp: 1 },
   { value: 'x', what: 'a random variable X', unit: '', mu: 40, sigma: 6, dp: 2 },
   { value: 'height', what: 'the height of three-year-old girls', unit: 'inches', mu: 38.72, sigma: 3.17, dp: 2 },
@@ -26,7 +26,7 @@ const ctxOf = (v) => NORMALS.find((c) => c.value === v);
 const setup = ($) => {
   const c = ctxOf($.ctx);
   const u = c.unit ? ` ${c.unit}` : '';
-  return `Assume ${c.what} is normally distributed with mean ${c.mu}${u} and standard deviation ${c.sigma}${u}.`;
+  return `Assume ${c.what} ${c.are ? 'are' : 'is'} normally distributed with mean ${c.mu}${u} and standard deviation ${c.sigma}${u}.`;
 };
 
 const SIDE = choice(['left', 'less than'], ['right', 'more than'], ['between', 'between']);

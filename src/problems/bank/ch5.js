@@ -5,16 +5,42 @@ import { BINOM_PS, POIS_MUS } from '../../stats/tables.js';
 
 const C5 = { ch: '5' };
 
-/** Binomial settings: what a trial is and what counts as a success. */
+/**
+ * Binomial settings: what a trial is and what counts as a success. A setting quoted from a source
+ * (the Red Cross, Gallup, CTIA) names it only at the source's own figure; other versions say
+ * "suppose", so no made-up percentage is ever pinned on a real organization. `pmax` keeps a
+ * setting's success rate believable (no run where 70% of the items are defective).
+ */
 const BIN_CTX = [
-  { value: 'defect', text: (n, p) => `In a production run, ${pct(p)} of the items are defective. A random sample of ${n} items is inspected. Let X be the number of defective items in the sample.` },
+  { value: 'defect', pmax: 0.3, text: (n, p) => `In a production run, ${pct(p)} of the items are defective. A random sample of ${n} items is inspected. Let X be the number of defective items in the sample.` },
   { value: 'recover', text: (n, p) => `The probability that a patient recovers from a rare blood disease is ${p}. ${cap(words(n))} people are known to have contracted the disease. Let X be the number who recover.` },
   { value: 'throws', text: (n, p) => `A basketball player makes ${pct(p)} of her free throws. She shoots ${n} free throws, independently. Let X be the number she makes.` },
   { value: 'survey', text: (n, p) => `In a large city, ${pct(p)} of adults support a new transit tax. ${cap(words(n))} adults are chosen at random. Let X be the number who support it.` },
-  { value: 'blood', text: (n, p) => `According to the American Red Cross, ${pct(p)} of people in the United States have blood type O-negative. A simple random sample of ${n} people is taken. Let X be the number with type O-negative.` },
-  { value: 'favor', text: (n, p) => `According to the Gallup Organization, ${pct(p)} of adult Americans are in favor of the death penalty for individuals convicted of murder. In a random sample of ${n} adult Americans, let X be the number in favor.` },
-  { value: 'wireless', text: (n, p) => `According to CTIA, ${pct(p)} of all U.S. households are wireless-only (no landline). In a random sample of ${n} households, let X be the number that are wireless-only.` },
+  {
+    value: 'blood',
+    text: (n, p) =>
+      near(p, 0.15)
+        ? `According to the American Red Cross, 15% of people in the United States have blood type O-negative. A simple random sample of ${n} people is taken. Let X be the number with type O-negative.`
+        : `Suppose ${pct(p)} of the people in a large population have blood type O-negative. A simple random sample of ${n} people is taken. Let X be the number with type O-negative.`,
+  },
+  {
+    value: 'favor',
+    text: (n, p) =>
+      near(p, 0.65)
+        ? `According to the Gallup Organization, 65% of adult Americans are in favor of the death penalty for individuals convicted of murder. In a random sample of ${n} adult Americans, let X be the number in favor.`
+        : `Suppose ${pct(p)} of the adults in a state are in favor of the death penalty for individuals convicted of murder. In a random sample of ${n} adults from the state, let X be the number in favor.`,
+  },
+  {
+    value: 'wireless',
+    text: (n, p) =>
+      near(p, 0.41)
+        ? `According to CTIA, 41% of all U.S. households are wireless-only (no landline). In a random sample of ${n} households, let X be the number that are wireless-only.`
+        : `Suppose ${pct(p)} of the households in a region are wireless-only (no landline). In a random sample of ${n} households, let X be the number that are wireless-only.`,
+  },
 ];
+const near = (a, b) => Math.abs(a - b) < 1e-9;
+/** Generated versions only: the setting's success rate stays believable. */
+const binOk = ($) => $.p <= (BIN_CTX.find((c) => c.value === $.ctx).pmax ?? 1);
 const BIN = choice(...BIN_CTX.map((c) => [c.value, c.value]));
 const binText = ($) => BIN_CTX.find((c) => c.value === $.ctx).text($.n, $.p);
 
@@ -46,9 +72,19 @@ function cumulative(q, r, b) {
   }
 }
 const QTYPE = choice(['le', 'at most'], ['lt', 'fewer than'], ['ge', 'at least'], ['gt', 'more than'], ['between', 'between']);
+/** The verb phrase for a count k: "1 is defective" but "2 are defective". noun: [plural, singular]. */
+const said = (k, noun) => (Array.isArray(noun) ? noun[k === 1 ? 1 : 0] : noun);
 const phrase = (q, r, b, noun) =>
-  ({ le: `at most ${r} ${noun}`, lt: `fewer than ${r} ${noun}`, ge: `at least ${r} ${noun}`, gt: `more than ${r} ${noun}`, between: `from ${r} to ${b} ${noun}, inclusive` })[q];
-const NOUN = { defect: 'are defective', recover: 'recover', throws: 'are made', survey: 'support it', blood: 'have type O-negative', favor: 'favor the death penalty', wireless: 'are wireless-only' };
+  ({ le: `at most ${r} ${said(r, noun)}`, lt: `fewer than ${r} ${said(r, noun)}`, ge: `at least ${r} ${said(r, noun)}`, gt: `more than ${r} ${said(r, noun)}`, between: `from ${r} to ${b} ${said(2, noun)}, inclusive` })[q];
+const NOUN = {
+  defect: ['are defective', 'is defective'],
+  recover: ['recover', 'recovers'],
+  throws: ['are made', 'is made'],
+  survey: ['support it', 'supports it'],
+  blood: ['have type O-negative', 'has type O-negative'],
+  favor: ['favor the death penalty', 'favors the death penalty'],
+  wireless: ['are wireless-only', 'is wireless-only'],
+};
 
 /** Evaluate a cumulative rewrite with a cdf. */
 const evalCum = (c, cdf) => (c.one ? 1 : 0) + c.terms.reduce((a, [s, r]) => a + s * (r < 0 ? 0 : cdf(r)), 0);
@@ -60,7 +96,8 @@ export default [
     vars: { ctx: BIN, n: range(5, 20, 1), p: range(0.05, 0.95, 0.05), x: range(0, 20, 1) },
     derive: ($) => ({ q: 1 - $.p, ans: binomPmf($.x, $.n, $.p), C: choose($.n, $.x) }),
     valid: ($) => $.x <= $.n && $.ans > 0.005,
-    text: (T, $) => `${binText($)} Find the probability that exactly ${$.x} ${NOUN[$.ctx]}.`,
+    sampleValid: binOk,
+    text: (T, $) => `${binText($)} Find the probability that exactly ${$.x} ${said($.x, NOUN[$.ctx])}.`,
     parts: [
       prob('p', ($) => $.ans, {
         label: ($T, $) => String.raw`$P(X = ${$.x})$`,
@@ -104,6 +141,7 @@ export default [
       return { b, c, ans: evalCum(c, (k) => binomCdf(k, $.n, $.p)), table: evalCum(c, (k) => binomTable(k, $.n, $.p)) };
     },
     valid: ($) => $.r >= 1 && $.r < $.n && ($.qt !== 'between' || $.b <= $.n) && $.ans > 0.001 && $.ans < 0.999,
+    sampleValid: binOk,
     text: (T, $) => `${binText($)} Use Table A.1 to find the probability that ${phrase($.qt, $.r, $.b, NOUN[$.ctx])}.`,
     parts: [
       prob('p', ($) => $.ans, {
@@ -143,6 +181,7 @@ export default [
     ...C5, id: 'c5.binom-mean-var', title: 'Binomial mean and variance', kind: 'numeric', topics: ['binomial', 'expectation'], src: 'Walpole §5.2',
     vars: { ctx: BIN, n: range(10, 400, 5), p: range(0.05, 0.95, 0.05) },
     derive: ($) => ({ mu: $.n * $.p, v: $.n * $.p * (1 - $.p), sd: Math.sqrt($.n * $.p * (1 - $.p)) }),
+    sampleValid: binOk,
     text: (T, $) => `${binText($)} Find the mean, variance and standard deviation of X.`,
     parts: [
       num('mu', ($) => $.mu, { label: String.raw`$\mu$` }),
@@ -167,6 +206,7 @@ export default [
       return { b, c, ans: evalCum(c, (k) => binomCdf(k, $.n, $.p)) };
     },
     valid: ($) => $.r >= 1 && $.r < $.n && ($.qt !== 'between' || $.b <= $.n) && $.ans > 0.001 && $.ans < 0.999,
+    sampleValid: binOk,
     text: (T, $) => `${binText($)} Find the probability that ${phrase($.qt, $.r, $.b, NOUN[$.ctx])}.`,
     parts: [
       prob('p', ($) => $.ans, {
@@ -363,9 +403,9 @@ export default [
     valid: ($) => $.ans > 0.002 && $.ans < 0.998 && $.r <= 3 * $.mu + 3,
     text: (T, $) =>
       ({
-        tankers: `An average of ${$.mu} oil tankers arrive at a port each day. Use Table A.2 to find the probability that on a given day ${phrase($.qt, $.r, $.b, 'tankers arrive')}.`,
-        accidents: `An intersection averages ${$.mu} accidents per month. Use Table A.2 to find the probability that next month ${phrase($.qt, $.r, $.b, 'accidents occur')}.`,
-        emails: `An inbox receives an average of ${$.mu} emails per hour. Use Table A.2 to find the probability that in the next hour ${phrase($.qt, $.r, $.b, 'emails arrive')}.`,
+        tankers: `An average of ${$.mu} oil tankers arrive at a port each day. Use Table A.2 to find the probability that on a given day ${phrase($.qt, $.r, $.b, ['tankers arrive', 'tanker arrives'])}.`,
+        accidents: `An intersection averages ${$.mu} accidents per month. Use Table A.2 to find the probability that next month ${phrase($.qt, $.r, $.b, ['accidents occur', 'accident occurs'])}.`,
+        emails: `An inbox receives an average of ${$.mu} emails per hour. Use Table A.2 to find the probability that in the next hour ${phrase($.qt, $.r, $.b, ['emails arrive', 'email arrives'])}.`,
       })[$.ctx],
     parts: [prob('p', ($) => $.ans, { label: ($T, $) => `$${$.c.ask}$`, alt: ($) => [$.table], traps: [[($) => 1 - $.ans, 'That is the complement. Check which values of X the question includes.']] })],
     hints: ['Table A.2 gives cumulative sums, P(X ≤ r). Rewrite the question in that form.', String.raw`$P(X > r) = 1 - P(X \le r)$, and $P(X \ge r) = 1 - P(X \le r - 1)$.`],

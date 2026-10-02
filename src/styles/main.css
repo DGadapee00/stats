@@ -694,6 +694,11 @@ h3 {
   color: var(--red);
 }
 
+/* The review set's question chips: eight to a row inside a card on a 380px phone. */
+.set-card .qnav a {
+  width: 32px;
+}
+
 .score {
   font: 600 var(--fs-display) var(--font);
 }

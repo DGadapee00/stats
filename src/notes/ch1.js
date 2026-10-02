@@ -384,7 +384,7 @@ export default {
       id: '1.7',
       title: 'Quartiles, outliers and the box plot',
       lab: 'describe',
-      problems: ['c1.quartiles', 'c1.outliers', 'c1.resistant'],
+      problems: ['c1.quartiles', 'c1.outliers', 'c1.resistant', 'c1.summarize'],
       blocks: [
         ['p', 'The median cuts the sorted data in half. Cutting each half in half again gives the **quartiles**:'],
         ['list', ['$Q_1$, the first quartile, has 25% of the data below it.', '$Q_2$ is the median: 50% below.', '$Q_3$, the third quartile, has 75% below.']],

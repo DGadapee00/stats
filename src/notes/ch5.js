@@ -16,7 +16,7 @@ export default {
       part: 'Counting successes in n trials',
       title: 'The binomial distribution',
       lab: 'dist',
-      problems: ['c5.is-binomial', 'c5.binom-pmf', 'c5.binom-cdf', 'c5.binom-mean-var', 'c5.binom-table'],
+      problems: ['c5.is-binomial', 'c5.binom-pmf', 'c5.binom-cdf', 'c5.binom-mean-var', 'c5.binom-table', 'c5.binom-three'],
       blocks: [
         ['p', 'A **Bernoulli trial** is a random experiment with exactly two outcomes, called success and failure (flipping a coin). A **binomial experiment** is:'],
         [
@@ -247,7 +247,7 @@ export default {
       part: 'Counting rare events',
       title: 'The Poisson distribution',
       lab: 'dist',
-      problems: ['c5.poisson-basics', 'c5.poisson-rate', 'c5.poisson-table', 'c5.which-distribution'],
+      problems: ['c5.poisson-basics', 'c5.poisson-rate', 'c5.poisson-table', 'c5.poisson-period', 'c5.which-distribution'],
       blocks: [
         ['p', 'The **Poisson distribution** counts events in a fixed interval of time or region of space, when the events are rare, random and independent: fatalities per 100 million miles, calls per hour, flaws per square meter.'],
         ['key', String.raw`$P(X = x) = \dfrac{e^{-\lambda}\lambda^x}{x!}$, for $x = 0, 1, 2, \ldots$, where $\lambda$ is the average number of events in the interval. Mean and variance are both $\lambda$.`],

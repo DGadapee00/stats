@@ -15,7 +15,7 @@ const integrate = (f, a, b, n = 4000) => {
 const XS = [0, 1, 2, 3, 4, 5];
 const PS = [0.35, 0.25, 0.2, 0.1, 0.05, 0.05];
 const E = (g) => XS.reduce((t, x, i) => t + g(x) * PS[i], 0);
-/** E[g(X, Y)] over the welds table of Ex 3.A. */
+/** E[g(X, Y)] over the welds table of Ex 3.B. */
 const EW = (g) => WELDS.reduce((t, row, y) => t + row.reduce((u, p, x) => u + g(x, y) * p, 0), 0);
 const COV = () => EW((x, y) => x * y) - EW((x) => x) * EW((x, y) => y);
 
@@ -29,7 +29,7 @@ export default {
       part: 'The center of a distribution',
       title: 'The mean (expected value) of a random variable',
       lab: 'dist',
-      problems: ['c4.mean-variance-pmf', 'c4.commission', 'c4.expected-life', 'c4.expected-value'],
+      problems: ['c4.mean-variance-pmf', 'c4.commission', 'c4.expected-life', 'c4.expected-value', 'c4.pmf-missing', 'c4.density-k'],
       blocks: [
         ['p', 'The **mean** or **expected value** of a random variable is the center of its distribution: the long-run average of its values if the experiment were repeated many times.'],
         ['p', 'For a data set, the mean adds the values and divides by $n$. Group equal values together and that is the same as weighting each value by its relative frequency. A distribution gives the long-run relative frequencies directly, as probabilities, so the mean weights each value by its probability.'],
@@ -189,7 +189,7 @@ export default {
               {
                 n: '4.A',
                 title: 'welds and machines again',
-                q: 'For the welds table of Ex 3.A ($X$ = welds needing rework, $Y = 1$ for the old machine), find the covariance and the correlation of $X$ and $Y$.',
+                q: 'For the welds table of Ex 3.B ($X$ = welds needing rework, $Y = 1$ for the old machine), find the covariance and the correlation of $X$ and $Y$.',
                 data: {
                   head: ['$f(x, y)$', '$x = 0$', '$x = 1$', '$x = 2$', '$h(y)$'],
                   rows: [
@@ -205,7 +205,7 @@ export default {
                   String.raw`Variances: $E(X^2) = 0.40 + 4(0.20) = 1.2$, so $\sigma_X^2 = 1.2 - 0.8^2 = 0.56$; $E(Y^2) = 0.4$, so $\sigma_Y^2 = 0.4 - 0.4^2 = 0.24$.`,
                   String.raw`$\rho = \dfrac{0.08}{\sqrt{0.56}\,\sqrt{0.24}} = \dfrac{0.08}{0.3666} = 0.218$.`,
                 ],
-                answer: String.raw`$\sigma_{XY} = 0.08$ and $\rho = 0.218$: a weak positive relation. Old-machine parts tend to need more rework, as Ex 3.A found.`,
+                answer: String.raw`$\sigma_{XY} = 0.08$ and $\rho = 0.218$: a weak positive relation. Old-machine parts tend to need more rework, as Ex 3.B found.`,
                 checks: () => [
                   ['μX', EW((x) => x), 0.8, 1e-12],
                   ['μY', EW((x, y) => y), 0.4, 1e-12],

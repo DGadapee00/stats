@@ -16,10 +16,13 @@ node scripts/smoke.mjs   # every screen at 380px and 1280px (needs the dev serve
 
 ## What is here
 
-- **Practice** — 96 problem generators covering all ten chapters (the midterm's Ch 1–6 and the final's Ch 1–10). Each draws fresh numbers,
+- **Practice** — 103 problem generators covering all ten chapters (the midterm's Ch 1–6 and the final's Ch 1–10). Each draws fresh numbers,
   computes the answer, and shows a worked solution that names every table lookup. The first
-  attempts go through the worked examples (127 in all: every worked example in the teacher's notes, Ch 1–10,
-  and a few from the textbook); after that, every attempt gets new numbers.
+  attempts go through the worked examples (135 in all: every worked example in the teacher's notes, Ch 1–10,
+  the class's midterm review sheet, and a few from the textbook); after that, every attempt gets new numbers.
+  - **Review sheet:** the class's midterm review sheet as a named set: its eight questions in its
+    order and wording, every part of each (src/problems/bank/review.js, src/problems/sets.js).
+    Work it with the sheet's own numbers, again with new numbers, or as a timed practice exam.
   - **Grading:** answers are graded to table precision. A problem accepts both the exact value
     and the value you get from the printed tables (z rounded to 2 places, the t row either
     side of your df).

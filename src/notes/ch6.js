@@ -23,7 +23,7 @@ export default {
       part: 'A flat density',
       title: 'The continuous uniform distribution',
       lab: 'dist',
-      problems: ['c6.uniform-conditional', 'c6.uniform'],
+      problems: ['c6.uniform-conditional', 'c6.uniform', 'c6.uniform-wait'],
       blocks: [
         ['key', String.raw`$X$ uniform on $[A, B]$: $f(x) = \dfrac{1}{B - A}$ for $A \le x \le B$, and 0 elsewhere. Mean $\mu = \dfrac{A + B}{2}$, variance $\sigma^2 = \dfrac{(B - A)^2}{12}$.`],
         ['p', 'The density is a rectangle of base $B - A$ and height $1/(B - A)$ (area 1), so it is also called the rectangular distribution. A probability is the area of a slice of the rectangle: width × height.'],
@@ -53,6 +53,8 @@ export default {
           },
         ],
         ['p', 'Part (d) shows what conditioning does to a uniform: given $X < 8$, the tree’s growth is uniform on 6 to 8, so half of that range lies below 7.'],
+        ['p', String.raw`Conditioning works from the other end too, and that is the form waiting-time questions take: "you have already waited $w$ minutes; what is the chance of an arrival in the next $v$?" Given $X > c$, $X$ is uniform on what is left of the interval, $[c, B]$, so the window of width $v$ gets its share of what is left: $P(X \le c + v \mid X > c) = \dfrac{v}{B - c}$. For the cedars, given more than 8 inches of growth, $P(X < 10 \mid X > 8) = \dfrac{10 - 8}{11 - 8} = \dfrac{2}{3}$.`],
+        ['warn', String.raw`Dividing by the whole width $B - A$ ignores what you know. Once $c$ minutes have passed with no arrival, only $B - c$ minutes are possible.`],
         ['bridge', 'A uniform has hard edges and no favourite value. Most measurements cluster around a center and thin out on both sides, the shape Part II describes.'],
       ],
     },
@@ -61,7 +63,7 @@ export default {
       part: 'The normal curve',
       title: 'The normal distribution',
       lab: 'dist',
-      problems: ['c6.z-area', 'c6.z-find', 'c6.normal-prob', 'c6.normal-percentile', 'c6.normal-count', 'c6.both-independent'],
+      problems: ['c6.z-area', 'c6.z-find', 'c6.normal-prob', 'c6.normal-percentile', 'c6.normal-count', 'c6.both-independent', 'c6.normal-spec'],
       blocks: [
         ['p', 'The normal (Gaussian) curve is the bell shape of measurement: heights, weights, errors in a reading, scores on a long test. It matters even more because of Chapter 7: the mean of a large sample is close to normal whatever the population looks like.'],
         ['key', String.raw`$X \sim N(\mu, \sigma^2)$ has density $f(x) = \dfrac{1}{\sqrt{2\pi}\,\sigma} e^{-\frac{(x - \mu)^2}{2\sigma^2}}$ for all real $x$. $E(X) = \mu$, $\text{Var}(X) = \sigma^2$.`],

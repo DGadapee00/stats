@@ -16,6 +16,9 @@ function pmfOf(rand, k) {
 /** 3x²/D written the way a person would: x²/(D/3) when D is a multiple of 3. */
 const dens = (D, v = 'x') => (D % 3 === 0 ? String.raw`\dfrac{${v}^2}{${D / 3}}` : String.raw`\dfrac{3${v}^2}{${D}}`);
 
+/** x^k as a person writes it: x, x^2, x^3. */
+const xk = (k) => (k === 1 ? 'x' : `x^{${k}}`);
+
 const pmfTable = (xs, ps, missing = -1) =>
   `<table class="results" style="max-width:420px"><tbody><tr><th>x</th>${xs.map((x) => `<td>${x}</td>`).join('')}</tr><tr><th>f(x)</th>${ps.map((p, i) => `<td>${i === missing ? '?' : fx(p, 2)}</td>`).join('')}</tr></tbody></table>`;
 
@@ -96,22 +99,27 @@ export default [
 
   problem({
     ...C3, id: 'c3.pmf-table', title: 'A probability mass function', kind: 'numeric', topics: ['pmf'], src: 'Walpole §3.2',
-    vars: { k: range(3, 4, 1), m: range(0, 4, 1), j: range(1, 4, 1), ps: data((r, v) => pmfOf(r, v.k)) },
+    vars: { k: range(3, 4, 1), m: range(0, 4, 1), j: range(1, 4, 1), gt: choice([0, 'at least'], [1, 'more than']), ps: data((r, v) => pmfOf(r, v.k)) },
     derive: ($) => {
       const xs = Array.from({ length: $.k + 1 }, (_, i) => i);
-      return { xs, missing: $.ps[$.m], ge: $.ps.slice($.j).reduce((a, b) => a + b, 0) };
+      // "At least j" starts at j; "more than j" at j + 1.
+      const from = $.j + $.gt;
+      return { xs, from, missing: $.ps[$.m], ge: $.ps.slice(from).reduce((a, b) => a + b, 0), other: $.ps.slice($.gt ? $.j : $.j + 1).reduce((a, b) => a + b, 0) };
     },
-    valid: ($) => $.m <= $.k && $.j <= $.k,
-    text: () => 'X is the number of cars a household owns. Its probability distribution is below, with one value missing.',
+    valid: ($) => $.m <= $.k && $.from <= $.k,
+    text: ($T, $) => `X is the number of cars a household owns. Its probability distribution is below, with one value missing. Find the missing value, and the probability that a household owns ${$.gt ? 'more than' : 'at least'} ${$.j} car${$.j === 1 ? '' : 's'}.`,
     figure: ($) => pmfTable($.xs, $.ps, $.m),
     parts: [
       prob('missing', ($) => $.missing, { label: ($T, $) => `$f(${$.m})$` }),
-      prob('ge', ($) => $.ge, { label: ($T, $) => String.raw`$P(X \ge ${$.j})$`, traps: [[($) => $.ps.slice($.j + 1).reduce((a, b) => a + b, 0), String.raw`That leaves out $x = j$ itself. "At least" includes it.`]] }),
+      prob('ge', ($) => $.ge, {
+        label: ($T, $) => ($.gt ? `$P(X > ${$.j})$` : String.raw`$P(X \ge ${$.j})$`),
+        traps: [[($) => $.other, ($) => ($.gt ? String.raw`That includes $x = ${$.j}$. "More than ${$.j}" starts at ${$.j + 1}.` : String.raw`That leaves out $x = ${$.j}$ itself. "At least" includes it.`)]],
+      }),
     ],
-    hints: [String.raw`The probabilities of a pmf add to 1: $\sum f(x) = 1$.`, 'P(X ≥ j) adds f(x) for every x from j up.'],
+    hints: [String.raw`The probabilities of a pmf add to 1: $\sum f(x) = 1$.`, 'P(X ≥ j) adds f(x) for every x from j up; P(X > j) starts one value later, at j + 1.'],
     steps: ($) => [
       String.raw`$f(${$.m}) = 1 - (${$.ps.filter((_, i) => i !== $.m).map((p) => fx(p, 2)).join(' + ')}) = ${fx($.missing, 2)}$`,
-      String.raw`$P(X \ge ${$.j}) = ${$.ps.slice($.j).map((p) => fx(p, 2)).join(' + ')} = ${fx($.ge, 2)}$`,
+      String.raw`$P(X ${$.gt ? '>' : String.raw`\ge`} ${$.j}) = ${$.ps.slice($.from).map((p) => fx(p, 2)).join(' + ')} = ${fx($.ge, 2)}$${$.gt ? ` (the values from ${$.from} up)` : ''}`,
     ],
     cases: [],
   }),
@@ -145,12 +153,12 @@ export default [
       const x = Number(($.a * $.b).toFixed(2));
       return { c, x, p: (x / $.b) ** ($.k + 1) };
     },
-    text: (T, $) => String.raw`A continuous random variable X has density $f(x) = c\,x^{${$.k}}$ for $0 < x < ${$.b}$, and 0 elsewhere. Find c and $P(X < ${$.x})$.`,
+    text: (T, $) => String.raw`A continuous random variable X has density $f(x) = c\,${xk($.k)}$ for $0 < x < ${$.b}$, and 0 elsewhere. Find c and $P(X < ${$.x})$.`,
     parts: [num('c', ($) => $.c, { label: '$c$', tol: 0.002 }), prob('p', ($) => $.p, { label: ($T, $) => String.raw`$P(X < ${$.x})$`, traps: [[($) => $.c * $.x ** $.k, String.raw`That is $f(${'x'})$, a height. A probability for a continuous variable is an area: integrate.`]] })],
     hints: [String.raw`The total area is 1: $\int_0^{b} c\,x^k\,dx = 1$.`, String.raw`$\int_0^{b} x^k\,dx = \dfrac{b^{k+1}}{k+1}$`, 'Then P(X < a) is the area from 0 to a.'],
     steps: ($) => [
-      String.raw`$$\int_0^{${$.b}} c\,x^{${$.k}}\,dx = c\,\dfrac{${$.b}^{${$.k + 1}}}{${$.k + 1}} = 1 \;\Rightarrow\; c = \dfrac{${$.k + 1}}{${$.b ** ($.k + 1)}} = ${tn($.c)}$$`,
-      String.raw`$$P(X < ${$.x}) = \int_0^{${$.x}} ${tn($.c)}\,x^{${$.k}}\,dx = \left(\dfrac{${$.x}}{${$.b}}\right)^{${$.k + 1}} = ${fx($.p, 4)}$$`,
+      String.raw`$$\int_0^{${$.b}} c\,${xk($.k)}\,dx = c\,\dfrac{${$.b}^{${$.k + 1}}}{${$.k + 1}} = 1 \;\Rightarrow\; c = \dfrac{${$.k + 1}}{${$.b ** ($.k + 1)}} = ${tn($.c)}$$`,
+      String.raw`$$P(X < ${$.x}) = \int_0^{${$.x}} ${tn($.c)}\,${xk($.k)}\,dx = \left(\dfrac{${$.x}}{${$.b}}\right)^{${$.k + 1}} = ${fx($.p, 4)}$$`,
     ],
     cases: [],
   }),

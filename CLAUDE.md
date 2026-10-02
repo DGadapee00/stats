@@ -35,7 +35,10 @@ holds the plan and the course decisions (tables, quartile rule, exam dates, buil
 - TeX in JS goes in String.raw templates (tex-check enforces it). Prose uses `$…$` and `$$…$$`;
   never a bare `$` for money (write "dollars").
 - Cite sources by section (Walpole §5.2) or by the notes' example number (Notes Ex 1.13). Do not
-  invent textbook example numbers.
+  invent textbook example numbers. The class's review sheet is cited by question (Review 1, Q4).
+- Review-sheet problems (src/problems/bank/review.js) ask a sheet question the same way, all its
+  parts on one setup; the sheet's own numbers are a worked case. A named set (src/problems/sets.js)
+  lists them in the sheet's order, each item naming that case's `src`; problems-check checks it.
 - Mobile first: 380px portrait is the design width; no horizontal scroll.
 
 ## Labs

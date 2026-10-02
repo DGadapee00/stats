@@ -7,11 +7,14 @@
  * lookup. A clean solve (right on the first check, no hints, no solution) moves the problem up the
  * spaced-review ladder; anything less brings it back sooner (src/problems/progress.js).
  *
- * Sessions: working down the list, a mixed set or the review queue, Next follows the session.
+ * Sessions: working down the list, a mixed set, the review queue or a named set (the review sheet,
+ * src/problems/sets.js), Next follows the session. A named set's session can pin each problem's
+ * version: the sheet's own numbers, or fresh numbers chosen when the session starts.
  */
 import { PROBLEMS, problemById, problemsForUnit } from '../problems/index.js';
 import { instance, render, grade, accepted, caseIndex, seedForAttempt } from '../problems/engine.js';
 import { createProgress, pickSet, MASTERED_BOX } from '../problems/progress.js';
+import { setsForUnit, setById, sheetSeed } from '../problems/sets.js';
 import { CHAPTER_TITLES, unitById, unitLabel } from '../data/catalog.js';
 import { hashFor } from '../engine/router.js';
 import { labsForChapter } from '../labs/index.js';
@@ -61,12 +64,16 @@ function todayHTML(unitId, unit, byCh, due, days) {
       steps.push(`Your weakest chapter is Ch ${weak.ch} (${weak.c.mastered}/${weak.c.total} mastered): try <a href="${hashFor({ unitId, problemId: next.id })}">${esc(next.title)}</a>.`);
     }
   }
+  for (const set of setsForUnit(unitId)) {
+    const untried = set.items.filter((it) => !progress.get(it.id)?.attempts).length;
+    if (untried) steps.push(`Work the <a href="#" data-act="set" data-set="${set.id}" data-numbers="sheet">${esc(set.title.toLowerCase())}</a>: ${set.items.length} questions with the sheet's own numbers, then again with new ones.`);
+  }
   const examAt = new Date(`${unit.date}T00:00:00`);
   const fmt = (d) => d.toLocaleDateString('en-US', { weekday: 'short', month: 'numeric', day: 'numeric' });
   if (days >= 1 && days <= 4) steps.push(`<a href="${hashFor({ unitId, mode: 'exam' })}">Take a practice exam</a> today, timed, then review what you missed.`);
   else if (days > 4) steps.push(`Plan a timed <a href="${hashFor({ unitId, mode: 'exam' })}">practice exam</a> around ${fmt(new Date(examAt - 4 * 864e5))} and another on ${fmt(new Date(examAt - 864e5))}.`);
   if (!steps.length) return '';
-  return `<div class="card today"><h3>Today</h3><ol>${steps.map((x) => `<li>${x}</li>`).join('')}</ol></div>`;
+  return `<div class="card today"><h3>Today</h3><ol>${steps.slice(0, 3).map((x) => `<li>${x}</li>`).join('')}</ol></div>`;
 }
 
 export function renderList(root, { unitId }) {
@@ -95,6 +102,7 @@ export function renderList(root, { unitId }) {
         <button class="btn ${due.length ? '' : 'primary'}" data-act="mixed">Mixed set<small>5, weakest first</small></button>
         <a class="btn" href="${hashFor({ unitId, mode: 'exam' })}">Practice exam<small>8 problems · 50 min</small></a>
       </div>
+      ${setsForUnit(unitId).map((set) => setCard(unitId, set)).join('')}
       <div class="legend" aria-label="Status key">
         ${['new', 'learning', 'due', 'missed', 'mastered'].map((s) => `<span><i class="dot ${s}"></i>${STATUS_TEXT[s]}</span>`).join('')}
       </div>
@@ -134,13 +142,48 @@ export function renderList(root, { unitId }) {
     if (act) e.preventDefault();
     if (act === 'review' && due.length) startSession(unitId, 'review', due);
     if (act === 'mixed') startSession(unitId, 'mixed', pickSet(list, progress, { n: 5, seed: Date.now() }).map((t) => t.id));
+    if (act === 'set') {
+      const el = e.target.closest('[data-act]');
+      startSetSession(unitId, setById(el.dataset.set), el.dataset.numbers);
+    }
   };
 }
 
-function startSession(unitId, name, ids) {
+function startSession(unitId, name, ids, extra = {}) {
   if (!ids.length) return;
-  session = { name, ids, unitId };
-  location.hash = hashFor({ unitId, problemId: ids[0] });
+  session = { name, ids, unitId, ...extra };
+  location.hash = hashFor({ unitId, problemId: ids[0], seed: session.seeds?.[ids[0]] ?? null });
+}
+
+/** A named set in order: each problem at the sheet's numbers, or at fresh numbers for this session. */
+function startSetSession(unitId, set, numbers) {
+  if (!set) return;
+  const ids = set.items.map((it) => it.id);
+  const seeds = Object.fromEntries(set.items.map((it) => [it.id, numbers === 'sheet' ? sheetSeed(it) ?? null : 1 + Math.floor(Math.random() * 99999)]));
+  startSession(unitId, 'set', ids, { seeds, label: set.short });
+}
+
+/** A named set on the list: what it is, one chip per question (its status), and three ways in. */
+function setCard(unitId, set) {
+  const chips = set.items
+    .map((it, i) => {
+      const st = progress.status(it.id);
+      const cls = st === 'mastered' ? 'ok' : st === 'missed' ? 'bad' : st === 'new' ? '' : 'answered';
+      const seed = sheetSeed(it);
+      return `<a href="${hashFor({ unitId, problemId: it.id, seed })}" class="${cls}" title="Q${i + 1}: ${esc(problemById(it.id)?.title || '')} (${STATUS_TEXT[st]})">${i + 1}</a>`;
+    })
+    .join('');
+  return `
+    <div class="card stack set-card">
+      <h3>${esc(set.title)}</h3>
+      <p class="note">${esc(set.blurb)} Each question opens with the sheet's numbers; tap a number to go straight to it.</p>
+      <nav class="qnav" aria-label="${esc(set.title)}: questions">${chips}</nav>
+      <div class="actions">
+        <button class="btn" data-act="set" data-set="${set.id}" data-numbers="sheet">The sheet<small>its own numbers</small></button>
+        <button class="btn" data-act="set" data-set="${set.id}" data-numbers="new">New numbers<small>same questions</small></button>
+        <a class="btn" href="${hashFor({ unitId, mode: 'exam', set: set.id })}">Timed<small>8 questions · 50 min</small></a>
+      </div>
+    </div>`;
 }
 
 // ---------------------------------------------------------------- problem sheet
@@ -194,7 +237,7 @@ function sessionInfo(unitId) {
   if (!session || session.unitId !== unitId || !current) return null;
   const i = session.ids.indexOf(current.tpl.id);
   if (i < 0) return null;
-  const label = { list: 'Chapter list', review: 'Review', mixed: 'Mixed set' }[session.name] || '';
+  const label = session.label || { list: 'Chapter list', review: 'Review', mixed: 'Mixed set' }[session.name] || '';
   return { i, n: session.ids.length, next: session.ids[i + 1] || null, label };
 }
 
@@ -317,7 +360,7 @@ function draw(root, unitId) {
     }
     if (act === 'next') {
       current = null;
-      location.hash = s?.next ? hashFor({ unitId, problemId: s.next }) : hashFor({ unitId });
+      location.hash = s?.next ? hashFor({ unitId, problemId: s.next, seed: session?.seeds?.[s.next] ?? null }) : hashFor({ unitId });
     }
   };
 }

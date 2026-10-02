@@ -16,7 +16,7 @@ function otherQuartiles(xs, p) {
   const half = n % 2 ? (p < 0.5 ? s.slice(0, (n + 1) / 2) : s.slice((n - 1) / 2)) : null;
   return { interp, inclusive: half ? median(half) : null };
 }
-const quartileTraps = (p) => [
+export const quartileTraps = (p) => [
   [($) => otherQuartiles($.xs, p).interp, 'That is a quartile by interpolating between values (the spreadsheet rule). The notes use the TI-84 rule: the median of the lower (or upper) half.'],
   [($) => otherQuartiles($.xs, p).inclusive ?? NaN, 'That half included the median. With an odd n, the TI-84 rule leaves the median out of both halves.'],
 ];
@@ -329,6 +329,8 @@ export default [
   problem({
     ...C1, id: 'c1.outliers', title: 'Fences and outliers', kind: 'numeric', level: 2, topics: ['outliers', 'box-plot', 'iqr'], src: 'Notes Ex 1.14',
     vars: {
+      // The notes' own case is collision claims in dollars; generated versions are waiting times.
+      ctx: choice(['wait', 'drive-through waiting times'], ['claims', 'collision claims']),
       n: range(10, 14, 1),
       far: choice([1, 'high'], [-1, 'low'], [0, 'none']),
       xs: data((r, v) => {
@@ -339,7 +341,11 @@ export default [
     },
     derive: ($) => ({ b: boxPlot($.xs) }),
     valid: ($) => $.b.iqr > 0 && $.b.outliers.every((x) => Math.abs(x - ($.b.upperFence + $.b.lowerFence) / 2) > 1),
-    text: (T, $) => `Waiting times (in seconds) at a drive-through: ${list($.xs)}. Use the 1.5 × IQR rule to check for outliers.`,
+    sampleValid: ($) => $.ctx === 'wait',
+    text: (T, $) =>
+      $.ctx === 'claims'
+        ? `Collision claims paid by an insurance company, in dollars: ${list($.xs)}. Use the 1.5 × IQR rule to check for outliers.`
+        : `Waiting times (in seconds) at a drive-through: ${list($.xs)}. Use the 1.5 × IQR rule to check for outliers.`,
     parts: [
       num('lf', ($) => $.b.lowerFence, { label: 'Lower fence', tol: 0, abs: 1e-9 }),
       num('uf', ($) => $.b.upperFence, { label: 'Upper fence', tol: 0, abs: 1e-9 }),
@@ -356,7 +362,7 @@ export default [
         b.outliers.length ? `Outlier${b.outliers.length > 1 ? 's' : ''}: ${b.outliers.join(', ')}. In a box plot the whiskers stop at ${b.whiskerLow} and ${b.whiskerHigh}, and each outlier is marked with *.` : `Every value lies between the fences, so there are no outliers. The whiskers run to ${b.whiskerLow} and ${b.whiskerHigh}.`,
       ];
     },
-    cases: [kase('Notes Ex 1.14 (collision claims)', { n: 18, far: 1, xs: CLAIMS }, { lf: -5164.5, uf: 10567.5, k: 1 })],
+    cases: [kase('Notes Ex 1.14 (collision claims)', { ctx: 'claims', n: 18, far: 1, xs: CLAIMS }, { lf: -5164.5, uf: 10567.5, k: 1 })],
   }),
 
   // ----------------------------------------------------------- frequency distributions
